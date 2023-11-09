@@ -1,7 +1,8 @@
 plugins {
-    id 'fabric-loom' version "1.2.+"
+    id 'fabric-loom' version "1.4.+"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'maven-publish'
+    id 'ploceus' version "1.4.+"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
@@ -22,15 +23,6 @@ repositories {
 
 loom {
     setIntermediaryUrl('https://maven.legacyfabric.net/net/fabricmc/intermediary/%1$s/intermediary-%1$s-v2.jar')
-    // Only needed for versions not available from vanilla launcher by default.
-    // customMinecraftManifest.set("https://meta.legacyfabric.net/v2/manifest/${minecraft_version}")
-
-    // Required by 1.7.x
-    // runs {
-    // 	client {
-    // 		programArgs "--userProperties", "{}"
-    // 	}
-    // }
 }
 
 import org.gradle.internal.os.OperatingSystem
@@ -47,7 +39,7 @@ switch (OperatingSystem.current()) {
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.legacyfabric:yarn:${project.yarn_mappings}:v2"
+    mappings "net.ornithemc:feather:${project.mappings}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     implementation("org.javassist:javassist:3.29.2-GA")
@@ -122,7 +114,7 @@ task remapShadowJar(type: net.fabricmc.loom.task.RemapJarTask, dependsOn: shadow
 // configure the maven publication
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        mavenJava(MavenPublication) { publication ->
             from components.java
         }
     }
