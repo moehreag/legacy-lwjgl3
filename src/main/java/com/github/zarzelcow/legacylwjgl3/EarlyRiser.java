@@ -28,7 +28,8 @@ public class EarlyRiser implements Runnable {
 			Triple.of("glLight", "glLightfv", "(IILjava/nio/FloatBuffer;)V"),
 			Triple.of("glLightModel", "glLightModelfv", "(ILjava/nio/FloatBuffer;)V"),
 			Triple.of("glMultMatrix", "glMultMatrixf", "(Ljava/nio/FloatBuffer;)V"),
-			Triple.of("glTexEnv", "glTexEnvfv", "(IILjava/nio/FloatBuffer;)V")
+			Triple.of("glTexEnv", "glTexEnvfv", "(IILjava/nio/FloatBuffer;)V"),
+			Triple.of("glTexGen", "glTexGenfv", "(IILjava/nio/FloatBuffer;)V")
 	);
 	private final List<Triple<String, String, String>> al10Translations = ImmutableList.of(
 			Triple.of("alListener", "alListenerfv", "(ILjava/nio/FloatBuffer;)V"),
