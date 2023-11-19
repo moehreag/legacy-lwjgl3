@@ -166,6 +166,7 @@ public final class Display {
 		} else {
 			// Configure GLFW
 			GLFW.glfwDefaultWindowHints();
+
 			if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND){
 				GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_FALSE); // disable an unsupported function on wayland
 			}
