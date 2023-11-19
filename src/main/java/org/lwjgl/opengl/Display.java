@@ -102,6 +102,14 @@ public final class Display {
 
 	
 	public static int setIcon(@NotNull ByteBuffer[] icons) {
+
+		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND){
+			// Wayland does not have a standardised way of setting window icons, see
+			// https://www.glfw.org/docs/latest/group__window.html#gadd7ccd39fe7a7d1f0904666ae5932dc5
+			// for more information.
+			return 0;
+		}
+
 		// LWJGL2 doesn't enforce this to be called after window creation,
 		// meaning you have to keep hold the icons to use them when the window is created
 		if (!Arrays.equals(cached_icons, icons)) {
@@ -147,14 +155,26 @@ public final class Display {
 		GLFW.glfwSwapBuffers(handle);
 	}
 
-	public static void create(@Nullable PixelFormat pixelFormat) throws LWJGLException {
+	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
 		// Setup an error callback. The default implementation
 		GLFWErrorCallback.createPrint(System.err).set();
+		if (GLFW.glfwPlatformSupported(GLFW.GLFW_PLATFORM_WAYLAND)) {
+			GLFW.glfwInitHint(GLFW.GLFW_PLATFORM, GLFW.GLFW_PLATFORM_WAYLAND); // enable wayland backend if supported
+		}
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
 		} else {
 			// Configure GLFW
 			GLFW.glfwDefaultWindowHints();
+			if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND){
+				GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_FALSE); // disable an unsupported function on wayland
+			}
+
+			GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pixelFormat.getAlphaBits());
+			GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pixelFormat.getDepthBits());
+			GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pixelFormat.getStencilBits());
+			GLFW.glfwWindowHint(GLFW.GLFW_STEREO, pixelFormat.isStereo() ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+
 			GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, 0);
 			GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
 			handle =

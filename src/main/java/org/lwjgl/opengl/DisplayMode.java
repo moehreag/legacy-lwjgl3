@@ -46,7 +46,7 @@ public final class DisplayMode {
     }
 
     public boolean equals(Object obj) {
-        if (obj == null || !(obj instanceof DisplayMode)) {
+        if (!(obj instanceof DisplayMode)) {
             return false;
         }
 
