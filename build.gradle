@@ -25,17 +25,7 @@ loom {
     setIntermediaryUrl('https://maven.legacyfabric.net/net/fabricmc/intermediary/%1$s/intermediary-%1$s-v2.jar')
 }
 
-import org.gradle.internal.os.OperatingSystem
-
 project.ext.lwjglVersion = "3.3.2"
-switch (OperatingSystem.current()) {
-    case OperatingSystem.LINUX:
-        project.ext.lwjglNatives = "natives-linux"
-        break
-    case OperatingSystem.WINDOWS:
-        project.ext.lwjglNatives = "natives-windows"
-        break
-}
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -49,10 +39,12 @@ dependencies {
     implementation "org.lwjgl:lwjgl-glfw"
     implementation "org.lwjgl:lwjgl-openal"
     implementation "org.lwjgl:lwjgl-opengl"
-    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+    for (String platform : ["linux", "windows", "macos", "windows-arm64", "macos-arm64"]){
+        runtimeOnly "org.lwjgl:lwjgl::natives-$platform"
+        runtimeOnly "org.lwjgl:lwjgl-glfw::natives-$platform"
+        runtimeOnly "org.lwjgl:lwjgl-openal::natives-$platform"
+        runtimeOnly "org.lwjgl:lwjgl-opengl::natives-$platform"
+    }
 }
 
 configurations.configureEach {
