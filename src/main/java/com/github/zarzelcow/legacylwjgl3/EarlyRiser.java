@@ -36,6 +36,13 @@ public class EarlyRiser implements Runnable {
 			Triple.of("alSource", "alSourcefv", "(IILjava/nio/FloatBuffer;)V"),
 			Triple.of("alSourceStop", "alSourceStopv", "(Ljava/nio/IntBuffer;)V")
 	);
+	private final List<Triple<String, String, String>> gl20Translations = ImmutableList.of(
+			Triple.of("glUniformMatrix4", "glUniformMatrix4fv", "(IZLjava/nio/FloatBuffer;)V")
+	);
+	private final List<Triple<String, String, String>> arbShaderObjectsTranslations = ImmutableList.of(
+			Triple.of("glGetObjectParameterARB", "glGetObjectParameterivARB", "(IILjava/nio/IntBuffer;)V"),
+			Triple.of("glUniformMatrix4ARB", "glUniformMatrix4fvARB", "(IZLjava/nio/FloatBuffer;)V")
+	);
 
 	@Override
 	public void run() {
@@ -44,10 +51,19 @@ public class EarlyRiser implements Runnable {
 		pool.appendClassPath(new LoaderClassPath(FabricLauncherBase.getLauncher().getTargetClassLoader())); // knot class loader contains the fat jar with lwjgl 3 bundled
 
 		macroRedefineWithErrorHandling(pool, this::addMissingGLCapabilities);
-		macroRedefineWithErrorHandling(pool, this::addLegacyCompatibilityMethodsToGL11);
+		macroTranslateMethodNames(pool, "org.lwjgl.opengl.GL11", GL.class, gl11Translations);
 		macroRedefineWithErrorHandling(pool, this::addLegacyCompatibilityMethodsToGL20);
+		macroTranslateMethodNames(pool, "org.lwjgl.opengl.ARBShaderObjects", GL.class, arbShaderObjectsTranslations);
 		macroRedefineWithErrorHandling(pool, this::copyAlExtensions);
-		macroRedefineWithErrorHandling(pool, this::addLegacyCompatibilityMethodsToAL10);
+		macroTranslateMethodNames(pool, "org.lwjgl.openal.AL10", ALCapabilities.class, al10Translations);
+	}
+
+	private void macroTranslateMethodNames(ClassPool pool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames){
+		try {
+			addMethodTranslations(pool, clazz, neighbor, methodNames);
+		} catch (Exception e) {
+			LegacyLWJGL3.LOGGER.error("Failed in early riser while attempting to do hacky things", e);
+		}
 	}
 
 	// rather than handling errors is every method manually, this will do it for you
@@ -83,22 +99,6 @@ public class EarlyRiser implements Runnable {
 		defineCtClass(ctClass, GL.class, classPool.getClassLoader());
 	}
 
-	/*
-	 * Adds a few legacy methods to GL11 like glGetFloat which was renamed to glGetFloatv in LWJGL3
-	 */
-	private void addLegacyCompatibilityMethodsToGL11(ClassPool classPool) throws NotFoundException, CannotCompileException, IOException {
-		CtClass cc = classPool.get("org.lwjgl.opengl.GL11");
-		for (Triple<String, String, String> t : gl11Translations) {
-			CtMethod original = cc.getMethod(t.getMiddle(), t.getRight());
-			// copy original method and rename it
-			CtMethod renamed = CtNewMethod.copy(original, cc, null);
-			renamed.setName(t.getLeft());
-
-			cc.addMethod(renamed);
-			debug("Added legacy compat method $legacy");
-		}
-		defineCtClass(cc, GL.class, classPool.getClassLoader());
-	}
 
 	// new GL20 doesn't have a way to supply a shader source using ByteBuffer so this adds a method to do it
 	private void addLegacyCompatibilityMethodsToGL20(ClassPool classPool) throws NotFoundException, CannotCompileException, IOException {
@@ -109,14 +109,10 @@ public class EarlyRiser implements Runnable {
 				"string.get(data);\n" +
 				"string.position(0);\n" +
 				"org.lwjgl.opengl.GL20.glShaderSource(shader, new String(data));\n" +
-				"}\n" +
-				"\n" +
-				"public static void glUniformMatrix4(int location, boolean transpose, FloatBuffer matrices) {\n" +
-				"glUniformMatrix4fv(location, transpose, matrices);\n" +
-				"}";
+				"}\n";
 
 		cc.addMethod(CtNewMethod.make(code, cc));
-		defineCtClass(cc, GL.class, classPool.getClassLoader());
+		macroTranslateMethodNames(classPool, "org.lwjgl.opengl.GL20", GL.class, gl20Translations);
 	}
 
 	/**
@@ -151,21 +147,18 @@ public class EarlyRiser implements Runnable {
 		defineCtClass(target, ALCapabilities.class, classPool.getClassLoader());
 	}
 
-	/**
-	 * Adds legacy compatibility methods to AL10
-	 */
-	private void addLegacyCompatibilityMethodsToAL10(ClassPool classPool) throws NotFoundException, CannotCompileException, IOException {
-		CtClass cc = classPool.get("org.lwjgl.openal.AL10");
-		for (Triple<String, String, String> t : al10Translations) {
+	private void addMethodTranslations(ClassPool classPool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames)throws NotFoundException, CannotCompileException, IOException{
+		CtClass cc = classPool.get(clazz);
+		for (Triple<String, String, String> t : methodNames) {
 			CtMethod original = cc.getMethod(t.getMiddle(), t.getRight());
 			// copy original method and rename it
 			CtMethod copied = CtNewMethod.copy(original, cc, null);
 			copied.setName(t.getLeft());
 			cc.addMethod(copied);
 
-			debug("Added legacy compat method $legacy");
+			debug("Added legacy compat method "+t.getLeft());
 		}
-		defineCtClass(cc, ALCapabilities.class, classPool.getClassLoader());
+		defineCtClass(cc, neighbor, classPool.getClassLoader());
 	}
 
 	private void debug(String message) {

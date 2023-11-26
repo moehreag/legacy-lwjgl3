@@ -1,3 +1,5 @@
+import net.fabricmc.loom.task.RemapJarTask
+
 plugins {
     id 'fabric-loom' version "1.4.+"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
@@ -19,10 +21,6 @@ repositories {
     }
     maven { url "https://jitpack.io" }
     mavenCentral()
-}
-
-loom {
-    setIntermediaryUrl('https://maven.legacyfabric.net/net/fabricmc/intermediary/%1$s/intermediary-%1$s-v2.jar')
 }
 
 project.ext.lwjglVersion = "3.3.2"
@@ -97,11 +95,14 @@ shadowJar {
     }
 }
 
-task remapShadowJar(type: net.fabricmc.loom.task.RemapJarTask, dependsOn: shadowJar) {
+tasks.register('remapShadowJar', RemapJarTask) {
+    dependsOn shadowJar
     input = shadowJar.archiveFile
     setArchiveClassifier("all-remapped")
     addNestedDependencies = false
 }
+
+tasks.build.dependsOn remapShadowJar
 
 // configure the maven publication
 publishing {

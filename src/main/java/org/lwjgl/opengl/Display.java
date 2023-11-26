@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import com.github.zarzelcow.legacylwjgl3.DesktopFileInjector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.LWJGLException;
@@ -107,7 +108,7 @@ public final class Display {
 			// Wayland does not have a standardised way of setting window icons, see
 			// https://www.glfw.org/docs/latest/group__window.html#gadd7ccd39fe7a7d1f0904666ae5932dc5
 			// for more information.
-			return 0;
+			return DesktopFileInjector.setIcon(icons);
 		}
 
 		// LWJGL2 doesn't enforce this to be called after window creation,
@@ -169,6 +170,8 @@ public final class Display {
 
 			if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND){
 				GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_FALSE); // disable an unsupported function on wayland
+				DesktopFileInjector.inject();
+				GLFW.glfwWindowHintString(GLFW.GLFW_WAYLAND_APP_ID, DesktopFileInjector.APP_ID);
 			}
 
 			GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pixelFormat.getAlphaBits());
