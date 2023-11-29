@@ -1,7 +1,6 @@
 package com.github.zarzelcow.legacylwjgl3;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -47,9 +46,7 @@ public class DesktopFileInjector {
 			try {
 				int[] pixels = new int[buf.remaining() / 4];
 				for (int i = 0; i < pixels.length; i++) {
-					Color c = new Color(buf.getInt(), true);
-					Color transformed = new Color(c.getAlpha(), c.getRed(), c.getGreen(), c.getBlue());
-					pixels[i] = transformed.getRGB();
+					pixels[i] = Integer.rotateRight(buf.getInt(), 8);
 				}
 				int size = (int) MathHelper.sqrt(pixels.length);
 				BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
@@ -104,7 +101,7 @@ public class DesktopFileInjector {
 	private static void updateIconSystem() {
 		ProcessBuilder builder = new ProcessBuilder("xdg-icon-resource", "forceupdate");
 		try {
-			Process p = builder.start();
+			builder.start();
 		} catch (IOException ignored) {
 		}
 	}
