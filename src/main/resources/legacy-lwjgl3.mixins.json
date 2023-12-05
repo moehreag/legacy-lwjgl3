@@ -5,7 +5,8 @@
   "plugin": "com.github.zarzelcow.legacylwjgl3.EarlyRiserLoader",
   "compatibilityLevel": "JAVA_8",
   "client": [
-    "MixinMinecraftFixEarlyCrashNoReports"
+    "MixinMinecraftFixEarlyCrashNoReports",
+    "MixinScreenFixClipboard"
   ],
   "injectors": {
     "defaultRequire": 1
