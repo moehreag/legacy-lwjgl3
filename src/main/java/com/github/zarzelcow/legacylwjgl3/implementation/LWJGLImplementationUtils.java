@@ -2,8 +2,9 @@ package com.github.zarzelcow.legacylwjgl3.implementation;
 
 import com.github.zarzelcow.legacylwjgl3.implementation.glfw.GLFWKeyboardImplementation;
 import com.github.zarzelcow.legacylwjgl3.implementation.glfw.GLFWMouseImplementation;
-import com.github.zarzelcow.legacylwjgl3.implementation.input.CombinedInputImplementation;
-import com.github.zarzelcow.legacylwjgl3.implementation.input.InputImplementation;
+import com.github.zarzelcow.legacylwjgl3.implementation.glfw.VirtualGLFWMouseImplementation;
+import com.github.zarzelcow.legacylwjgl3.implementation.input.*;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * @author Zarzelcow
@@ -20,7 +21,10 @@ public class LWJGLImplementationUtils {
     }
 
     private static InputImplementation createImplementation() {
-        return new CombinedInputImplementation(new GLFWKeyboardImplementation(), new GLFWMouseImplementation());
+        MouseImplementation mouse = GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND ?
+                VirtualGLFWMouseImplementation.getInstance() :
+                new GLFWMouseImplementation();
+        return new CombinedInputImplementation(new GLFWKeyboardImplementation(), mouse);
     }
 
 }

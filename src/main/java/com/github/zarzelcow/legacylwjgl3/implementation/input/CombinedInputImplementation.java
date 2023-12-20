@@ -1,7 +1,7 @@
 package com.github.zarzelcow.legacylwjgl3.implementation.input;
 
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import java.nio.DoubleBuffer;
 
 /**
  * @author Zarzelcow
@@ -50,7 +50,7 @@ public class CombinedInputImplementation implements InputImplementation {
     }
 
     @Override
-    public void pollMouse(IntBuffer coord_buffer, ByteBuffer buttons_buffer) {
+    public void pollMouse(DoubleBuffer coord_buffer, ByteBuffer buttons_buffer) {
         mouseImpl.pollMouse(coord_buffer, buttons_buffer);
     }
 
@@ -60,7 +60,7 @@ public class CombinedInputImplementation implements InputImplementation {
     }
 
     @Override
-    public void setCursorPosition(int x, int y) {
+    public void setCursorPosition(double x, double y) {
         mouseImpl.setCursorPosition(x, y);
     }
 

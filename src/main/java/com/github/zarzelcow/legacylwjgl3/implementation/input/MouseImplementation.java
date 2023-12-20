@@ -1,28 +1,28 @@
 package com.github.zarzelcow.legacylwjgl3.implementation.input;
 
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
+import java.nio.DoubleBuffer;
 
 /**
  * @author Zarzelcow
  * @created 28/09/2022 - 8:58 PM
  */
 public interface MouseImplementation {
-    void createMouse();
+	void createMouse();
 
-    void destroyMouse();
+	void destroyMouse();
 
-    void pollMouse(IntBuffer coord_buffer, ByteBuffer buttons_buffer);
+	void pollMouse(DoubleBuffer coord_buffer, ByteBuffer buttons_buffer);
 
-    void readMouse(ByteBuffer readBuffer);
+	void readMouse(ByteBuffer readBuffer);
 
-    void setCursorPosition(int x, int y);
+	void setCursorPosition(double x, double y);
 
-    void grabMouse(boolean grab);
+	void grabMouse(boolean grab);
 
-    boolean hasWheel();
+	boolean hasWheel();
 
-    int getButtonCount();
+	int getButtonCount();
 
-    boolean isInsideWindow();
+	boolean isInsideWindow();
 }

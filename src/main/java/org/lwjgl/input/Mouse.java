@@ -32,6 +32,7 @@
 package org.lwjgl.input;
 
 import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Map;
@@ -62,7 +63,7 @@ import com.github.zarzelcow.legacylwjgl3.implementation.input.InputImplementatio
  */
 public class Mouse {
     /** Internal use - event size in bytes */
-    public static final int	EVENT_SIZE									= 1 + 1 + 4 + 4 + 4 + 8;
+    public static final int	EVENT_SIZE									= 1 + 1 + 8 + 8 + 8 + 8;
 
     /** Has the mouse been created? */
     private static boolean		created;
@@ -71,28 +72,28 @@ public class Mouse {
     private static ByteBuffer	buttons;
 
     /** Mouse absolute X position in pixels */
-    private static int				x;
+    private static double				x;
 
     /** Mouse absolute Y position in pixels */
-    private static int				y;
+    private static double				y;
 
     /** Mouse absolute X position in pixels without any clipping */
-    private static int				absolute_x;
+    private static double				absolute_x;
 
     /** Mouse absolute Y position in pixels without any clipping */
-    private static int				absolute_y;
+    private static double				absolute_y;
 
     /** Buffer to hold the deltas dx, dy and dwheel */
-    private static IntBuffer	coord_buffer;
+    private static DoubleBuffer coord_buffer;
 
     /** Delta X */
-    private static int				dx;
+    private static double				dx;
 
     /** Delta Y */
-    private static int				dy;
+    private static double				dy;
 
     /** Delta Z */
-    private static int				dwheel;
+    private static double				dwheel;
 
     /** Number of buttons supported by the mouse */
     private static int			buttonCount									= -1;
@@ -122,19 +123,19 @@ public class Mouse {
     private static boolean		eventState;
 
     /** The current delta of the mouse in the event queue */
-    private static int			event_dx;
-    private static int			event_dy;
-    private static int			event_dwheel;
+    private static double			event_dx;
+    private static double			event_dy;
+    private static double			event_dwheel;
     /** The current absolute position of the mouse in the event queue */
-    private static int			event_x;
-    private static int			event_y;
+    private static double			event_x;
+    private static double			event_y;
     private static long			event_nanos;
     /** The position of the mouse it was grabbed at */
-    private static int			grab_x;
-    private static int			grab_y;
+    private static double			grab_x;
+    private static double			grab_y;
     /** The last absolute mouse event position (before clipping) for delta computation */
-    private static int			last_event_raw_x;
-    private static int			last_event_raw_y;
+    private static double			last_event_raw_x;
+    private static double			last_event_raw_y;
 
     /** Buffer size in events */
     private static final int	BUFFER_SIZE									= 50;
@@ -273,7 +274,7 @@ public class Mouse {
         // set mouse buttons
         buttonCount = implementation.getButtonCount();
         buttons = BufferUtils.createByteBuffer(buttonCount);
-        coord_buffer = BufferUtils.createIntBuffer(3);
+        coord_buffer = BufferUtils.createDoubleBuffer(3);
 //        if (currentCursor != null && implementation.getNativeCursorCapabilities() != 0)
 //            setNativeCursor(currentCursor);
         readBuffer = ByteBuffer.allocate(EVENT_SIZE * BUFFER_SIZE);
@@ -349,10 +350,10 @@ public class Mouse {
             implementation.pollMouse(coord_buffer, buttons);
 
             /* If we're grabbed, poll returns mouse deltas, if not it returns absolute coordinates */
-            int poll_coord1 = coord_buffer.get(0);
-            int poll_coord2 = coord_buffer.get(1);
+            double poll_coord1 = coord_buffer.get(0);
+            double poll_coord2 = coord_buffer.get(1);
             /* The wheel is always relative */
-            int poll_dwheel = coord_buffer.get(2);
+            double poll_dwheel = coord_buffer.get(2);
 
             if (isGrabbed()) {
                 dx += poll_coord1;
@@ -444,15 +445,15 @@ public class Mouse {
                 eventButton = readBuffer.get();
                 eventState = readBuffer.get() != 0;
                 if (isGrabbed()) {
-                    event_dx = readBuffer.getInt();
-                    event_dy = readBuffer.getInt();
+                    event_dx = readBuffer.getDouble();
+                    event_dy = readBuffer.getDouble();
                     event_x += event_dx;
                     event_y += event_dy;
                     last_event_raw_x = event_x;
                     last_event_raw_y = event_y;
                 } else {
-                    int new_event_x = readBuffer.getInt();
-                    int new_event_y = readBuffer.getInt();
+                    double new_event_x = readBuffer.getDouble();
+                    double new_event_y = readBuffer.getDouble();
                     event_dx = new_event_x - last_event_raw_x;
                     event_dy = new_event_y - last_event_raw_y;
                     event_x = new_event_x;
@@ -464,7 +465,7 @@ public class Mouse {
                     event_x = Math.min(Display.getWidth() - 1, Math.max(0, event_x));
                     event_y = Math.min(Display.getHeight() - 1, Math.max(0, event_y));
                 }
-                event_dwheel = readBuffer.getInt();
+                event_dwheel = readBuffer.getDouble();
                 event_nanos = readBuffer.getLong();
                 return true;
             } else
@@ -496,7 +497,7 @@ public class Mouse {
      */
     public static int getEventDX() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            return event_dx;
+            return (int) event_dx;
 //        }
     }
 
@@ -505,7 +506,7 @@ public class Mouse {
      */
     public static int getEventDY() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            return event_dy;
+            return (int) event_dy;
 //        }
     }
 
@@ -514,7 +515,7 @@ public class Mouse {
      */
     public static int getEventX() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            return event_x;
+            return (int) event_x;
 //        }
     }
 
@@ -523,7 +524,7 @@ public class Mouse {
      */
     public static int getEventY() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            return event_y;
+            return (int) event_y;
 //        }
     }
 
@@ -532,7 +533,7 @@ public class Mouse {
      */
     public static int getEventDWheel() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            return event_dwheel;
+            return (int) event_dwheel;
 //        }
     }
 
@@ -558,7 +559,7 @@ public class Mouse {
      */
     public static int getX() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            return x;
+            return (int) x;
 //        }
     }
 
@@ -570,7 +571,7 @@ public class Mouse {
      */
     public static int getY() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            return y;
+            return (int) y;
 //        }
     }
 
@@ -579,7 +580,7 @@ public class Mouse {
      */
     public static int getDX() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            int result = dx;
+            int result = (int) dx;
             dx = 0;
             return result;
 //        }
@@ -590,7 +591,7 @@ public class Mouse {
      */
     public static int getDY() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            int result = dy;
+            int result = (int) dy;
             dy = 0;
             return result;
 //        }
@@ -601,7 +602,7 @@ public class Mouse {
      */
     public static int getDWheel() {
 //        synchronized (OpenGLPackageAccess.global_lock) {
-            int result = dwheel;
+            int result = (int) dwheel;
             dwheel = 0;
             return result;
 //        }

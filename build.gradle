@@ -3,6 +3,7 @@ import net.fabricmc.loom.task.RemapJarTask
 plugins {
     id 'fabric-loom' version "1.4.+"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'io.freefair.lombok' version "8.1.0"
     id 'maven-publish'
     id 'ploceus' version "1.4.+"
 }
@@ -21,6 +22,14 @@ repositories {
     }
     maven { url "https://jitpack.io" }
     mavenCentral()
+}
+
+loom {
+    mods {
+        "legacy-lwjgl3" {
+            sourceSet("main")
+        }
+    }
 }
 
 project.ext.lwjglVersion = "3.3.2"
@@ -43,6 +52,8 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-openal::natives-$platform"
         runtimeOnly "org.lwjgl:lwjgl-opengl::natives-$platform"
     }
+
+    ploceus.dependOsl(osl_version)
 }
 
 configurations.configureEach {
