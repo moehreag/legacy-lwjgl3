@@ -305,9 +305,9 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	private void loadCursor() {
 		cursor = SystemCursor.load();
 
-		//if (Boolean.getBoolean("virtual_mouse.export")) {
-		cursor.export();
-		//}
+		if (Boolean.getBoolean("virtual_mouse.export")) {
+			cursor.export();
+		}
 
 		List<Integer> glIds = new ArrayList<>();
 		for (XCursor.Chunk chunk : cursor.chunks) {
