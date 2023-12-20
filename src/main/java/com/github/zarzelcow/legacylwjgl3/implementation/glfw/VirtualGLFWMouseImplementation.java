@@ -26,6 +26,8 @@ import net.minecraft.client.gui.screen.inventory.menu.InventoryMenuScreen;
 import net.minecraft.client.render.Window;
 import net.minecraft.resource.Identifier;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.*;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -36,25 +38,18 @@ import org.lwjgl.opengl.EventQueue;
  * <p>2023/12/18</p>
  */
 public class VirtualGLFWMouseImplementation implements MouseImplementation {
-
-	public static VirtualGLFWMouseImplementation getInstance() {
-		return INSTANCE;
-	}
-
+	private static final Logger LOGGER = LogManager.getLogger("Virtual Mouse");
 	private static final VirtualGLFWMouseImplementation INSTANCE = new VirtualGLFWMouseImplementation();
-
+	private final EventQueue event_queue = new EventQueue(Mouse.EVENT_SIZE);
+	private final ByteBuffer tmp_event = ByteBuffer.allocate(Mouse.EVENT_SIZE);
 	protected GLFWMouseButtonCallback buttonCallback;
+	protected byte[] button_states = new byte[this.getButtonCount()];
 	private GLFWCursorPosCallback posCallback;
 	private GLFWScrollCallback scrollCallback;
 	private GLFWCursorEnterCallback cursorEnterCallback;
 	private long windowHandle;
 	private boolean grabbed;
 	private boolean isInsideWindow;
-
-	private final EventQueue event_queue = new EventQueue(Mouse.EVENT_SIZE);
-
-	private final ByteBuffer tmp_event = ByteBuffer.allocate(Mouse.EVENT_SIZE);
-
 	private double last_x;
 	private double last_y;
 	private double accum_dx, accum_dy, accum_dz;
@@ -63,8 +58,28 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	private int image = -1;
 	private boolean virtual;
 	private boolean created;
-	protected byte[] button_states = new byte[this.getButtonCount()];
-	private long last_event_nanos;
+
+	public static VirtualGLFWMouseImplementation getInstance() {
+		return INSTANCE;
+	}
+
+	public static void render() {
+		getInstance().draw();
+	}
+
+	public static void drawTexture(double x, double y, double u, double v, double width, double height, double textureWidth, double textureHeight) {
+		double n = 1.0F / textureWidth;
+		double o = 1.0F / textureHeight;
+		double z = 1000;
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferBuilder = tessellator.getBuilder();
+		bufferBuilder.begin(7, DefaultVertexFormat.POSITION_TEX);
+		bufferBuilder.vertex(x, y + height, z).texture(u * n, (v + height) * o).nextVertex();
+		bufferBuilder.vertex(x + width, y + height, z).texture((u + width) * n, (v + height) * o).nextVertex();
+		bufferBuilder.vertex(x + width, y, z).texture((u + width) * n, v * o).nextVertex();
+		bufferBuilder.vertex(x, y, z).texture(u * n, v * o).nextVertex();
+		tessellator.end();
+	}
 
 	@Override
 	public void createMouse() {
@@ -141,10 +156,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		created = false;
 	}
 
-	private boolean isInside() {
-		return getX() > 1 && getX() < Display.getWidth() - 1 && getY() > 1 && getY() < Display.getHeight() - 1;
-	}
-
 	private boolean mayVirtualize() {
 		return Minecraft.getInstance().world != null;
 	}
@@ -172,7 +183,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		tmp_event.put(button).put(state).putDouble(coord1).putDouble(coord2).putDouble(dz).putLong(nanos);
 		tmp_event.flip();
 		event_queue.putEvent(tmp_event);
-		last_event_nanos = nanos;
 	}
 
 	@Override
@@ -205,10 +215,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		accum_dx = accum_dy = accum_dz = 0;
 		for (int i = 0; i < button_states.length; i++)
 			buttons_buffer.put(i, button_states[i]);
-	}
-
-	private void logPos() {
-		System.out.println("X: " + getX() + " Y: " + getY() + " Virtual: " + virtual + " Grabbed: " + grabbed);
 	}
 
 	@Override
@@ -255,10 +261,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		return this.isInsideWindow;
 	}
 
-	public static void render() {
-		getInstance().draw();
-	}
-
 	private void draw() {
 		if (virtual && image != 0) {
 			GlStateManager.enableTexture();
@@ -272,25 +274,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		}
 	}
 
-	public static void drawTexture(double x, double y, double u, double v, double width, double height, double textureWidth, double textureHeight) {
-		double n = 1.0F / textureWidth;
-		double o = 1.0F / textureHeight;
-		double z = 1000;
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferBuilder = tessellator.getBuilder();
-		bufferBuilder.begin(7, DefaultVertexFormat.POSITION_TEX);
-		bufferBuilder.vertex(x, y + height, z).texture(u * n, (v + height) * o).nextVertex();
-		bufferBuilder.vertex(x + width, y + height, z).texture((u + width) * n, (v + height) * o).nextVertex();
-		bufferBuilder.vertex(x + width, y, z).texture((u + width) * n, v * o).nextVertex();
-		bufferBuilder.vertex(x, y, z).texture(u * n, v * o).nextVertex();
-		tessellator.end();
-	}
-
 	private void loadCursor() {
-		/*xhot = 7;
-		yhot = 7;
-		width = 32;
-		height = 32;*/
 		XCursor cursor = SystemCursor.load();
 
 		Arrays.stream(cursor.getChunks()).filter(c -> c instanceof XCursor.ImageChunk)
@@ -316,22 +300,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 		private static final SystemCursor INSTANCE = new SystemCursor();
 
-		public InputStream getArrowCursor() throws IOException {
-			Path theme = XDGPathResolver.getIconTheme();
-			if (theme != null) {
-				System.out.println("Found cursor theme: " + theme);
-				return Files.newInputStream(theme.resolve("cursors").resolve("left_ptr"));
-			}
-
-			try {
-				return Minecraft.getInstance().getResourceManager().getResource(new Identifier("virtual_cursor", "default")).asStream();
-			} catch (IOException ignored) {
-
-			}
-
-			return this.getClass().getResourceAsStream("/assets/virtual_cursor/default");
-		}
-
 		public static XCursor load() {
 
 			try {
@@ -346,10 +314,34 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			}
 
 		}
+
+		public InputStream getArrowCursor() throws IOException {
+			Path theme = XDGPathResolver.getIconTheme("cursors/left_ptr");
+			if (theme != null) {
+				LOGGER.info("Using system cursor theme: " + theme);
+				return Files.newInputStream(theme);
+			}
+
+			LOGGER.info("Falling back to packaged cursor");
+			try {
+				return Minecraft.getInstance().getResourceManager().getResource(new Identifier("virtual_cursor", "default")).asStream();
+			} catch (IOException ignored) {
+
+			}
+
+			return this.getClass().getResourceAsStream("/assets/virtual_cursor/default");
+		}
 	}
 
 	@Data
 	private static class XCursor {
+
+		private final String magic;
+		private final long headerLength;
+		private final long fileVersion;
+		private final long toCEntryCount;
+		private final TableOfContents[] toC;
+		private final Chunk[] chunks;
 
 		public static XCursor parse(ByteBuffer buf) {
 
@@ -458,34 +450,34 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		}
 
 		private static long getInt(ByteBuffer buf, Index index) {
-			return readUnsignedInteger(buf, 4, index).longValue();
+			return readUnsignedInteger(buf, index).longValue();
 		}
 
-		private static BigInteger readUnsignedInteger(ByteBuffer buffer, int length, Index index) {
-			return new BigInteger(1, readBytes(buffer, length, true, index));
+		private static BigInteger readUnsignedInteger(ByteBuffer buffer, Index index) {
+			return new BigInteger(1, readBytes(buffer, index));
 		}
 
-		private static byte[] readBytes(ByteBuffer buffer, int length, boolean reversed, Index index) {
-			byte[] bytes = new byte[length];
-			for (int i = 0; i < length; i++) {
-				bytes[reversed ? length - 1 - i : i] = buffer.get(index.getIndex());
+		private static byte[] readBytes(ByteBuffer buffer, Index index) {
+			byte[] bytes = new byte[4];
+			for (int i = 0; i < 4; i++) {
+				bytes[4 - 1 - i] = buffer.get(index.getIndex());
 				index.increment();
 			}
 			return bytes;
 		}
 
 		private static long getInt(ByteBuffer buf) {
-			return readUnsignedInteger(buf, 4).longValue();
+			return readUnsignedInteger(buf).longValue();
 		}
 
-		private static BigInteger readUnsignedInteger(ByteBuffer buffer, int length) {
-			return new BigInteger(1, readBytes(buffer, length, true));
+		private static BigInteger readUnsignedInteger(ByteBuffer buffer) {
+			return new BigInteger(1, readBytes(buffer));
 		}
 
-		private static byte[] readBytes(ByteBuffer buffer, int length, boolean reversed) {
-			byte[] bytes = new byte[length];
-			for (int i = 0; i < length; i++) {
-				bytes[reversed ? length - 1 - i : i] = buffer.get();
+		private static byte[] readBytes(ByteBuffer buffer) {
+			byte[] bytes = new byte[4];
+			for (int i = 0; i < 4; i++) {
+				bytes[4 - 1 - i] = buffer.get();
 			}
 			return bytes;
 		}
@@ -497,15 +489,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			}
 			return new String(data, StandardCharsets.UTF_8);
 		}
-
-
-		private final String magic;
-		private final long headerLength;
-		private final long fileVersion;
-		private final long toCEntryCount;
-
-		private final TableOfContents[] toC;
-		private final Chunk[] chunks;
 
 		@Data
 		private static class TableOfContents {

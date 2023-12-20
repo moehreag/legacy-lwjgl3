@@ -1,7 +1,7 @@
 package com.github.zarzelcow.legacylwjgl3.util;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,7 +36,7 @@ public class XDGPathResolver {
 		return ImmutableList.of(userShare, homeIcons, systemIcons);
 	}
 
-	public static Path getIconTheme(){
+	public static Path getIconTheme(String icon){
 
 		String themeName;
 
@@ -50,14 +50,51 @@ public class XDGPathResolver {
 			themeName = "default";
 		}
 
+		return findInThemes(themeName, icon);
+	}
+
+	private static Path findInThemes(String themeName, String icon){
+
+		Path themePath = getThemePath(themeName);
+		Path iconPath = themePath.resolve(icon);
+		if (Files.exists(iconPath)){
+			return iconPath;
+		}
+
+		Path themeIndex = themePath.resolve("index.theme");
+		if (Files.exists(themeIndex)){
+
+			try {
+				List<String> lines = Files.readAllLines(themeIndex, StandardCharsets.UTF_8);
+
+				boolean iconThemeFound = false;
+				for (String s : lines){
+					if ("[Icon Theme]".equals(s)){
+						iconThemeFound = true;
+					}
+
+					if (iconThemeFound && !s.startsWith("#")){
+						String[] parts = s.split("=", 2);
+						if ("Inherits".equals(parts[0])){
+							return findInThemes(parts[1], icon);
+						}
+					}
+				}
+			} catch (IOException ignored) {
+			}
+
+		}
+		return null;
+	}
+
+	private static Path getThemePath(String name){
 		for (Path p : getIconThemeLocations()){
-			Path theme = p.resolve(themeName);
+			Path theme = p.resolve(name);
 			if (Files.exists(theme)){
 				return theme;
 			}
 		}
-
-		return null;
+		return getThemePath("default");
 	}
 
 	public static int getCursorSize(){
