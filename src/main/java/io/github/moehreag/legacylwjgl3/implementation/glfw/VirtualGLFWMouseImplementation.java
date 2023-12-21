@@ -742,8 +742,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 					int i = 0;
 					name = imageName + "_" + i;
-					while (new File(name + ".png").exists()) {
-						name = imageName + "_" + i;
+					while (new File("cursors", name + ".png").exists()) {
 						i++;
 					}
 
@@ -753,14 +752,14 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				String cursor = (getSubtype() + " " + xhot + " " + yhot + " " + name + ".png");
 				if (delay != 0) {
 					cursor += " " + delay;
-					if (Files.exists(Paths.get(getSubtype() + "x" + getSubtype() + ".cursor"))) {
+					if (Files.exists(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".cursor"))) {
 						cursor = "\n" + cursor;
 					}
 				}
 
 				try {
 					ImageIO.write(im, "png", new File("cursors", name + ".png"));
-					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".txt"), lines, StandardOpenOption.CREATE);
+					Files.write(Paths.get("cursors", name + ".txt"), lines, StandardOpenOption.CREATE);
 					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".cursor"), cursor.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 				} catch (IOException e) {
 					LOGGER.warn("Image export failed!", e);
