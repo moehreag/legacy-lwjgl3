@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3.implementation.glfw;
+package io.github.moehreag.legacylwjgl3.implementation.glfw;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -9,20 +9,18 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.zarzelcow.legacylwjgl3.implementation.input.MouseImplementation;
-import com.github.zarzelcow.legacylwjgl3.util.XDGPathResolver;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tessellator;
+import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
+import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import lombok.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -48,6 +46,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	private static final VirtualGLFWMouseImplementation INSTANCE = new VirtualGLFWMouseImplementation();
 	private final EventQueue event_queue = new EventQueue(Mouse.EVENT_SIZE);
 	private final ByteBuffer tmp_event = ByteBuffer.allocate(Mouse.EVENT_SIZE);
+	private final List<XCursor.ImageChunk> chunks = new ArrayList<>();
 	protected GLFWMouseButtonCallback buttonCallback;
 	protected byte[] button_states = new byte[this.getButtonCount()];
 	private GLFWCursorPosCallback posCallback;
@@ -60,7 +59,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	private double last_y;
 	private double accum_dx, accum_dy, accum_dz;
 	private double virt_offset_x, virt_offset_y;
-	private final List<XCursor.ImageChunk> chunks = new ArrayList<>();
 	private int current;
 	private int[] images = new int[]{-1};
 	private long animationTime;
@@ -73,20 +71,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 	public static void render() {
 		getInstance().draw();
-	}
-
-	public static void drawTexture(double x, double y, double u, double v, double width, double height, double textureWidth, double textureHeight) {
-		double n = 1.0F / textureWidth;
-		double o = 1.0F / textureHeight;
-		double z = 1000;
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferBuilder = tessellator.getBuilder();
-		bufferBuilder.begin(7, DefaultVertexFormat.POSITION_TEX);
-		bufferBuilder.vertex(x, y + height, z).texture(u * n, (v + height) * o).nextVertex();
-		bufferBuilder.vertex(x + width, y + height, z).texture((u + width) * n, (v + height) * o).nextVertex();
-		bufferBuilder.vertex(x + width, y, z).texture((u + width) * n, v * o).nextVertex();
-		bufferBuilder.vertex(x, y, z).texture(u * n, v * o).nextVertex();
-		tessellator.end();
 	}
 
 	@Override
@@ -122,7 +106,10 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 				if (virtual) {
 
-					while (getX() <= 0) {
+					/*
+					 * Stop the virtual cursor from leaving the screen entirely
+					 */
+					while (getX() <= 0) { // TODO get rid if the loops. loops are bad here.
 						virt_offset_x++;
 					}
 					while (getX() > Display.getWidth()) {
@@ -168,6 +155,9 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		return Minecraft.getInstance().world != null;
 	}
 
+	/*
+	 * whether we are on a screen where the virtual cursor is allowed
+	 */
 	private boolean isValidScreen() {
 		Screen s = Minecraft.getInstance().screen;
 		return s instanceof InventoryMenuScreen || s instanceof ChatScreen || s instanceof BookEditScreen;
@@ -193,6 +183,9 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		event_queue.putEvent(tmp_event);
 	}
 
+	/*
+	 * deconstruct everything and free native memory as well as cursor textures
+	 */
 	@Override
 	public void destroyMouse() {
 		this.buttonCallback.free();
@@ -232,12 +225,18 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		event_queue.copyEvents(readBuffer);
 	}
 
+	/*
+	 * Set the cursor position (of the virtual cursor)
+	 */
 	@Override
 	public void setCursorPosition(double x, double y) {
 		virt_offset_y = y - last_y;
 		virt_offset_x = x - last_x;
 	}
 
+	/*
+	 * (un)grabs the mouse and activates the virtual cursor if necessary
+	 */
 	@Override
 	public void grabMouse(boolean grab) {
 		if (grab) {
@@ -271,8 +270,11 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		return this.isInsideWindow;
 	}
 
+	/*
+	 * Draw the virtual cursor
+	 */
 	private void draw() {
-		if (virtual && images[0] != 0) {
+		if (virtual && images[0] != -1) {
 			GlStateManager.enableTexture();
 			GlStateManager.enableAlphaTest();
 			GlStateManager.enableBlend();
@@ -282,10 +284,24 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			float scale = new Window(Minecraft.getInstance()).getScale();
 			double x = getX();
 			double y = getY();
-			drawTexture((x - getCurrent().xhot) / scale, (Display.getHeight() - y - getCurrent().yhot) / scale, 0, 0, getCurrent().width / scale, getCurrent().height / scale, getCurrent().width / scale, getCurrent().height / scale);
+			drawTexture((x - getCurrent().xhot) / scale, (Display.getHeight() - y - getCurrent().yhot) / scale, getCurrent().width / scale, getCurrent().height / scale, getCurrent().width / scale, getCurrent().height / scale);
 
 			advanceAnimation();
 		}
+	}
+
+	private void drawTexture(double x, double y, double width, double height, double textureWidth, double textureHeight) {
+		double n = 1.0F / textureWidth;
+		double o = 1.0F / textureHeight;
+		double z = 1000;
+		Tessellator tessellator = Tessellator.getInstance();
+		BufferBuilder bufferBuilder = tessellator.getBuilder();
+		bufferBuilder.begin(7, DefaultVertexFormat.POSITION_TEX);
+		bufferBuilder.vertex(x, y + height, z).texture(0, height * o).nextVertex();
+		bufferBuilder.vertex(x + width, y + height, z).texture(width * n, height * o).nextVertex();
+		bufferBuilder.vertex(x + width, y, z).texture(width * n, 0).nextVertex();
+		bufferBuilder.vertex(x, y, z).texture(0, 0).nextVertex();
+		tessellator.end();
 	}
 
 	private void advanceAnimation() {
@@ -304,6 +320,9 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		return chunks.get(current);
 	}
 
+	/*
+	 * Load the virtual cursor
+	 */
 	private void loadCursor() {
 		XCursor cursor = SystemCursor.load();
 
@@ -323,7 +342,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 		current = 0;
 		images = new int[chunks.size()];
-		for (int i = 0;i<images.length;i++){
+		for (int i = 0; i < images.length; i++) {
 			XCursor.ImageChunk c = chunks.get(i);
 			int id = TextureUtil.genTextures();
 			images[i] = id;
@@ -344,10 +363,14 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 		private static final SystemCursor INSTANCE = new SystemCursor();
 
+		/*
+		 * Loads the cursor file and parse it
+		 */
 		public static XCursor load() {
 
 			try {
 				byte[] c = IOUtils.toByteArray(INSTANCE.getArrowCursor());
+
 
 				ByteBuffer buf = ByteBuffer.wrap(c);
 
@@ -359,8 +382,8 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 		}
 
-		public InputStream getArrowCursor() throws IOException {
-			Path theme = XDGPathResolver.getIconTheme("cursors/left_ptr");
+		private InputStream getArrowCursor() throws IOException {
+			Path theme = XDGPathResolver.getIconTheme("cursors/left_ptr"); // load the arrow pointer cursor from the selected theme
 			if (theme != null) {
 				LOGGER.info("Loading system cursor: " + theme);
 				return Files.newInputStream(theme);
@@ -387,6 +410,12 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		private final TableOfContents[] toC;
 		private final Chunk[] chunks;
 
+		/**
+		 * Parse a cursor icon file
+		 *
+		 * @param buf the data of the file
+		 * @return a parsed cursor object
+		 */
 		public static XCursor parse(ByteBuffer buf) {
 
 			String magic = getString(buf, 4);
@@ -402,6 +431,12 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			Chunk[] chunks = new Chunk[(int) ntoc];
 
 			for (int i = 0; i < ntoc; i++) {
+				/*
+				 * Procedure:
+				 *  - read a table of contents
+				 *  - read the corresponding chunk from the file without modifying the buffer's indices
+				 *  - repeat until all tables are read
+				 */
 				TableOfContents table = new TableOfContents(getInt(buf), getInt(buf), getInt(buf));
 				toc[i] = table;
 				chunks[i] = parseChunk(buf, table);
@@ -410,6 +445,9 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			return new XCursor(magic, headerLength, version, ntoc, toc, chunks);
 		}
 
+		/*
+		 * read a chunk from a corresponding table
+		 */
 		private static Chunk parseChunk(ByteBuffer buf, TableOfContents table) {
 			switch ((int) table.type) {
 				case 0xfffe0001: // Comment
@@ -421,6 +459,9 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			}
 		}
 
+		/*
+		 * parse an image chunk
+		 */
 		private static Chunk parseImage(ByteBuffer buf, TableOfContents table) {
 
 			Index offset = Index.of((int) table.position);
@@ -470,6 +511,9 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			return new ImageChunk(size, type, subtype, version, width, height, xhot, yhot, delay, pixels);
 		}
 
+		/*
+		 * parse a comment chunk
+		 */
 		private static Chunk parseComment(ByteBuffer buf, TableOfContents table) {
 			Index offset = Index.of((int) table.position);
 
@@ -534,16 +578,36 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			return new String(data, StandardCharsets.UTF_8);
 		}
 
+		/*
+		 * export the cursor files
+		 */
 		public void export() {
 
 			Path dir = Paths.get("cursors");
 			try {
-				Files.deleteIfExists(dir);
+				Files.walkFileTree(dir,
+						new SimpleFileVisitor<Path>() {
+							@Override
+							public FileVisitResult postVisitDirectory(
+									Path dir, IOException exc) throws IOException {
+								Files.delete(dir);
+								return FileVisitResult.CONTINUE;
+							}
+
+							@Override
+							public FileVisitResult visitFile(
+									Path file, BasicFileAttributes attrs)
+									throws IOException {
+								Files.delete(file);
+								return FileVisitResult.CONTINUE;
+							}
+						});
 				Files.createDirectory(dir);
 			} catch (IOException e) {
 				LOGGER.warn("Failed to create clean export directory, export will likely fail!", e);
 			}
 
+			LOGGER.info("Exporting chunks..");
 			for (Chunk c : chunks) {
 				c.export();
 			}
@@ -671,18 +735,33 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				lines.add("[Delay]");
 				lines.add("" + delay);
 
-				String cursor = (getSubtype() + " " + xhot + " " + yhot + " " + getSubtype() + "x" + getSubtype() + ".png");
 
 				String imageName = getSubtype() + "x" + getSubtype();
+				String name = imageName;
+				if (delay != 0) {
+
+					int i = 0;
+					name = imageName + "_" + i;
+					while (new File(name + ".png").exists()) {
+						name = imageName + "_" + i;
+						i++;
+					}
+
+
+				}
+
+				String cursor = (getSubtype() + " " + xhot + " " + yhot + " " + name + ".png");
 				if (delay != 0) {
 					cursor += " " + delay;
-					imageName += "_" + delay;
+					if (Files.exists(Paths.get(getSubtype() + "x" + getSubtype() + ".cursor"))) {
+						cursor = "\n" + cursor;
+					}
 				}
 
 				try {
-					ImageIO.write(im, "png", new File("cursors", imageName + ".png"));
+					ImageIO.write(im, "png", new File("cursors", name + ".png"));
 					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".txt"), lines, StandardOpenOption.CREATE);
-					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".cursor"), cursor.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+					Files.write(Paths.get("cursors", getSubtype() + "x" + getSubtype() + ".cursor"), cursor.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 				} catch (IOException e) {
 					LOGGER.warn("Image export failed!", e);
 				}

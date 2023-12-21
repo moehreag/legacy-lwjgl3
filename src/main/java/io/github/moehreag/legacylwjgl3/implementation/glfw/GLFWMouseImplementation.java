@@ -1,6 +1,6 @@
-package com.github.zarzelcow.legacylwjgl3.implementation.glfw;
+package io.github.moehreag.legacylwjgl3.implementation.glfw;
 
-import com.github.zarzelcow.legacylwjgl3.implementation.input.MouseImplementation;
+import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
 import org.lwjgl.glfw.*;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;

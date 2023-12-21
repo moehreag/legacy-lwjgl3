@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3;
+package io.github.moehreag.legacylwjgl3;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import com.github.zarzelcow.legacylwjgl3.util.XDGPathResolver;
+import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.math.MathHelper;
 import org.apache.commons.io.IOUtils;

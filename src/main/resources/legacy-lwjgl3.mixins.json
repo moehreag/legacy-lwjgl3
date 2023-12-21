@@ -1,8 +1,8 @@
 {
 	"required": true,
 	"minVersion": "0.8",
-	"package": "com.github.zarzelcow.legacylwjgl3.mixin",
-	"plugin": "com.github.zarzelcow.legacylwjgl3.EarlyRiserLoader",
+	"package": "io.github.moehreag.legacylwjgl3.mixin",
+	"plugin": "io.github.moehreag.legacylwjgl3.EarlyRiserLoader",
 	"compatibilityLevel": "JAVA_8",
 	"client": [
 		"MixinMinecraftDrawVirtualCursor",

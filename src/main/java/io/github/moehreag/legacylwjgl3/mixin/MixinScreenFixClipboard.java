@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3.mixin;
+package io.github.moehreag.legacylwjgl3.mixin;
 
 import net.minecraft.client.gui.screen.Screen;
 import org.lwjgl.glfw.GLFW;

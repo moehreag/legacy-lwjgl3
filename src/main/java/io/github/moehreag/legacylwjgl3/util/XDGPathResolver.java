@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3.util;
+package io.github.moehreag.legacylwjgl3.util;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3.mixin;
+package io.github.moehreag.legacylwjgl3.mixin;
 
 import com.mojang.blaze3d.platform.GLX;
 import net.minecraft.client.ClientBrandRetriever;

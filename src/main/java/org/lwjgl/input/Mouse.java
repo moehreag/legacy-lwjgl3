@@ -33,16 +33,15 @@ package org.lwjgl.input;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
-import java.nio.IntBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
-import com.github.zarzelcow.legacylwjgl3.implementation.LWJGLImplementationUtils;
+import io.github.moehreag.legacylwjgl3.implementation.LWJGLImplementationUtils;
 import org.lwjgl.opengl.Display;
-import com.github.zarzelcow.legacylwjgl3.implementation.input.InputImplementation;
+import io.github.moehreag.legacylwjgl3.implementation.input.InputImplementation;
 
 
 /**

@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3;
+package io.github.moehreag.legacylwjgl3;
 
 import java.io.IOException;
 import java.util.List;
@@ -119,7 +119,7 @@ public class EarlyRiser implements Runnable {
 	 * It copies all the methods and fields from the extension class to the real class
 	 */
 	private void copyAlExtensions(ClassPool classPool) throws NotFoundException, CannotCompileException, IOException {
-		CtClass extension = classPool.get("com.github.zarzelcow.legacylwjgl3.ALExtensions");
+		CtClass extension = classPool.get("io.github.moehreag.legacylwjgl3.ALExtensions");
 		CtClass target = classPool.get("org.lwjgl.openal.AL");
 		// this code is hacky, but it replaces the stub method with the real one
 		target.getMethod("destroy", "()V")
