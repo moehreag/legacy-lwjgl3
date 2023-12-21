@@ -21,7 +21,10 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.Tessellator;
 import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
-import lombok.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
@@ -449,63 +452,67 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		 * read a chunk from a corresponding table
 		 */
 		private static Chunk parseChunk(ByteBuffer buf, TableOfContents table) {
+			int pos = buf.position();
+			buf.position((int) table.position);
+			Chunk c;
 			switch ((int) table.type) {
 				case 0xfffe0001: // Comment
-					return parseComment(buf, table);
+					c = parseComment(buf, table);
+					break;
 				case 0xfffd0002: // Image
-					return parseImage(buf, table);
+					c = parseImage(buf, table);
+					break;
 				default:
 					throw new IllegalArgumentException("Unrecognized type: " + table.type);
 			}
+			buf.position(pos);
+			return c;
 		}
 
 		/*
 		 * parse an image chunk
 		 */
 		private static Chunk parseImage(ByteBuffer buf, TableOfContents table) {
-
-			Index offset = Index.of((int) table.position);
-
-			long size = getInt(buf, offset);
+			long size = getInt(buf);
 			if (size != 36) {
 				throw new IllegalArgumentException("not an image chunk! size != 36: " + size);
 			}
 
-			long type = getInt(buf, offset);
+			long type = getInt(buf);
 			if (type != 0xfffd0002L || type != table.type) {
 				throw new IllegalArgumentException("not an image chunk! type != image: " + type);
 			}
 
-			long subtype = getInt(buf, offset);
+			long subtype = getInt(buf);
 			if (subtype != table.subtype) {
 				throw new IllegalArgumentException("not an image chunk! subtype != table.subtype: " + subtype);
 			}
-			long version = getInt(buf, offset);
+			long version = getInt(buf);
 
-			long width = getInt(buf, offset);
+			long width = getInt(buf);
 
 			if (width > 0x7ff) {
 				throw new IllegalArgumentException("image too large! width > 0x7ff: " + width);
 			}
 
-			long height = getInt(buf, offset);
+			long height = getInt(buf);
 			if (height > 0x7ff) {
 				throw new IllegalArgumentException("image too large! height > 0x7ff: " + height);
 			}
-			long xhot = getInt(buf, offset);
+			long xhot = getInt(buf);
 			if (xhot > width) {
 				throw new IllegalArgumentException("xhot outside image!: " + xhot);
 			}
-			long yhot = getInt(buf, offset);
+			long yhot = getInt(buf);
 			if (yhot > height) {
 				throw new IllegalArgumentException("yhot outside image!: " + yhot);
 			}
-			long delay = getInt(buf, offset);
+			long delay = getInt(buf);
 
 			long[] pixels = new long[(int) (width * height)];
 
 			for (int i = 0; i < pixels.length; i++) {
-				pixels[i] = getInt(buf, offset);
+				pixels[i] = getInt(buf);
 			}
 
 			return new ImageChunk(size, type, subtype, version, width, height, xhot, yhot, delay, pixels);
@@ -515,43 +522,24 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		 * parse a comment chunk
 		 */
 		private static Chunk parseComment(ByteBuffer buf, TableOfContents table) {
-			Index offset = Index.of((int) table.position);
-
-			long size = getInt(buf, offset);
+			long size = getInt(buf);
 			if (size != 20) {
 				throw new IllegalArgumentException("not a comment chunk! size != 20: " + size);
 			}
 
-			long type = getInt(buf, offset);
+			long type = getInt(buf);
 			if (type != 0xfffe0001L || type != table.type) {
 				throw new IllegalArgumentException("not a comment chunk! type != comment: " + type);
 			}
 
-			long subtype = getInt(buf, offset);
+			long subtype = getInt(buf);
 			if (subtype != table.subtype) {
 				throw new IllegalArgumentException("not a comment chunk! subtype != table.subtype: " + subtype);
 			}
-			long version = getInt(buf, offset);
-			long commentLength = getInt(buf, offset);
+			long version = getInt(buf);
+			long commentLength = getInt(buf);
 			String comment = getString(buf, (int) commentLength);
 			return new CommentChunk(size, type, subtype, version, commentLength, comment);
-		}
-
-		private static long getInt(ByteBuffer buf, Index index) {
-			return readUnsignedInteger(buf, index).longValue();
-		}
-
-		private static BigInteger readUnsignedInteger(ByteBuffer buffer, Index index) {
-			return new BigInteger(1, readBytes(buffer, index));
-		}
-
-		private static byte[] readBytes(ByteBuffer buffer, Index index) {
-			byte[] bytes = new byte[4];
-			for (int i = 0; i < 4; i++) {
-				bytes[4 - 1 - i] = buffer.get(index.getIndex());
-				index.increment();
-			}
-			return bytes;
 		}
 
 		private static long getInt(ByteBuffer buf) {
@@ -766,20 +754,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				} catch (IOException e) {
 					LOGGER.warn("Image export failed!", e);
 				}
-			}
-		}
-
-		@Getter
-		@AllArgsConstructor(access = AccessLevel.PRIVATE)
-		private static class Index {
-			private int index;
-
-			public static Index of(int index) {
-				return new Index(index);
-			}
-
-			public void increment() {
-				index++;
 			}
 		}
 	}
