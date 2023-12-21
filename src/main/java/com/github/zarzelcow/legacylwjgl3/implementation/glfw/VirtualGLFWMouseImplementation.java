@@ -60,7 +60,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	private double last_y;
 	private double accum_dx, accum_dy, accum_dz;
 	private double virt_offset_x, virt_offset_y;
-	private XCursor cursor;
+	private final List<XCursor.ImageChunk> chunks = new ArrayList<>();
 	private int current;
 	private int[] images = new int[]{-1};
 	private long animationTime;
@@ -289,42 +289,46 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	}
 
 	private void advanceAnimation() {
-		if (animationTime == 0 || System.currentTimeMillis() - animationTime > getCurrent().delay) {
-			animationTime = System.currentTimeMillis();
-			current++;
-			if (current >= images.length) {
-				current = 0;
+		if (images.length > 1) {
+			if (animationTime == 0 || System.currentTimeMillis() - animationTime > getCurrent().delay) {
+				animationTime = System.currentTimeMillis();
+				current++;
+				if (current >= images.length) {
+					current = 0;
+				}
 			}
 		}
 	}
 
 	private XCursor.ImageChunk getCurrent() {
-		return (XCursor.ImageChunk) cursor.chunks[current];
+		return chunks.get(current);
 	}
 
 	private void loadCursor() {
-		cursor = SystemCursor.load();
+		XCursor cursor = SystemCursor.load();
 
 		if (Boolean.getBoolean("virtual_mouse.export")) {
 			cursor.export();
 		}
 
-		List<Integer> glIds = new ArrayList<>();
+		chunks.clear();
 		for (XCursor.Chunk chunk : cursor.chunks) {
 			if (chunk instanceof XCursor.ImageChunk) {
 				XCursor.ImageChunk c = (XCursor.ImageChunk) chunk;
 				if (c.getSubtype() == XDGPathResolver.getCursorSize()) {
-					int id = TextureUtil.genTextures();
-					glIds.add(id);
-					TextureUtil.prepare(id, (int) c.width, (int) c.height);
-					TextureUtil.uploadTexture(id, c.getImage(), (int) c.width, (int) c.height);
+					chunks.add(c);
 				}
 			}
 		}
+
 		current = 0;
-		images = new int[glIds.size()];
-		for (int i = 0; i < images.length; i++) {
-			images[i] = glIds.get(i);
+		images = new int[chunks.size()];
+		for (int i = 0;i<images.length;i++){
+			XCursor.ImageChunk c = chunks.get(i);
+			int id = TextureUtil.genTextures();
+			images[i] = id;
+			TextureUtil.prepare(id, (int) c.width, (int) c.height);
+			TextureUtil.uploadTexture(id, c.getImage(), (int) c.width, (int) c.height);
 		}
 	}
 
