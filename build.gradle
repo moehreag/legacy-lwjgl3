@@ -182,7 +182,7 @@ modrinth {
     gameVersions = fetchGameVersions()
     loaders = ["fabric", "quilt"]
     dependencies {
-        required.project "osl"
+        optional.project "osl"
     }
 }
 
