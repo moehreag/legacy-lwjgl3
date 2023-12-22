@@ -1,16 +1,22 @@
+import groovy.json.JsonSlurper
 import net.fabricmc.loom.task.RemapJarTask
+import net.ornithemc.ploceus.Constants
+import net.ornithemc.ploceus.GameSide
+import net.ornithemc.ploceus.OslVersionCache;
 
 plugins {
     id 'fabric-loom' version "1.4.+"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'io.freefair.lombok' version "8.1.0"
     id 'maven-publish'
-    id 'ploceus' version "1.4.+"
+    id 'ploceus' version "1.4.7"
+    id 'com.modrinth.minotaur' version "2.+"
 }
 
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 
-archivesBaseName = project.archives_base_name
+base.archivesName = project.archives_base_name
 version = project.mod_version
 group = project.maven_group
 
@@ -21,6 +27,14 @@ repositories {
     }
     maven { url "https://jitpack.io" }
     mavenCentral()
+}
+
+loom {
+    mods {
+        "legacy-lwjgl3" {
+            sourceSet("main")
+        }
+    }
 }
 
 project.ext.lwjglVersion = "3.3.2"
@@ -43,6 +57,12 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-openal::natives-$platform"
         runtimeOnly "org.lwjgl:lwjgl-opengl::natives-$platform"
     }
+
+    ploceus.addCommonLibraries()
+    //modRuntimeOnly("net.ornithemc:osl:$osl_version")
+    dependOsl(osl_version)
+
+
 }
 
 configurations.configureEach {
@@ -123,6 +143,68 @@ publishing {
             authentication {
                 basic(BasicAuthentication)
             }
+        }
+    }
+}
+
+tasks.modrinth.dependsOn publish
+
+static def fetchGameVersions(){
+
+    List<String> versions = new ArrayList<>()
+    InputStream stream = URI.create("https://meta.ornithemc.net/v3/versions/game").toURL().openStream()
+    JsonSlurper slurper = new JsonSlurper()
+    List<Version> json = slurper.parse(stream) as List<Version>
+    json.forEach(ve -> {
+        if (ve.stable) {
+            def v = ve.version
+            String[] parts = v.split("\\.");
+            int minor = Integer.parseInt(parts[1]);
+            if (minor >= 8 && minor < 13) {
+                versions.add(v)
+            }
+        }
+    })
+    return versions
+}
+
+class Version {
+    String version
+    boolean stable
+}
+
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = "lpiIRiAZ"
+    versionType = "release"
+    uploadFile = remapShadowJar
+    additionalFiles = [sourcesJar]
+    gameVersions = fetchGameVersions()
+    loaders = ["fabric", "quilt"]
+    dependencies {
+        required.project "osl"
+    }
+}
+
+// This exists to have OSL in a runtimeOnly configuration
+def dependOsl(String version) throws Exception {
+    def oslVersions = project.ext.properties['oslVersions']
+    if (oslVersions == null){
+        oslVersions = project.ext.oslVersions = new OslVersionCache(project, ploceus)
+    }
+    for (Map.Entry<String, String> entry : oslVersions.getDependencies(version).entrySet()) {
+        String module = entry.getKey();
+        String baseVersion = entry.getValue();
+        String moduleVersion = oslVersions.getVersion(module, baseVersion, GameSide.MERGED);
+
+        // not all modules cover all Minecraft versions
+        // so check if a valid module version exists for
+        // this Minecraft version before adding the dependency
+        if (moduleVersion != null) {
+            project.getDependencies().add("modRuntimeOnly", String.format("%s:%s:%s",
+                    Constants.OSL_MAVEN_GROUP,
+                    module,
+                    moduleVersion));
         }
     }
 }

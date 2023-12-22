@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import com.github.zarzelcow.legacylwjgl3.DesktopFileInjector;
+import io.github.moehreag.legacylwjgl3.DesktopFileInjector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.LWJGLException;

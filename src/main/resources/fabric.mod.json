@@ -18,7 +18,7 @@
   "environment": "client",
   "entrypoints": {
     "main": [
-      "com.github.zarzelcow.legacylwjgl3.LegacyLWJGL3"
+	    "io.github.moehreag.legacylwjgl3.LegacyLWJGL3"
     ]
   },
   "mixins": [

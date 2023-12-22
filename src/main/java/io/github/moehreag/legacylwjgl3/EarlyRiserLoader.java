@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3;
+package io.github.moehreag.legacylwjgl3;
 
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import org.objectweb.asm.tree.ClassNode;

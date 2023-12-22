@@ -1,7 +1,7 @@
-package com.github.zarzelcow.legacylwjgl3.implementation.glfw;
+package io.github.moehreag.legacylwjgl3.implementation.glfw;
 
+import io.github.moehreag.legacylwjgl3.implementation.input.KeyboardImplementation;
 import org.lwjgl.glfw.*;
-import com.github.zarzelcow.legacylwjgl3.implementation.input.KeyboardImplementation;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.EventQueue;

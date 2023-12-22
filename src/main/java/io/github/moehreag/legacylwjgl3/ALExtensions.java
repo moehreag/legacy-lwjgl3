@@ -1,4 +1,4 @@
-package com.github.zarzelcow.legacylwjgl3;
+package io.github.moehreag.legacylwjgl3;
 
 import java.nio.IntBuffer;
 
