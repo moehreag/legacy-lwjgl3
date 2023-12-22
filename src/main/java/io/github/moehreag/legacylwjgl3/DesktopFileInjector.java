@@ -15,7 +15,6 @@ import java.util.Objects;
 
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.util.math.MathHelper;
 import org.apache.commons.io.IOUtils;
 
 public class DesktopFileInjector {
@@ -48,7 +47,7 @@ public class DesktopFileInjector {
 				for (int i = 0; i < pixels.length; i++) {
 					pixels[i] = Integer.rotateRight(buf.getInt(), 8);
 				}
-				int size = (int) MathHelper.sqrt(pixels.length);
+				int size = (int) Math.sqrt(pixels.length);
 				BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 				image.setRGB(0, 0, size, size, pixels, 0, size);
 				Path target = getIconFileLocation(image.getWidth(), image.getHeight());
