@@ -1,15 +1,13 @@
 import groovy.json.JsonSlurper
 import net.fabricmc.loom.task.RemapJarTask
-import net.ornithemc.ploceus.Constants
 import net.ornithemc.ploceus.GameSide
-import net.ornithemc.ploceus.OslVersionCache;
 
 plugins {
     id 'fabric-loom' version "1.4.+"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'io.freefair.lombok' version "8.1.0"
     id 'maven-publish'
-    id 'ploceus' version "1.4.7"
+    id 'ploceus' version "1.4.8"
     id 'com.modrinth.minotaur' version "2.+"
 }
 
@@ -59,8 +57,7 @@ dependencies {
     }
 
     ploceus.addCommonLibraries()
-    //modRuntimeOnly("net.ornithemc:osl:$osl_version")
-    dependOsl(osl_version)
+    ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.MERGED)
 
 
 }
@@ -183,28 +180,5 @@ modrinth {
     loaders = ["fabric", "quilt"]
     dependencies {
         optional.project "osl"
-    }
-}
-
-// This exists to have OSL in a runtimeOnly configuration
-def dependOsl(String version) throws Exception {
-    def oslVersions = project.ext.properties['oslVersions']
-    if (oslVersions == null){
-        oslVersions = project.ext.oslVersions = new OslVersionCache(project, ploceus)
-    }
-    for (Map.Entry<String, String> entry : oslVersions.getDependencies(version).entrySet()) {
-        String module = entry.getKey();
-        String baseVersion = entry.getValue();
-        String moduleVersion = oslVersions.getVersion(module, baseVersion, GameSide.MERGED);
-
-        // not all modules cover all Minecraft versions
-        // so check if a valid module version exists for
-        // this Minecraft version before adding the dependency
-        if (moduleVersion != null) {
-            project.getDependencies().add("modRuntimeOnly", String.format("%s:%s:%s",
-                    Constants.OSL_MAVEN_GROUP,
-                    module,
-                    moduleVersion));
-        }
     }
 }
