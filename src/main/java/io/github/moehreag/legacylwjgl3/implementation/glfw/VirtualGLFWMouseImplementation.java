@@ -457,7 +457,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			Chunk c;
 			switch ((int) table.type) {
 				case 0xfffe0001: // Comment
-					c = parseComment(buf, table);
+					c = parseComment(buf, table); // I have yet to find a single cursor file that uses these, not even `xcursorgen` supports them.
 					break;
 				case 0xfffd0002: // Image
 					c = parseImage(buf, table);

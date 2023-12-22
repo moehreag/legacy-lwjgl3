@@ -12,7 +12,7 @@ import org.lwjgl.openal.ALCapabilities;
 import org.lwjgl.opengl.GL;
 
 /**
- * Uses gross hacks to "redefine" classes that i couldnt find a way to edit with mixins.
+ * Uses gross hacks to "redefine" classes that I couldn't find a way to edit with mixins.
  * <p>
  * Uses javassist to edit the classes e.x adding fields and methods for compatibility with legacy LWJGL2 code.
  *
