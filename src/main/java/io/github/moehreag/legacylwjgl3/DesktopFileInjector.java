@@ -35,7 +35,7 @@ public class DesktopFileInjector {
 			injectFile(location, String.format(IOUtils.toString(Objects.requireNonNull(stream)),
 					version, ICON_NAME.substring(0, ICON_NAME.lastIndexOf("."))).getBytes(StandardCharsets.UTF_8));
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			LegacyLWJGL3.LOGGER.error("Failed to inject icon: ", e);
 		}
 
 	}
@@ -65,13 +65,11 @@ public class DesktopFileInjector {
 
 	private static void injectFile(Path target, byte[] data) {
 		try {
-			if (!Files.exists(target)) {
-				Files.createFile(target);
-			}
+			Files.createDirectories(target.getParent());
 			Files.write(target, data);
 			injectedLocations.add(target);
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			LegacyLWJGL3.LOGGER.error("Failed to inject file: ", e);
 		}
 	}
 
