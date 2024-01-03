@@ -94,6 +94,9 @@ public class XDGPathResolver {
 				return theme;
 			}
 		}
+		if ("default".equals(name)){
+			return Paths.get("usr", "share", "icons", "default");
+		}
 		return getThemePath("default");
 	}
 
