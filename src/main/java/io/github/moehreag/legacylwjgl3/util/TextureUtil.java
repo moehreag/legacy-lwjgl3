@@ -1,4 +1,4 @@
-package com.mojang.blaze3d.platform;
+package io.github.moehreag.legacylwjgl3.util;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.IntBuffer;
 
+import com.mojang.blaze3d.platform.MemoryTracker;
 import io.github.moehreag.legacylwjgl3.mixin.MinecraftAccessor;
+import io.github.moehreag.legacylwjgl3.util.GlStateManager;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

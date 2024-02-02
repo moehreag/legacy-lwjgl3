@@ -14,8 +14,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.platform.TextureUtil;
+import io.github.moehreag.legacylwjgl3.util.GlStateManager;
+import io.github.moehreag.legacylwjgl3.util.TextureUtil;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
