@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableList;
 import javassist.*;
 import javassist.util.proxy.DefineClassHelper;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
-import org.apache.commons.lang3.tuple.Triple;
+import io.github.moehreag.legacylwjgl3.util.Triple;
 import org.lwjgl.openal.ALCapabilities;
 import org.lwjgl.opengl.GL;
 
@@ -43,6 +43,9 @@ public class EarlyRiser implements Runnable {
 			Triple.of("glGetObjectParameterARB", "glGetObjectParameterivARB", "(IILjava/nio/IntBuffer;)V"),
 			Triple.of("glUniformMatrix4ARB", "glUniformMatrix4fvARB", "(IZLjava/nio/FloatBuffer;)V")
 	);
+	private final List<Triple<String, String, String>> arbOcclusionQueryTranslations = ImmutableList.of(
+		Triple.of("glGetQueryObjectuARB", "glGetQueryObjectuivARB", "(IILjava/nio/IntBuffer;)V")
+	);
 
 	@Override
 	public void run() {
@@ -51,9 +54,10 @@ public class EarlyRiser implements Runnable {
 		pool.appendClassPath(new LoaderClassPath(FabricLauncherBase.getLauncher().getTargetClassLoader())); // knot class loader contains the fat jar with lwjgl 3 bundled
 
 		macroRedefineWithErrorHandling(pool, this::addMissingGLCapabilities);
-		macroTranslateMethodNames(pool, "org.lwjgl.opengl.GL11", GL.class, gl11Translations);
+		macroRedefineWithErrorHandling(pool, this::addLegacyCompatibilityMethodsToGL11);
 		macroRedefineWithErrorHandling(pool, this::addLegacyCompatibilityMethodsToGL20);
 		macroTranslateMethodNames(pool, "org.lwjgl.opengl.ARBShaderObjects", GL.class, arbShaderObjectsTranslations);
+		macroTranslateMethodNames(pool, "org.lwjgl.opengl.ARBOcclusionQuery", GL.class, arbOcclusionQueryTranslations);
 		macroRedefineWithErrorHandling(pool, this::copyAlExtensions);
 		macroTranslateMethodNames(pool, "org.lwjgl.openal.AL10", ALCapabilities.class, al10Translations);
 	}
@@ -115,6 +119,33 @@ public class EarlyRiser implements Runnable {
 		macroTranslateMethodNames(classPool, "org.lwjgl.opengl.GL20", GL.class, gl20Translations);
 	}
 
+	private void addLegacyCompatibilityMethodsToGL11(ClassPool pool) throws Exception {
+		CtClass cc = pool.get("org.lwjgl.opengl.GL11");
+		String[] methods = new String[]{
+			"public static void glTexCoordPointer(int i, int stride, java.nio.FloatBuffer pointer){" +
+				"glTexCoordPointer(i, 0x1406, stride, pointer);"+ // 0x1404 = INT
+				"}",
+			"public static void glTexCoordPointer(int i, int stride, java.nio.ShortBuffer pointer){" +
+				"glTexCoordPointer(i, 0x1402, stride, pointer);"+ // 0x1402 = SHORT
+				"}",
+			"public static void glColorPointer(int i, boolean bl, int i2, java.nio.ByteBuffer pointer){" +
+				"glColorPointer(i, 0x1401, i2, pointer);"+
+				"}",
+			"public static void glVertexPointer(int i, int i2, java.nio.FloatBuffer pointer){" +
+				"glVertexPointer(i, 0x1406, i2, pointer);" +
+				"}",
+			"public static void glNormalPointer(int stride, java.nio.ByteBuffer pointer){" +
+				"glNormalPointer(0x1400, stride, pointer);" +
+				"}"
+		};
+
+		for (String method : methods){
+			cc.addMethod(CtNewMethod.make(method, cc));
+		}
+
+		macroTranslateMethodNames(pool, "org.lwjgl.opengl.GL11", GL.class, gl11Translations);
+	}
+
 	/**
 	 * It copies all the methods and fields from the extension class to the real class
 	 */
@@ -147,7 +178,7 @@ public class EarlyRiser implements Runnable {
 		defineCtClass(target, ALCapabilities.class, classPool.getClassLoader());
 	}
 
-	private void addMethodTranslations(ClassPool classPool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames)throws NotFoundException, CannotCompileException, IOException{
+	private void addMethodTranslations(ClassPool classPool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames) throws NotFoundException, CannotCompileException, IOException{
 		CtClass cc = classPool.get(clazz);
 		for (Triple<String, String, String> t : methodNames) {
 			CtMethod original = cc.getMethod(t.getMiddle(), t.getRight());

@@ -101,10 +101,10 @@ public final class Display {
 		return Arrays.stream(availableDisplayModes).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
 	}
 
-	
+
 	public static int setIcon(@NotNull ByteBuffer[] icons) {
 
-		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND){
+		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
 			// Wayland does not have a standardised way of setting window icons, see
 			// https://www.glfw.org/docs/latest/group__window.html#gadd7ccd39fe7a7d1f0904666ae5932dc5
 			// for more information.
@@ -156,6 +156,14 @@ public final class Display {
 		GLFW.glfwSwapBuffers(handle);
 	}
 
+	public static void create() {
+		try {
+			create(new PixelFormat());
+		} catch (LWJGLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
 		// Setup an error callback. The default implementation
 		GLFWErrorCallback.createPrint(System.err).set();
@@ -168,7 +176,7 @@ public final class Display {
 			// Configure GLFW
 			GLFW.glfwDefaultWindowHints();
 
-			if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND){
+			if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
 				GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_FALSE); // disable an unsupported function on wayland
 				DesktopFileInjector.inject();
 				GLFW.glfwWindowHintString(GLFW.GLFW_WAYLAND_APP_ID, DesktopFileInjector.APP_ID);
@@ -258,7 +266,7 @@ public final class Display {
 		Keyboard.destroy();
 		// Destroy the window
 		GLFW.glfwDestroyWindow(handle);
-		
+
 		GLFW.glfwTerminate();
 		GLFWErrorCallback callback = GLFW.glfwSetErrorCallback(null);
 		if (callback != null) {
@@ -289,12 +297,12 @@ public final class Display {
 		Sync.sync(fps);
 	}
 
-	
+
 	public static void setVSyncEnabled(boolean enabled) {
 		GLFW.glfwSwapInterval(enabled ? 1 : 0);
 	}
 
-	
+
 	public static boolean wasResized() {
 		return window_resized;
 	}
@@ -309,5 +317,9 @@ public final class Display {
 			Display.width = width;
 			Display.height = height;
 		}
+	}
+
+	public static void swapBuffers(){
+		GLFW.glfwSwapBuffers(handle);
 	}
 }

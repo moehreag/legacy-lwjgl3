@@ -278,7 +278,7 @@ public class Mouse {
 //            setNativeCursor(currentCursor);
         readBuffer = ByteBuffer.allocate(EVENT_SIZE * BUFFER_SIZE);
         readBuffer.limit(0);
-        setGrabbed(isGrabbed);
+        //setGrabbed(isGrabbed);
     }
 
     /**

@@ -1,23 +1,11 @@
 package io.github.moehreag.legacylwjgl3.mixin;
 
-import com.mojang.blaze3d.platform.GLX;
-import net.minecraft.client.ClientBrandRetriever;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.options.GameOptions;
-import net.minecraft.client.resource.language.LanguageManager;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.crash.CrashReport;
-import net.minecraft.util.profiler.Profiler;
-import org.lwjgl.Sys;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GL11;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(Minecraft.class)
 public class MixinMinecraftFixEarlyCrashNoReports {
+	/*
     // @formatter:off
     @Shadow @Final private String gameVersion;
     @Shadow public GameOptions options;
@@ -30,7 +18,7 @@ public class MixinMinecraftFixEarlyCrashNoReports {
      *
      * @reason Fix early crashes (before an opengl context is created) causing crash reports not being generated
      * @author mojang
-     */
+     *
     @Overwrite
     public CrashReport populateCrashReport(CrashReport crashReport) {
         crashReport.getSystemDetails().add("Launched Version", () -> MixinMinecraftFixEarlyCrashNoReports.this.gameVersion);
@@ -77,5 +65,5 @@ public class MixinMinecraftFixEarlyCrashNoReports {
         }
 
         return crashReport;
-    }
+    }*/
 }
