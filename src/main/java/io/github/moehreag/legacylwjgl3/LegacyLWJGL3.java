@@ -15,15 +15,6 @@ public class LegacyLWJGL3 implements ClientModInitializer {
 	}
 
 	public static Minecraft getMinecraft() {
-		/*try {
-			Field mc = Minecraft.class.getField(FabricLoader.getInstance().getMappingResolver().mapFieldName("intermediary",
-				"net.minecraft.client.Minecraft",
-				"f_7951283", "Lnet/minecraft/client/Minecraft;"));
-			mc.setAccessible(true);
-			return (Minecraft) mc.get(null);
-		} catch (IllegalAccessException | NoSuchFieldException e) {
-			throw new IllegalStateException(e);
-		}*/
 		return MinecraftAccessor.getInstance();
 	}
 }

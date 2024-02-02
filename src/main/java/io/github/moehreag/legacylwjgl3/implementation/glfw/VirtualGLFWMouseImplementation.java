@@ -35,7 +35,6 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.EventQueue;
-import org.lwjgl.opengl.GL11;
 
 /**
  * @author moehreag
@@ -194,7 +193,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		this.cursorEnterCallback.free();
 		if (images[0] != 0) {
 			for (int i : images) {
-				//GlStateManager.deleteTexture(i); // TODO
+				GlStateManager.deleteTexture(i);
 			}
 			images = new int[]{-1};
 		}
@@ -278,6 +277,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			GlStateManager.enableTexture();
 			GlStateManager.enableAlphaTest();
 			GlStateManager.enableBlend();
+			GlStateManager.disableLighting();
 			GlStateManager.color3f(1, 1, 1);
 			GlStateManager.bindTexture(images[current]);
 

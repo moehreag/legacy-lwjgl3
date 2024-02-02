@@ -17,7 +17,7 @@
   "icon": "assets/legacy-lwjgl3/icon.png",
   "environment": "client",
   "entrypoints": {
-    "main": [
+    "client": [
 	    "io.github.moehreag.legacylwjgl3.LegacyLWJGL3"
     ]
   },

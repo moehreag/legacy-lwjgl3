@@ -22,9 +22,9 @@ public class MixinScreenFixClipboard {
 	/**
 	 * @author moehreag
 	 * @reason Fix clipboard access with GLFW
-	 */
+	 *
 	@Overwrite
 	public static void setClipboard(String string){
 		GLFW.glfwSetClipboardString(Display.getHandle(), string);
-	}
+	}*/
 }
