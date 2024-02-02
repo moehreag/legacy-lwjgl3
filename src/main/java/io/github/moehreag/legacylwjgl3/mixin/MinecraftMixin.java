@@ -51,6 +51,7 @@ public abstract class MinecraftMixin {
 			String[] address = serverAddress.split(":");
 			minecraft.setServerAddressAndPort(address[0], Integer.parseInt(address[1]));
 		}
+		LegacyLWJGL3.setMinecraft(minecraft);
 		new Thread(minecraft, "Minecraft Main Thread").start();
 	}
 
@@ -92,5 +93,10 @@ public abstract class MinecraftMixin {
 
 			this.onResolutionChanged(this.width, this.height);
 		}
+	}
+
+	@Inject(method = "stop", at = @At("TAIL"))
+	private void stop(CallbackInfo ci){
+		System.exit(0);
 	}
 }

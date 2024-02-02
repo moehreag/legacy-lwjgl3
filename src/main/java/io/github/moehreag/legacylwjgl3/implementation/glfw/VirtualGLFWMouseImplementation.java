@@ -281,7 +281,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			GlStateManager.color3f(1, 1, 1);
 			GlStateManager.bindTexture(images[current]);
 
-			float scale = new Window(LegacyLWJGL3.getMinecraft().options, LegacyLWJGL3.getMinecraft().width, LegacyLWJGL3.getMinecraft().height).scale;
+			float scale = new Window(LegacyLWJGL3.getMinecraft().width, LegacyLWJGL3.getMinecraft().height).scale;
 			double x = getX();
 			double y = getY();
 			drawTexture((x - getCurrent().xhot) / scale, (Display.getHeight() - y - getCurrent().yhot) / scale, getCurrent().width / scale, getCurrent().height / scale, getCurrent().width / scale, getCurrent().height / scale);

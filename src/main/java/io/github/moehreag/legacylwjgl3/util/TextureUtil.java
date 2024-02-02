@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.nio.IntBuffer;
 
 import com.mojang.blaze3d.platform.MemoryTracker;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.mixin.MinecraftAccessor;
 import io.github.moehreag.legacylwjgl3.util.GlStateManager;
 import org.apache.commons.io.IOUtils;
@@ -144,7 +145,7 @@ public class TextureUtil {
 
 	private static void putInBufferAt(int[] is, int i, int j) {
 		int[] js = is;
-		if (MinecraftAccessor.getInstance().options.anaglyph) {
+		if (LegacyLWJGL3.getMinecraft().options.anaglyph) {
 			js = getAnaglyphColors(is);
 		}
 

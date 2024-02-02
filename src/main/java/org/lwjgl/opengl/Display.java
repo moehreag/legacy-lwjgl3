@@ -322,4 +322,8 @@ public final class Display {
 	public static void swapBuffers(){
 		GLFW.glfwSwapBuffers(handle);
 	}
+
+	public static void setDisplayConfiguration(float f, float y, float z){
+
+	}
 }

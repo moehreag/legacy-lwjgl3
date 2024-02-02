@@ -62,6 +62,7 @@ public abstract class MinecraftAppletMixin extends Applet {
 		launcher.removeAll();
 		launcher.setSize(0, 0);
 
+		LegacyLWJGL3.setMinecraft(minecraft);
 		Thread thread = new Thread(minecraft, "Minecraft Main Thread");
 		thread.start();
 		try {
