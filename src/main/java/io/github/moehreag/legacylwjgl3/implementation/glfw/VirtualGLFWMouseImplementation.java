@@ -17,21 +17,17 @@ import java.util.List;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.TextureUtil;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tessellator;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.inventory.BookEditScreen;
 import net.minecraft.client.gui.screen.inventory.menu.InventoryMenuScreen;
 import net.minecraft.client.render.Window;
-import net.minecraft.resource.Identifier;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,6 +35,7 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.EventQueue;
+import org.lwjgl.opengl.GL11;
 
 /**
  * @author moehreag
@@ -155,15 +152,15 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	}
 
 	private boolean mayVirtualize() {
-		return Minecraft.getInstance().world != null;
+		return LegacyLWJGL3.getMinecraft().world != null;
 	}
 
 	/*
 	 * whether we are on a screen where the virtual cursor is allowed
 	 */
 	private boolean isValidScreen() {
-		Screen s = Minecraft.getInstance().screen;
-		return s instanceof InventoryMenuScreen || s instanceof ChatScreen || s instanceof BookEditScreen;
+		Screen s = LegacyLWJGL3.getMinecraft().screen;
+		return s instanceof InventoryMenuScreen || s instanceof ChatScreen;
 	}
 
 	private void setup() {
@@ -197,7 +194,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		this.cursorEnterCallback.free();
 		if (images[0] != 0) {
 			for (int i : images) {
-				GlStateManager.deleteTexture(i);
+				//GlStateManager.deleteTexture(i); // TODO
 			}
 			images = new int[]{-1};
 		}
@@ -284,7 +281,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			GlStateManager.color3f(1, 1, 1);
 			GlStateManager.bindTexture(images[current]);
 
-			float scale = new Window(Minecraft.getInstance()).getScale();
+			float scale = new Window(LegacyLWJGL3.getMinecraft().options, LegacyLWJGL3.getMinecraft().width, LegacyLWJGL3.getMinecraft().height).scale;
 			double x = getX();
 			double y = getY();
 			drawTexture((x - getCurrent().xhot) / scale, (Display.getHeight() - y - getCurrent().yhot) / scale, getCurrent().width / scale, getCurrent().height / scale, getCurrent().width / scale, getCurrent().height / scale);
@@ -297,14 +294,13 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		double n = 1.0F / textureWidth;
 		double o = 1.0F / textureHeight;
 		double z = 1000;
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferBuilder = tessellator.getBuilder();
-		bufferBuilder.begin(7, DefaultVertexFormat.POSITION_TEX);
-		bufferBuilder.vertex(x, y + height, z).texture(0, height * o).nextVertex();
-		bufferBuilder.vertex(x + width, y + height, z).texture(width * n, height * o).nextVertex();
-		bufferBuilder.vertex(x + width, y, z).texture(width * n, 0).nextVertex();
-		bufferBuilder.vertex(x, y, z).texture(0, 0).nextVertex();
-		tessellator.end();
+		BufferBuilder bufferBuilder = BufferBuilder.INSTANCE;
+		bufferBuilder.start(7);
+		bufferBuilder.vertex(x, y + height, z, 0, height * o);
+		bufferBuilder.vertex(x + width, y + height, z, width * n, height * o);
+		bufferBuilder.vertex(x + width, y, z, width * n, 0);
+		bufferBuilder.vertex(x, y, z, 0, 0);
+		bufferBuilder.end();
 	}
 
 	private void advanceAnimation() {
@@ -393,12 +389,6 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			}
 
 			LOGGER.info("Falling back to packaged cursor");
-			try {
-				return Minecraft.getInstance().getResourceManager().getResource(new Identifier("virtual_cursor", "default")).asStream();
-			} catch (IOException ignored) {
-
-			}
-
 			return this.getClass().getResourceAsStream("/assets/virtual_cursor/default");
 		}
 	}

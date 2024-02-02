@@ -3,11 +3,11 @@ import net.fabricmc.loom.task.RemapJarTask
 import net.ornithemc.ploceus.GameSide
 
 plugins {
-    id 'fabric-loom' version "1.4.+"
+    id 'fabric-loom' version "1.5-SNAPSHOT"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'io.freefair.lombok' version "8.1.0"
     id 'maven-publish'
-    id 'ploceus' version "1.4.8"
+    id 'ploceus' version "1.5-SNAPSHOT"
     id 'com.modrinth.minotaur' version "2.+"
 }
 
@@ -33,13 +33,24 @@ loom {
             sourceSet("main")
         }
     }
+
+    clientOnlyMinecraftJar()
+}
+
+ploceus {
+    clientOnlyMappings()
 }
 
 project.ext.lwjglVersion = "3.3.2"
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.ornithemc:feather:${project.mappings}"
+    mappings project.loom.layered {
+        mappings "net.ornithemc:feather:${project.rootProject.minecraft_version}-client+build.${project.feather_build}:v2"
+        addLayer project.ploceus.nestedMappings() // remove this line if not using nests
+    }
+    nests "net.ornithemc:nests:${project.rootProject.minecraft_version}-client+build.${project.nests_build}" // remove this line if not using nests
+
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     implementation("org.javassist:javassist:3.29.2-GA")
@@ -57,7 +68,7 @@ dependencies {
     }
 
     ploceus.addCommonLibraries()
-    ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.MERGED)
+    ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.CLIENT)
 
 
 }
