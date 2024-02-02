@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(Minecraft.class)
-public class MixinMinecraftFixEarlyCrashNoReports {
+public abstract class MixinMinecraftFixEarlyCrashNoReports {
 	/*
     // @formatter:off
     @Shadow @Final private String gameVersion;

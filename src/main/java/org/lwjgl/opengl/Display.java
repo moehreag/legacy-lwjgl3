@@ -18,7 +18,7 @@ public final class Display {
 	@NotNull
 	private static String title = "";
 	private static long handle = -1L;
-	private static boolean resizable;
+	private static boolean resizable = true;
 	@NotNull
 	private static DisplayMode displayMode = new DisplayMode(640, 480, 24, 60);
 	private static int width;
