@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Minecraft.class)
-public class MixinMinecraftDrawVirtualCursor {
+public abstract class MixinMinecraftDrawVirtualCursor {
 
 	@Inject(method = "run", at = @At(value = "INVOKE", target = "Ljava/lang/Thread;yield()V", remap = false))
 	private void drawVirtualCursor(CallbackInfo ci) {

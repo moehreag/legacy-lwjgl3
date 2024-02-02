@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.injection.Inject;
 
 @Mixin(Screen.class)
-public class MixinScreenFixClipboard {
+public abstract class MixinScreenFixClipboard {
 
 	/**
 	 * @author moehreag

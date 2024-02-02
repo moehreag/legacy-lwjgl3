@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(Mouse.class)
-public class MouseMixin {
+public abstract class MouseMixin {
 
 	@Redirect(method = "release", at = @At(value = "INVOKE", target = "Ljava/awt/Component;getHeight()I"))
 	private int getHeight(Component instance){
