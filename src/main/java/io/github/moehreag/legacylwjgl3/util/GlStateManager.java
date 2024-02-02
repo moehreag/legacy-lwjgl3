@@ -1,4 +1,4 @@
-package com.mojang.blaze3d.platform;
+package io.github.moehreag.legacylwjgl3.util;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import org.lwjgl.opengl.GL11;
