@@ -160,16 +160,46 @@ tasks.modrinth.dependsOn publish
 static def fetchGameVersions(){
 
     List<String> versions = new ArrayList<>()
-    InputStream stream = URI.create("https://meta.ornithemc.net/v3/versions/game").toURL().openStream()
+    InputStream stream = URI.create("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").toURL().openStream()
     JsonSlurper slurper = new JsonSlurper()
-    List<Version> json = slurper.parse(stream) as List<Version>
+    Map<String, ?> map = slurper.parse(stream) as Map<String, ?>
+    List<Version> json =  map.get("versions") as List<Version>
     json.forEach(ve -> {
-        if (ve.stable) {
-            def v = ve.version
-            String[] parts = v.split("\\.");
-            int minor = Integer.parseInt(parts[1]);
-            if (minor >= 8 && minor < 13) {
+        if (ve.id.startsWith("a1.")){
+            def v = ve.id
+            String[] parts = v.split("\\.")
+            int minor = Integer.parseInt(parts[1])
+            if (minor > 0){
                 versions.add(v)
+                return
+            }
+            int patch = Integer.parseInt(parts[2].split("_")[0].split("-")[0])
+            if (patch >= 16){
+                versions.add(v)
+            }
+        } else if (ve.id.startsWith("b1.")) {
+            def v = ve.id
+            String[] parts = v.split("\\.")
+
+            if (parts[1].contains("-") && parts[1].split("-", 2)[1].contains("t")){
+                return
+            }
+
+            if (parts[1] == "3b"){
+                versions.add(v)
+                return
+            }
+
+            int minor = Integer.parseInt(parts[1].split("_")[0].split("-")[0])
+            if (minor < 7){
+                versions.add(v)
+                return
+            }
+            if (parts.length == 2 && parts[1] == "7"){
+                versions.add(v)
+            }
+            if (parts.length != 3){
+                return
             }
         }
     })
@@ -177,8 +207,7 @@ static def fetchGameVersions(){
 }
 
 class Version {
-    String version
-    boolean stable
+    String id
 }
 
 modrinth {
