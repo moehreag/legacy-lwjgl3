@@ -277,6 +277,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			GlStateManager.enableTexture();
 			GlStateManager.enableAlphaTest();
 			GlStateManager.enableBlend();
+			GlStateManager.disableLighting();
 			GlStateManager.color3f(1, 1, 1);
 			GlStateManager.bindTexture(images[current]);
 
