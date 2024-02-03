@@ -159,26 +159,27 @@ tasks.modrinth.dependsOn publish
 
 static def fetchGameVersions(){
 
-    List<String> versions = new ArrayList<>()
-    InputStream stream = URI.create("https://meta.ornithemc.net/v3/versions/game").toURL().openStream()
+    /*List<String> versions = new ArrayList<>()
+    InputStream stream = URI.create("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").toURL().openStream()
     JsonSlurper slurper = new JsonSlurper()
-    List<Version> json = slurper.parse(stream) as List<Version>
+    Map<String, ?> map = slurper.parse(stream) as Map<String, ?>
+    List<Version> json = map.get("versions") as List<Version>
     json.forEach(ve -> {
-        if (ve.stable) {
-            def v = ve.version
+        if (ve.type == "release") {
+            def v = ve.id
             String[] parts = v.split("\\.");
-            int minor = Integer.parseInt(parts[1]);
-            if (minor >= 8 && minor < 13) {
+            int minor = Integer.parseInt(parts[1]); // TODO fix this mess.
+            if (minor >= 2 && minor < 3) {
                 versions.add(v)
             }
         }
-    })
-    return versions
+    })*/
+    return ["b1.7.3"]
 }
 
 class Version {
-    String version
-    boolean stable
+    String id
+    String type
 }
 
 modrinth {
