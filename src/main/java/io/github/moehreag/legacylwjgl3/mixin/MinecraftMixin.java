@@ -91,6 +91,7 @@ public abstract class MinecraftMixin {
 			}
 
 			this.onResolutionChanged(this.width, this.height);
+			Display.update();
 		}
 	}
 }
