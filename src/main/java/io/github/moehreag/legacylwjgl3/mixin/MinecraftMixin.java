@@ -51,7 +51,8 @@ public abstract class MinecraftMixin {
 			String[] address = serverAddress.split(":");
 			minecraft.setServerAddressAndPort(address[0], Integer.parseInt(address[1]));
 		}
-		new Thread(minecraft, "Minecraft Main Thread").start();
+		Thread.currentThread().setName("Minecraft Main Thread");
+		minecraft.run();
 	}
 
 	@Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;canvas:Ljava/awt/Canvas;"))
