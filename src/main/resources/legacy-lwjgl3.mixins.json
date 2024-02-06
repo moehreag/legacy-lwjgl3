@@ -5,13 +5,14 @@
 	"plugin": "io.github.moehreag.legacylwjgl3.EarlyRiserLoader",
 	"compatibilityLevel": "JAVA_8",
 	"client": [
-    "MinecraftAccessor",
+		"MinecraftAccessor",
+		"MinecraftAppletMixin",
+		"MinecraftMixin",
 		"MixinMinecraftDrawVirtualCursor",
 		"MixinMinecraftFixEarlyCrashNoReports",
 		"MixinScreenFixClipboard",
-    "MinecraftMixin",
-    "MinecraftAppletMixin",
-    "MouseMixin"
+		"MouseMixin",
+		"MixinResourceDownloadThread"
 	],
 	"injectors": {
 		"defaultRequire": 1
