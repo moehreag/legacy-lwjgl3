@@ -7,7 +7,9 @@ import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Session;
 import net.minecraft.client.crash.CrashSummary;
+import net.minecraft.client.options.GameOptions;
 import net.minecraft.client.resource.ResourceDownloadThread;
+import net.minecraft.client.sound.system.SoundEngine;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.Display;
 import org.spongepowered.asm.mixin.Mixin;
@@ -65,12 +67,6 @@ public abstract class MinecraftMixin {
 			canvas.setVisible(false);
 		}
 		canvas = null;
-	}
-
-	// Because the url is dead anyway...
-	@Redirect(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resource/ResourceDownloadThread;start()V"))
-	private void noResourceLoading(ResourceDownloadThread instance){
-
 	}
 
 	@ModifyArg(method = "init", at = @At(value = "INVOKE", target = "Lorg/lwjgl/opengl/Display;setTitle(Ljava/lang/String;)V", remap = false))
