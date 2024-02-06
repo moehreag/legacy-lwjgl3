@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(MinecraftApplet.class)
+@Mixin(value = MinecraftApplet.class, priority = 1100)
 public abstract class MinecraftAppletMixin extends Applet {
 
 	@Shadow
@@ -61,15 +61,10 @@ public abstract class MinecraftAppletMixin extends Applet {
 		setStub(null);
 		launcher.removeAll();
 		launcher.setSize(0, 0);
-
 		LegacyLWJGL3.setMinecraft(minecraft);
-		Thread thread = new Thread(minecraft, "Minecraft Main Thread");
-		thread.start();
-		try {
-			Thread.currentThread().join();
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);
-		}
+		Thread.currentThread().setName("Minecraft Main Thread");
+		minecraft.run();
+		System.exit(0);
 	}
 
 }
