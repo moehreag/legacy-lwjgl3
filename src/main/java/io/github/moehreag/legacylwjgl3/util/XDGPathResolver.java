@@ -13,7 +13,7 @@ import org.apache.commons.io.IOUtils;
 public class XDGPathResolver {
 
 	private static Path getHome(){
-		String home = System.getenv().getOrDefault("$HOME", System.getProperty("user.home"));
+		String home = System.getenv().getOrDefault("HOME", System.getProperty("user.home"));
 		if (home == null || home.isEmpty()) {
 			throw new IllegalStateException("could not resolve user home");
 		}
@@ -21,7 +21,7 @@ public class XDGPathResolver {
 	}
 
 	public static Path getUserDataLocation() {
-		String xdgDataHome = System.getenv("$XDG_DATA_HOME");
+		String xdgDataHome = System.getenv("XDG_DATA_HOME");
 		if (xdgDataHome == null || xdgDataHome.isEmpty()) {
 			return getHome().resolve(".local/share/");
 		}
