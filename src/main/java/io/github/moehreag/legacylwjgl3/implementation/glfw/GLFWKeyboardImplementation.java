@@ -51,6 +51,7 @@ public class GLFWKeyboardImplementation implements KeyboardImplementation {
 
 		if (keycode == -1) {
 			ByteBuffer lastEvent = event_queue.getLastEvent();
+
 			if (lastEvent.getInt(0) > 0 && lastEvent.getInt(5) == 0) {
 				lastEvent.putInt(5, ch);
 				return;
