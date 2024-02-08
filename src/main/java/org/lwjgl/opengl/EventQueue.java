@@ -31,13 +31,12 @@
  */
 package org.lwjgl.opengl;
 
+import java.nio.ByteBuffer;
+
 /**
  * A java implementation of a LWJGL compatible event queue.
  * @author elias_naur
  */
-
-import java.nio.ByteBuffer;
-
 public class EventQueue {
     private static final int QUEUE_SIZE = 200;
 
@@ -79,5 +78,14 @@ public class EventQueue {
             return true;
         } else
             return false;
+    }
+
+    public synchronized ByteBuffer getLastEvent(){
+        int position = queue.position();
+        queue.position(Math.max(position-event_size, 0));
+        ByteBuffer slice = queue.slice();
+        slice.clear();
+        queue.position(position);
+        return slice;
     }
 }
