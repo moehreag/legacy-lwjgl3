@@ -7,7 +7,6 @@ import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MinecraftApplet;
 import net.minecraft.client.Session;
-import net.minecraft.client.crash.CrashSummary;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,8 +19,7 @@ public abstract class MinecraftAppletMixin extends Applet {
 	@Shadow
 	public abstract void destroy();
 
-	@Shadow
-	public abstract void m_7026193();
+	@Shadow public abstract void stopThread();
 
 	@Inject(method = "init", remap = false, at = @At("HEAD"), cancellable = true)
 	private void onAppletInit(CallbackInfo ci){
@@ -34,18 +32,15 @@ public abstract class MinecraftAppletMixin extends Applet {
 			var1 = this.getParameter("fullscreen").equalsIgnoreCase("true");
 		}
 
-		Minecraft minecraft = new Minecraft(null, null, null, 854, 480, var1) {
-			public void printCrashReport(CrashSummary crashSummary) {
+		Minecraft minecraft = new Minecraft(null, null, 854, 480, var1) {
+			public void printCrashReport(net.minecraft.util.crash.CrashReport crashSummary) {
 				CrashReport.report(crashSummary);
 			}
 		};
 
 		if (this.getParameter("username") != null && this.getParameter("sessionid") != null) {
 			minecraft.session = new Session(this.getParameter("username"), this.getParameter("sessionid"));
-			System.out.println("Setting user: " + minecraft.session.username + ", " + minecraft.session.sessionId);
-			if (this.getParameter("mppass") != null) {
-				minecraft.session.password = this.getParameter("mppass");
-			}
+			System.out.println("Setting user: " + minecraft.session.username);
 		} else {
 			minecraft.session = new Session("Player", "");
 		}
@@ -57,7 +52,7 @@ public abstract class MinecraftAppletMixin extends Applet {
 		launcher.setVisible(false);
 		launcher.stop();
 		launcher.destroy();
-		m_7026193();
+		stopThread();
 		setStub(null);
 		launcher.removeAll();
 		launcher.setSize(0, 0);

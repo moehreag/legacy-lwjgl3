@@ -6,7 +6,6 @@ import io.github.moehreag.legacylwjgl3.CrashReport;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Session;
-import net.minecraft.client.crash.CrashSummary;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.Display;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,13 +30,41 @@ public abstract class MinecraftMixin {
 
 	@Shadow protected abstract void onResolutionChanged(int width, int height);
 
-	@Inject(method = "m_6868991", at = @At("HEAD"), cancellable = true)
-	private static void m_6868991(String userName, String sessionId, String serverAddress, CallbackInfo ci) {
+	@Shadow private String serverAddress;
+
+	@Inject(method = "main", at = @At("HEAD"), cancellable = true)
+	private static void m_6868991(String[] args, CallbackInfo ci) {
 		ci.cancel();
+		String userName = "Player" + Minecraft.getTime() % 1000L;
+		if (args.length > 0) {
+			userName = args[0];
+		}
+		String sessionId = "-";
+		if (args.length > 1) {
+			sessionId = args[1];
+		}
+		String server = null;
+		String port = null;
+		for (int i = 2;i<args.length-1;i++){
+			if ("server".equals(args[i])){
+				server = args[i+1];
+			}
+			if ("port".equals(args[i])){
+				port = args[i+1];
+			}
+		}
+		String serverAddress = null;
+		if (server != null){
+			if (port != null){
+				serverAddress = server+":"+port;
+			} else {
+				serverAddress = server+":25565";
+			}
+		}
 		LegacyLWJGL3.LOGGER.info("Creating GLFW window!");
-		Minecraft minecraft = new Minecraft(null, null, null, Display.getWidth(), Display.getHeight(), false) {
+		Minecraft minecraft = new Minecraft(null, null, Display.getWidth(), Display.getHeight(), false) {
 			@Override
-			public void printCrashReport(CrashSummary crashSummary) {
+			public void printCrashReport(net.minecraft.util.crash.CrashReport crashSummary) {
 				CrashReport.report(crashSummary);
 			}
 		};
@@ -52,6 +79,7 @@ public abstract class MinecraftMixin {
 		}
 		Thread.currentThread().setName("Minecraft Main Thread");
 		minecraft.run();
+		Runtime.getRuntime().addShutdownHook(new Thread(Minecraft::shutdown));
 	}
 
 	@Redirect(method = "<init>", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;canvas:Ljava/awt/Canvas;"))

@@ -33,12 +33,6 @@ loom {
             sourceSet("main")
         }
     }
-
-    clientOnlyMinecraftJar()
-}
-
-ploceus {
-    clientOnlyMappings()
 }
 
 project.ext.lwjglVersion = "3.3.2"
@@ -46,10 +40,10 @@ project.ext.lwjglVersion = "3.3.2"
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings project.loom.layered {
-        mappings "net.ornithemc:feather:${project.rootProject.minecraft_version}-client+build.${project.feather_build}:v2"
+        mappings "net.ornithemc:feather:${project.rootProject.minecraft_version}+build.${project.feather_build}:v2"
         addLayer project.ploceus.nestedMappings() // remove this line if not using nests
     }
-    nests "net.ornithemc:nests:${project.rootProject.minecraft_version}-client+build.${project.nests_build}" // remove this line if not using nests
+    nests "net.ornithemc:nests:${project.rootProject.minecraft_version}+build.${project.nests_build}" // remove this line if not using nests
 
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
@@ -68,7 +62,7 @@ dependencies {
     }
 
     ploceus.addCommonLibraries()
-    ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.CLIENT)
+    ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.MERGED)
 
 
 }

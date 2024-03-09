@@ -46,7 +46,7 @@ public class XDGPathResolver {
 			Process p = builder.start();
 			themeName = IOUtils.toString(p.getInputStream()).split("'")[1];
 			p.waitFor();
-		} catch (IOException | InterruptedException e) {
+		} catch (Exception e) {
 			themeName = "default";
 		}
 

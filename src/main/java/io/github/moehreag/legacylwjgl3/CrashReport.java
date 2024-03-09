@@ -5,16 +5,15 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import net.minecraft.client.crash.CrashSummary;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 public class CrashReport {
-	public static void report(CrashSummary summary){
+	public static void report(net.minecraft.util.crash.CrashReport summary){
 		Display.destroy();
 		StringWriter var2 = new StringWriter();
-		summary.cause.printStackTrace(new PrintWriter(var2));
+		summary.getException().printStackTrace(new PrintWriter(var2));
 		String stackTrace = var2.toString();
 		String cardManufacturer = "";
 		StringBuilder report = new StringBuilder();
