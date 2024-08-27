@@ -5,7 +5,7 @@ import net.ornithemc.ploceus.GameSide
 plugins {
     id 'fabric-loom' version "1.4.+"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
-    id 'io.freefair.lombok' version "8.1.0"
+    id 'io.freefair.lombok' version "8.+"
     id 'maven-publish'
     id 'ploceus' version "1.4.8"
     id 'com.modrinth.minotaur' version "2.+"
@@ -35,7 +35,7 @@ loom {
     }
 }
 
-project.ext.lwjglVersion = "3.3.2"
+project.ext.lwjglVersion = "3.3.4"
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -91,7 +91,7 @@ java {
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.archivesBaseName}" }
+        rename { "${it}_${project.base.archivesName.get()}" }
     }
 }
 
