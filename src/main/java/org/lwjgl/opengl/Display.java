@@ -167,9 +167,7 @@ public final class Display {
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
 		// Setup an error callback. The default implementation
 		GLFWErrorCallback.createPrint(System.err).set();
-		if (GLFW.glfwPlatformSupported(GLFW.GLFW_PLATFORM_WAYLAND)) {
-			GLFW.glfwInitHint(GLFW.GLFW_PLATFORM, GLFW.GLFW_PLATFORM_WAYLAND); // enable wayland backend if supported
-		}
+
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
 		} else {
@@ -259,19 +257,20 @@ public final class Display {
 	}
 
 	public static void destroy() {
-		// free callbacks
-		assert sizeCallback != null;
-		sizeCallback.free();
 		Mouse.destroy();
 		Keyboard.destroy();
-		// Destroy the window
-		GLFW.glfwDestroyWindow(handle);
 
-		GLFW.glfwTerminate();
+
 		GLFWErrorCallback callback = GLFW.glfwSetErrorCallback(null);
 		if (callback != null) {
-			callback.free();
+			callback.close();
 		}
+		// Destroy the window
+		GLFW.glfwDestroyWindow(handle);
+		System.exit(0);
+		// Calling glfwTerminate produces a segfault. Why? no idea.
+		// Hopefully we can get away with not calling it.
+		//GLFW.glfwTerminate();
 	}
 
 	public static boolean isCreated() {
@@ -321,5 +320,9 @@ public final class Display {
 
 	public static void swapBuffers(){
 		GLFW.glfwSwapBuffers(handle);
+	}
+
+	public static void makeCurrent() {
+		// No-Op
 	}
 }

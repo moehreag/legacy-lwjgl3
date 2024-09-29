@@ -14,21 +14,20 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
-import io.github.moehreag.legacylwjgl3.util.GlStateManager;
-import io.github.moehreag.legacylwjgl3.util.TextureUtil;
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
+import io.github.moehreag.legacylwjgl3.util.GlStateManager;
+import io.github.moehreag.legacylwjgl3.util.TextureUtil;
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import net.minecraft.class_564;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.inventory.menu.InventoryMenuScreen;
-import net.minecraft.client.render.Window;
-import org.apache.commons.io.IOUtils;
+import net.minecraft.client.gui.screen.container.ContainerScreen;
+import net.minecraft.client.render.Tessellator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.*;
@@ -158,8 +157,8 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	 * whether we are on a screen where the virtual cursor is allowed
 	 */
 	private boolean isValidScreen() {
-		Screen s = LegacyLWJGL3.getMinecraft().screen;
-		return s instanceof InventoryMenuScreen || s instanceof ChatScreen;
+		Screen s = LegacyLWJGL3.getMinecraft().currentScreen;
+		return s instanceof ContainerScreen || s instanceof ChatScreen;
 	}
 
 	private void setup() {
@@ -281,7 +280,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			GlStateManager.color3f(1, 1, 1);
 			GlStateManager.bindTexture(images[current]);
 
-			float scale = new Window(LegacyLWJGL3.getMinecraft().options, LegacyLWJGL3.getMinecraft().width, LegacyLWJGL3.getMinecraft().height).scale;
+			float scale = new class_564(LegacyLWJGL3.getMinecraft().options, LegacyLWJGL3.getMinecraft().displayWidth, LegacyLWJGL3.getMinecraft().displayHeight).field_2391;
 			double x = getX();
 			double y = getY();
 			drawTexture((x - getCurrent().xhot) / scale, (Display.getHeight() - y - getCurrent().yhot) / scale, getCurrent().width / scale, getCurrent().height / scale, getCurrent().width / scale, getCurrent().height / scale);
@@ -294,13 +293,13 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		double n = 1.0F / textureWidth;
 		double o = 1.0F / textureHeight;
 		double z = 1000;
-		BufferBuilder bufferBuilder = BufferBuilder.INSTANCE;
+		Tessellator bufferBuilder = Tessellator.INSTANCE;
 		bufferBuilder.start(7);
 		bufferBuilder.vertex(x, y + height, z, 0, height * o);
 		bufferBuilder.vertex(x + width, y + height, z, width * n, height * o);
 		bufferBuilder.vertex(x + width, y, z, width * n, 0);
 		bufferBuilder.vertex(x, y, z, 0, 0);
-		bufferBuilder.end();
+		bufferBuilder.draw();
 	}
 
 	private void advanceAnimation() {
@@ -368,7 +367,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		public static XCursor load() {
 
 			try {
-				byte[] c = IOUtils.toByteArray(INSTANCE.getArrowCursor());
+				byte[] c = LegacyLWJGL3.toByteArray(INSTANCE.getArrowCursor());
 
 
 				ByteBuffer buf = ByteBuffer.wrap(c);

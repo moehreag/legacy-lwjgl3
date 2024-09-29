@@ -5,10 +5,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-import org.apache.commons.io.IOUtils;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 
 public class XDGPathResolver {
 
@@ -33,7 +33,7 @@ public class XDGPathResolver {
 		Path userShare = getUserDataLocation().resolve("icons");
 		Path homeIcons = getHome().resolve(".icons");
 		Path systemIcons = Paths.get("/usr/share/icons");
-		return ImmutableList.of(userShare, homeIcons, systemIcons);
+		return Arrays.asList(userShare, homeIcons, systemIcons);
 	}
 
 	public static Path getIconTheme(String icon){
@@ -44,7 +44,7 @@ public class XDGPathResolver {
 
 		try {
 			Process p = builder.start();
-			themeName = IOUtils.toString(p.getInputStream()).split("'")[1];
+			themeName = LegacyLWJGL3.toString(p.getInputStream()).split("'")[1];
 			p.waitFor();
 		} catch (IOException | InterruptedException e) {
 			themeName = "default";
@@ -106,7 +106,7 @@ public class XDGPathResolver {
 
 		try {
 			Process p = builder.start();
-			size = Integer.parseInt(IOUtils.toString(p.getInputStream()).split("\n")[0]);
+			size = Integer.parseInt(LegacyLWJGL3.toString(p.getInputStream()).split("\n")[0]);
 			p.waitFor();
 		} catch (IOException | InterruptedException e) {
 			size = 24;

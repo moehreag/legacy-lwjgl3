@@ -6,17 +6,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.IntBuffer;
 
-import com.mojang.blaze3d.platform.MemoryTracker;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.mixin.MinecraftAccessor;
-import io.github.moehreag.legacylwjgl3.util.GlStateManager;
-import org.apache.commons.io.IOUtils;
+import net.minecraft.client.util.GlAllocationUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
 
 public class TextureUtil {
 	private static final Logger LOGGER = LogManager.getLogger();
-	private static final IntBuffer BUFFER = MemoryTracker.createIntBuffer(4194304);
+	private static final IntBuffer BUFFER = GlAllocationUtils.allocateIntBuffer(4194304);
 
 	public static int genTextures() {
 		return GlStateManager.genTextures();
@@ -36,16 +35,16 @@ public class TextureUtil {
 	}
 
 	private static int blendPixelComponents(int i, int j, int k, int l, int m) {
-		float f = (float)Math.pow((double)((float)(i >> m & 0xFF) / 255.0F), 2.2);
-		float g = (float)Math.pow((double)((float)(j >> m & 0xFF) / 255.0F), 2.2);
-		float h = (float)Math.pow((double)((float)(k >> m & 0xFF) / 255.0F), 2.2);
-		float n = (float)Math.pow((double)((float)(l >> m & 0xFF) / 255.0F), 2.2);
-		float o = (float)Math.pow((double)(f + g + h + n) * 0.25, 0.45454545454545453);
-		return (int)((double)o * 255.0);
+		float f = (float) Math.pow((double) ((float) (i >> m & 0xFF) / 255.0F), 2.2);
+		float g = (float) Math.pow((double) ((float) (j >> m & 0xFF) / 255.0F), 2.2);
+		float h = (float) Math.pow((double) ((float) (k >> m & 0xFF) / 255.0F), 2.2);
+		float n = (float) Math.pow((double) ((float) (l >> m & 0xFF) / 255.0F), 2.2);
+		float o = (float) Math.pow((double) (f + g + h + n) * 0.25, 0.45454545454545453);
+		return (int) ((double) o * 255.0);
 	}
 
 	public static void upload(int[][] is, int i, int j, int k, int l, boolean bl, boolean bl2) {
-		for(int m = 0; m < is.length; ++m) {
+		for (int m = 0; m < is.length; ++m) {
 			int[] js = is[m];
 			upload(m, js, i >> m, j >> m, k >> m, l >> m, bl, bl2, is.length > 1);
 		}
@@ -57,7 +56,7 @@ public class TextureUtil {
 		setTextureClamp(bl2);
 
 		int q;
-		for(int o = 0; o < j * k; o += j * q) {
+		for (int o = 0; o < j * k; o += j * q) {
 			int p = o / j;
 			q = Math.min(n, k - p);
 			int r = j * q;
@@ -81,12 +80,12 @@ public class TextureUtil {
 		if (j >= 0) {
 			GL11.glTexParameteri(3553, 33085, j);
 			GL11.glTexParameterf(3553, 33082, 0.0F);
-			GL11.glTexParameterf(3553, 33083, (float)j);
+			GL11.glTexParameterf(3553, 33083, (float) j);
 			GL11.glTexParameterf(3553, 34049, 0.0F);
 		}
 
-		for(int m = 0; m <= j; ++m) {
-			GL11.glTexImage2D(3553, m, 6408, k >> m, l >> m, 0, 32993, 33639, (IntBuffer)null);
+		for (int m = 0; m <= j; ++m) {
+			GL11.glTexImage2D(3553, m, 6408, k >> m, l >> m, 0, 32993, 33639, (IntBuffer) null);
 		}
 	}
 
@@ -104,7 +103,7 @@ public class TextureUtil {
 		setFilterWithBlur(bl);
 		setTextureClamp(bl2);
 
-		for(int n = 0; n < k * l; n += k * m) {
+		for (int n = 0; n < k * l; n += k * m) {
 			int o = n / k;
 			int p = Math.min(m, l - o);
 			int q = k * p;
@@ -144,7 +143,7 @@ public class TextureUtil {
 
 	private static void putInBufferAt(int[] is, int i, int j) {
 		int[] js = is;
-		if (MinecraftAccessor.getInstance().options.anaglyph) {
+		if (MinecraftAccessor.getInstance().options.anaglyph3d) {
 			js = getAnaglyphColors(is);
 		}
 
@@ -162,7 +161,7 @@ public class TextureUtil {
 		try {
 			var1 = ImageIO.read(inputStream);
 		} finally {
-			IOUtils.closeQuietly(inputStream);
+			LegacyLWJGL3.closeQuietly(inputStream);
 		}
 
 		return var1;
@@ -171,7 +170,7 @@ public class TextureUtil {
 	public static int[] getAnaglyphColors(int[] is) {
 		int[] js = new int[is.length];
 
-		for(int i = 0; i < is.length; ++i) {
+		for (int i = 0; i < is.length; ++i) {
 			js[i] = getAnaglyphColor(is[i]);
 		}
 
@@ -193,7 +192,7 @@ public class TextureUtil {
 		int[] js = new int[i];
 		int k = j / 2;
 
-		for(int l = 0; l < k; ++l) {
+		for (int l = 0; l < k; ++l) {
 			System.arraycopy(is, l * i, js, 0, i);
 			System.arraycopy(is, (j - 1 - l) * i, is, l * i, i);
 			System.arraycopy(js, 0, is, (j - 1 - l) * i, i);

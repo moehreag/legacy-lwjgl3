@@ -1,13 +1,13 @@
 package io.github.moehreag.legacylwjgl3;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
+import io.github.moehreag.legacylwjgl3.util.Triple;
 import javassist.*;
 import javassist.util.proxy.DefineClassHelper;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
-import io.github.moehreag.legacylwjgl3.util.Triple;
 import org.lwjgl.openal.ALCapabilities;
 import org.lwjgl.opengl.GL;
 
@@ -21,7 +21,7 @@ import org.lwjgl.opengl.GL;
 public class EarlyRiser implements Runnable {
 
 	// list of legacy methods that we need to add to GL11. moved out of method for readability
-	private final List<Triple<String, String, String>> gl11Translations = ImmutableList.of(
+	private final List<Triple<String, String, String>> gl11Translations = Arrays.asList(
 			Triple.of("glGetFloat", "glGetFloatv", "(ILjava/nio/FloatBuffer;)V"),
 			Triple.of("glGetInteger", "glGetIntegerv", "(ILjava/nio/IntBuffer;)V"),
 			Triple.of("glFog", "glFogfv", "(ILjava/nio/FloatBuffer;)V"),
@@ -31,20 +31,20 @@ public class EarlyRiser implements Runnable {
 			Triple.of("glTexEnv", "glTexEnvfv", "(IILjava/nio/FloatBuffer;)V"),
 			Triple.of("glTexGen", "glTexGenfv", "(IILjava/nio/FloatBuffer;)V")
 	);
-	private final List<Triple<String, String, String>> al10Translations = ImmutableList.of(
+	private final List<Triple<String, String, String>> al10Translations = Arrays.asList(
 			Triple.of("alListener", "alListenerfv", "(ILjava/nio/FloatBuffer;)V"),
 			Triple.of("alSource", "alSourcefv", "(IILjava/nio/FloatBuffer;)V"),
 			Triple.of("alSourceStop", "alSourceStopv", "(Ljava/nio/IntBuffer;)V")
 	);
-	private final List<Triple<String, String, String>> gl20Translations = ImmutableList.of(
+	private final List<Triple<String, String, String>> gl20Translations = Arrays.asList(
 			Triple.of("glUniformMatrix4", "glUniformMatrix4fv", "(IZLjava/nio/FloatBuffer;)V")
 	);
-	private final List<Triple<String, String, String>> arbShaderObjectsTranslations = ImmutableList.of(
+	private final List<Triple<String, String, String>> arbShaderObjectsTranslations = Arrays.asList(
 			Triple.of("glGetObjectParameterARB", "glGetObjectParameterivARB", "(IILjava/nio/IntBuffer;)V"),
 			Triple.of("glUniformMatrix4ARB", "glUniformMatrix4fvARB", "(IZLjava/nio/FloatBuffer;)V")
 	);
-	private final List<Triple<String, String, String>> arbOcclusionQueryTranslations = ImmutableList.of(
-		Triple.of("glGetQueryObjectuARB", "glGetQueryObjectuivARB", "(IILjava/nio/IntBuffer;)V")
+	private final List<Triple<String, String, String>> arbOcclusionQueryTranslations = Arrays.asList(
+			Triple.of("glGetQueryObjectuARB", "glGetQueryObjectuivARB", "(IILjava/nio/IntBuffer;)V")
 	);
 
 	@Override
@@ -62,7 +62,7 @@ public class EarlyRiser implements Runnable {
 		macroTranslateMethodNames(pool, "org.lwjgl.openal.AL10", ALCapabilities.class, al10Translations);
 	}
 
-	private void macroTranslateMethodNames(ClassPool pool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames){
+	private void macroTranslateMethodNames(ClassPool pool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames) {
 		try {
 			addMethodTranslations(pool, clazz, neighbor, methodNames);
 		} catch (Exception e) {
@@ -94,12 +94,12 @@ public class EarlyRiser implements Runnable {
 				ctClass.getConstructor("(Lorg/lwjgl/system/FunctionProvider;Ljava/util/Set;ZLjava/util/function/IntFunction;)V");
 		constructor.insertAfter(
 				"GL_EXT_multi_draw_arrays = ext.contains(\"GL_EXT_multi_draw_arrays\");" +
-						"GL_EXT_paletted_texture = ext.contains(\"GL_EXT_paletted_texture\");" +
-						"GL_EXT_rescale_normal = ext.contains(\"GL_EXT_rescale_normal\"); " +
-						"GL_EXT_texture_3d = ext.contains(\"GL_EXT_texture_3d\");\n" +
-						"GL_EXT_texture_lod_bias = ext.contains(\"GL_EXT_texture_lod_bias\");\n" +
-						"GL_EXT_vertex_shader = ext.contains(\"GL_EXT_vertex_shader\");\n" +
-						"GL_EXT_vertex_weighting = ext.contains(\"GL_EXT_vertex_weighting\");".trim());
+				"GL_EXT_paletted_texture = ext.contains(\"GL_EXT_paletted_texture\");" +
+				"GL_EXT_rescale_normal = ext.contains(\"GL_EXT_rescale_normal\"); " +
+				"GL_EXT_texture_3d = ext.contains(\"GL_EXT_texture_3d\");\n" +
+				"GL_EXT_texture_lod_bias = ext.contains(\"GL_EXT_texture_lod_bias\");\n" +
+				"GL_EXT_vertex_shader = ext.contains(\"GL_EXT_vertex_shader\");\n" +
+				"GL_EXT_vertex_weighting = ext.contains(\"GL_EXT_vertex_weighting\");".trim());
 		defineCtClass(ctClass, GL.class, classPool.getClassLoader());
 	}
 
@@ -108,12 +108,12 @@ public class EarlyRiser implements Runnable {
 	private void addLegacyCompatibilityMethodsToGL20(ClassPool classPool) throws NotFoundException, CannotCompileException, IOException {
 		CtClass cc = classPool.get("org.lwjgl.opengl.GL20");
 		String code = "public static void glShaderSource(int shader, java.nio.ByteBuffer string) {\n" +
-				"byte[] data = new byte[string.limit()];\n" +
-				"string.position(0);\n" +
-				"string.get(data);\n" +
-				"string.position(0);\n" +
-				"org.lwjgl.opengl.GL20.glShaderSource(shader, new String(data));\n" +
-				"}\n";
+					  "byte[] data = new byte[string.limit()];\n" +
+					  "string.position(0);\n" +
+					  "string.get(data);\n" +
+					  "string.position(0);\n" +
+					  "org.lwjgl.opengl.GL20.glShaderSource(shader, new String(data));\n" +
+					  "}\n";
 
 		cc.addMethod(CtNewMethod.make(code, cc));
 		macroTranslateMethodNames(classPool, "org.lwjgl.opengl.GL20", GL.class, gl20Translations);
@@ -122,24 +122,24 @@ public class EarlyRiser implements Runnable {
 	private void addLegacyCompatibilityMethodsToGL11(ClassPool pool) throws Exception {
 		CtClass cc = pool.get("org.lwjgl.opengl.GL11");
 		String[] methods = new String[]{
-			"public static void glTexCoordPointer(int i, int stride, java.nio.FloatBuffer pointer){" +
-				"glTexCoordPointer(i, 0x1406, stride, pointer);"+ // 0x1404 = INT
+				"public static void glTexCoordPointer(int i, int stride, java.nio.FloatBuffer pointer){" +
+				"glTexCoordPointer(i, 0x1406, stride, pointer);" + // 0x1404 = INT
 				"}",
-			"public static void glTexCoordPointer(int i, int stride, java.nio.ShortBuffer pointer){" +
-				"glTexCoordPointer(i, 0x1402, stride, pointer);"+ // 0x1402 = SHORT
+				"public static void glTexCoordPointer(int i, int stride, java.nio.ShortBuffer pointer){" +
+				"glTexCoordPointer(i, 0x1402, stride, pointer);" + // 0x1402 = SHORT
 				"}",
-			"public static void glColorPointer(int i, boolean bl, int i2, java.nio.ByteBuffer pointer){" +
-				"glColorPointer(i, 0x1401, i2, pointer);"+
+				"public static void glColorPointer(int i, boolean bl, int i2, java.nio.ByteBuffer pointer){" +
+				"glColorPointer(i, 0x1401, i2, pointer);" +
 				"}",
-			"public static void glVertexPointer(int i, int i2, java.nio.FloatBuffer pointer){" +
+				"public static void glVertexPointer(int i, int i2, java.nio.FloatBuffer pointer){" +
 				"glVertexPointer(i, 0x1406, i2, pointer);" +
 				"}",
-			"public static void glNormalPointer(int stride, java.nio.ByteBuffer pointer){" +
+				"public static void glNormalPointer(int stride, java.nio.ByteBuffer pointer){" +
 				"glNormalPointer(0x1400, stride, pointer);" +
 				"}"
 		};
 
-		for (String method : methods){
+		for (String method : methods) {
 			cc.addMethod(CtNewMethod.make(method, cc));
 		}
 
@@ -178,7 +178,7 @@ public class EarlyRiser implements Runnable {
 		defineCtClass(target, ALCapabilities.class, classPool.getClassLoader());
 	}
 
-	private void addMethodTranslations(ClassPool classPool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames) throws NotFoundException, CannotCompileException, IOException{
+	private void addMethodTranslations(ClassPool classPool, String clazz, Class<?> neighbor, List<Triple<String, String, String>> methodNames) throws NotFoundException, CannotCompileException, IOException {
 		CtClass cc = classPool.get(clazz);
 		for (Triple<String, String, String> t : methodNames) {
 			CtMethod original = cc.getMethod(t.getMiddle(), t.getRight());
@@ -187,7 +187,7 @@ public class EarlyRiser implements Runnable {
 			copied.setName(t.getLeft());
 			cc.addMethod(copied);
 
-			debug("Added legacy compat method "+t.getLeft());
+			debug("Added legacy compat method " + t.getLeft());
 		}
 		defineCtClass(cc, neighbor, classPool.getClassLoader());
 	}

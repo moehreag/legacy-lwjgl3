@@ -2,9 +2,7 @@ package io.github.moehreag.legacylwjgl3;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,10 +10,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import net.fabricmc.loader.api.FabricLoader;
-import org.apache.commons.io.IOUtils;
 
 public class DesktopFileInjector {
 	public static final String APP_ID = "com.mojang.minecraft";
@@ -32,8 +30,10 @@ public class DesktopFileInjector {
 
 			String version = FabricLoader.getInstance().getModContainer("minecraft").orElseThrow(IllegalStateException::new)
 					.getMetadata().getVersion().getFriendlyString();
-			injectFile(location, String.format(IOUtils.toString(Objects.requireNonNull(stream)),
-					version, ICON_NAME.substring(0, ICON_NAME.lastIndexOf("."))).getBytes(StandardCharsets.UTF_8));
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(stream)))) {
+				injectFile(location, String.format(reader.lines().collect(Collectors.joining("\n")),
+						version, ICON_NAME.substring(0, ICON_NAME.lastIndexOf("."))).getBytes(StandardCharsets.UTF_8));
+			}
 		} catch (IOException e) {
 			LegacyLWJGL3.LOGGER.error("Failed to inject icon: ", e);
 		}

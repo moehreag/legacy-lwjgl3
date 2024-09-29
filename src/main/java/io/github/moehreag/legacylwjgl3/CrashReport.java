@@ -5,16 +5,16 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import net.minecraft.client.crash.CrashSummary;
+import net.minecraft.class_447;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 public class CrashReport {
-	public static void report(CrashSummary summary){
+	public static void report(class_447 summary){
 		Display.destroy();
 		StringWriter var2 = new StringWriter();
-		summary.cause.printStackTrace(new PrintWriter(var2));
+		summary.field_1705.printStackTrace(new PrintWriter(var2));
 		String stackTrace = var2.toString();
 		String cardManufacturer = "";
 		StringBuilder report = new StringBuilder();
@@ -22,7 +22,7 @@ public class CrashReport {
 		try {
 			report.append("Generated ").append(new SimpleDateFormat().format(new Date())).append("\n");
 			report.append("\n");
-			report.append("Minecraft: Minecraft 1.2.5\n");
+			report.append("Minecraft: Minecraft b1.7.3\n");
 			report.append("OS: ")
 				.append(System.getProperty("os.name"))
 				.append(" (")

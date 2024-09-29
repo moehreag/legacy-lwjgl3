@@ -4,9 +4,9 @@ import java.awt.*;
 
 import io.github.moehreag.legacylwjgl3.CrashReport;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
+import net.minecraft.class_447;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Session;
-import net.minecraft.client.crash.CrashSummary;
+import net.minecraft.client.util.Session;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.opengl.Display;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,19 +25,20 @@ public abstract class MinecraftMixin {
 
 	@Shadow private boolean fullscreen;
 
-	@Shadow public int width;
+	@Shadow public int displayWidth;
 
-	@Shadow public int height;
+	@Shadow public int displayHeight;
 
-	@Shadow protected abstract void onResolutionChanged(int width, int height);
+	// onResolutionChanged
+	@Shadow() protected abstract void method_2108(int width, int height);
 
-	@Inject(method = "m_6868991", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "method_2121", at = @At("HEAD"), cancellable = true)
 	private static void m_6868991(String userName, String sessionId, String serverAddress, CallbackInfo ci) {
 		ci.cancel();
 		LegacyLWJGL3.LOGGER.info("Creating GLFW window!");
 		Minecraft minecraft = new Minecraft(null, null, null, Display.getWidth(), Display.getHeight(), false) {
 			@Override
-			public void printCrashReport(CrashSummary crashSummary) {
+			public void method_2102(class_447 crashSummary) {
 				CrashReport.report(crashSummary);
 			}
 		};
@@ -48,7 +49,7 @@ public abstract class MinecraftMixin {
 		}
 		if (serverAddress != null) {
 			String[] address = serverAddress.split(":");
-			minecraft.setServerAddressAndPort(address[0], Integer.parseInt(address[1]));
+			minecraft.method_2117(address[0], Integer.parseInt(address[1]));
 		}
 		Thread.currentThread().setName("Minecraft Main Thread");
 		minecraft.run();
@@ -71,20 +72,20 @@ public abstract class MinecraftMixin {
 		return title.substring("Minecraft ".length());
 	}
 
-	@Inject(method = "run", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;canvas:Ljava/awt/Canvas;", remap = false))
+	@Inject(method = "run", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;canvas:Ljava/awt/Canvas;", remap = false), remap = false)
 	private void resizeCallback(CallbackInfo ci){
-		if (!this.fullscreen && (Display.getWidth() != this.width || Display.getHeight() != this.height)) {
-			this.width = Display.getWidth();
-			this.height = Display.getHeight();
-			if (this.width <= 0) {
-				this.width = 1;
+		if (!this.fullscreen && (Display.getWidth() != this.displayWidth || Display.getHeight() != this.displayHeight)) {
+			this.displayWidth = Display.getWidth();
+			this.displayHeight = Display.getHeight();
+			if (this.displayWidth <= 0) {
+				this.displayWidth = 1;
 			}
 
-			if (this.height <= 0) {
-				this.height = 1;
+			if (this.displayHeight <= 0) {
+				this.displayHeight = 1;
 			}
 
-			this.onResolutionChanged(this.width, this.height);
+			this.method_2108(this.displayWidth, this.displayHeight);
 		}
 	}
 }
