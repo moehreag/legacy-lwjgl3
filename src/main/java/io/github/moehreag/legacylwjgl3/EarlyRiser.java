@@ -37,7 +37,9 @@ public class EarlyRiser implements Runnable {
 			Triple.of("alSourceStop", "alSourceStopv", "(Ljava/nio/IntBuffer;)V")
 	);
 	private final List<Triple<String, String, String>> gl20Translations = Arrays.asList(
-			Triple.of("glUniformMatrix4", "glUniformMatrix4fv", "(IZLjava/nio/FloatBuffer;)V")
+			Triple.of("glUniformMatrix4", "glUniformMatrix4fv", "(IZLjava/nio/FloatBuffer;)V"),
+			Triple.of("glUniform3", "glUniform3fv", "(ILjava/nio/FloatBuffer;)V"),
+			Triple.of("glUniform1", "glUniform1iv", "(ILjava/nio/IntBuffer;)V")
 	);
 	private final List<Triple<String, String, String>> arbShaderObjectsTranslations = Arrays.asList(
 			Triple.of("glGetObjectParameterARB", "glGetObjectParameterivARB", "(IILjava/nio/IntBuffer;)V"),
@@ -107,13 +109,13 @@ public class EarlyRiser implements Runnable {
 	// new GL20 doesn't have a way to supply a shader source using ByteBuffer so this adds a method to do it
 	private void addLegacyCompatibilityMethodsToGL20(ClassPool classPool) throws NotFoundException, CannotCompileException, IOException {
 		CtClass cc = classPool.get("org.lwjgl.opengl.GL20");
-		String code = "public static void glShaderSource(int shader, java.nio.ByteBuffer string) {\n" +
-					  "byte[] data = new byte[string.limit()];\n" +
-					  "string.position(0);\n" +
-					  "string.get(data);\n" +
-					  "string.position(0);\n" +
-					  "org.lwjgl.opengl.GL20.glShaderSource(shader, new String(data));\n" +
-					  "}\n";
+		String code = "public static void glShaderSource(int shader, java.nio.ByteBuffer string) {" +
+					  "byte[] data = new byte[string.limit()];" +
+					  "string.position(0);" +
+					  "string.get(data);" +
+					  "string.position(0);" +
+					  "org.lwjgl.opengl.GL20.glShaderSource(shader, new String(data));" +
+					  "}";
 
 		cc.addMethod(CtNewMethod.make(code, cc));
 		macroTranslateMethodNames(classPool, "org.lwjgl.opengl.GL20", GL.class, gl20Translations);

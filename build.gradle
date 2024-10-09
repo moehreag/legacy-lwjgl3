@@ -2,19 +2,19 @@ import groovy.json.JsonSlurper
 import net.fabricmc.loom.task.RemapJarTask
 
 plugins {
-    id 'fabric-loom' version "1.6-SNAPSHOT"
-    id 'babric-loom-extension' version "1.6-SNAPSHOT"
+    id 'fabric-loom' version "1.7-SNAPSHOT"
+    id 'babric-loom-extension' version "1.7-SNAPSHOT"
     id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'io.freefair.lombok' version "8.+"
     id 'maven-publish'
     id 'com.modrinth.minotaur' version "2.+"
 }
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 base.archivesName = project.archives_base_name
-version = project.mod_version+"+"+project.minecraft_version+"-babric"
+version = project.mod_version+"+"+project.minecraft_version+"-babric.3"
 group = project.maven_group
 
 
@@ -24,6 +24,45 @@ loom {
 }
 
 project.ext.lwjglVersion = "3.3.4"
+
+repositories {
+    maven {
+        name = 'Glass Releases'
+        url = 'https://maven.glass-launcher.net/releases'
+    }
+    // Used for StationAPI and HowManyItems.
+    maven {
+        name = 'Glass Snapshots'
+        url = 'https://maven.glass-launcher.net/snapshots'
+    }
+    // Used for a StationAPI dependency.
+    maven {
+        name = 'Froge'
+        url 'https://maven.minecraftforge.net/'
+    }
+    // Used for projects that do not have a maven repository, but do have a GitHub repository with working build scripts.
+    maven {
+        name = 'Jitpack'
+        url = 'https://jitpack.io'
+    }
+    // Used for another StationAPI dependency
+    /*exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }*/
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+    }
+    mavenCentral()
+}
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -46,9 +85,8 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-opengl::natives-$platform"
     }
 
-    //ploceus.addCommonLibraries()
-    //ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.CLIENT)
-
+    modLocalRuntime("net.modificationstation:StationAPI:2.0-alpha.2.3")
+    modLocalRuntime("maven.modrinth:smoothbeta:6OmLHirm")
 
 }
 
@@ -69,7 +107,7 @@ processResources {
 // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
-    if (JavaVersion.current().isJava9Compatible()) it.options.release = 8
+    if (JavaVersion.current().isJava9Compatible()) it.options.release = 17
 }
 
 java {

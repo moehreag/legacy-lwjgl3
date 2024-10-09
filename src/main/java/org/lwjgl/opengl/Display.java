@@ -267,7 +267,6 @@ public final class Display {
 		}
 		// Destroy the window
 		GLFW.glfwDestroyWindow(handle);
-		System.exit(0);
 		// Calling glfwTerminate produces a segfault. Why? no idea.
 		// Hopefully we can get away with not calling it.
 		//GLFW.glfwTerminate();
@@ -323,6 +322,10 @@ public final class Display {
 	}
 
 	public static void makeCurrent() {
-		// No-Op
+		GLFW.glfwMakeContextCurrent(handle);
+	}
+
+	public static Drawable getDrawable() {
+		return Drawable.INSTANCE;
 	}
 }
