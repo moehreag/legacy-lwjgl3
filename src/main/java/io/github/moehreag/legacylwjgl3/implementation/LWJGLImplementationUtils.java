@@ -13,6 +13,7 @@ import org.lwjgl.glfw.GLFW;
  * @created 28/09/2022 - 3:12 PM
  */
 public class LWJGLImplementationUtils {
+    private static final boolean allowVirtualCursor = Boolean.getBoolean("legacy_lwjgl3.allow_virtual_cursor") || System.getenv("LEGACY_LWJGL3_ALLOW_VIRTUAL_CURSOR") != null;
     private static InputImplementation _inputImplementation;
 
     public static InputImplementation getOrCreateInputImplementation() {
@@ -23,7 +24,7 @@ public class LWJGLImplementationUtils {
     }
 
     private static InputImplementation createImplementation() {
-        MouseImplementation mouse = GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND ?
+        MouseImplementation mouse = allowVirtualCursor && GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND ?
                 VirtualGLFWMouseImplementation.getInstance() :
                 new GLFWMouseImplementation();
         return new CombinedInputImplementation(new GLFWKeyboardImplementation(), mouse);

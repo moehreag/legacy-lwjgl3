@@ -1,13 +1,13 @@
 import groovy.json.JsonSlurper
 import net.fabricmc.loom.task.RemapJarTask
-import net.ornithemc.ploceus.GameSide
+import net.ornithemc.ploceus.api.GameSide
 
 plugins {
-    id 'fabric-loom' version "1.5-SNAPSHOT"
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'fabric-loom' version "1.8.+"
+    id 'com.gradleup.shadow' version '8.+'
     id 'io.freefair.lombok' version "8.+"
     id 'maven-publish'
-    id 'ploceus' version "1.5-SNAPSHOT"
+    id 'ploceus' version "1.8.+"
     id 'com.modrinth.minotaur' version "2.+"
 }
 
@@ -33,24 +33,13 @@ loom {
             sourceSet("main")
         }
     }
-
-    clientOnlyMinecraftJar()
-}
-
-ploceus {
-    clientOnlyMappings()
 }
 
 project.ext.lwjglVersion = "3.3.4"
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings project.loom.layered {
-        mappings "net.ornithemc:feather:${project.rootProject.minecraft_version}-client+build.${project.feather_build}:v2"
-        addLayer project.ploceus.nestedMappings() // remove this line if not using nests
-    }
-    nests "net.ornithemc:nests:${project.rootProject.minecraft_version}-client+build.${project.nests_build}" // remove this line if not using nests
-
+    mappings "net.ornithemc:feather:${project.mappings}"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
     implementation("org.javassist:javassist:3.29.2-GA")
@@ -67,8 +56,8 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-opengl::natives-$platform"
     }
 
-    ploceus.addCommonLibraries()
-    ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.CLIENT)
+    //ploceus.addCommonLibraries()
+    ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.MERGED)
 
 
 }
@@ -159,27 +148,26 @@ tasks.modrinth.dependsOn publish
 
 static def fetchGameVersions(){
 
-    /*List<String> versions = new ArrayList<>()
-    InputStream stream = URI.create("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json").toURL().openStream()
+    List<String> versions = new ArrayList<>()
+    InputStream stream = URI.create("https://meta.ornithemc.net/v3/versions/game").toURL().openStream()
     JsonSlurper slurper = new JsonSlurper()
-    Map<String, ?> map = slurper.parse(stream) as Map<String, ?>
-    List<Version> json = map.get("versions") as List<Version>
+    List<Version> json = slurper.parse(stream) as List<Version>
     json.forEach(ve -> {
-        if (ve.type == "release") {
-            def v = ve.id
+        if (ve.stable) {
+            def v = ve.version
             String[] parts = v.split("\\.");
-            int minor = Integer.parseInt(parts[1]); // TODO fix this mess.
-            if (minor >= 2 && minor < 3) {
+            int minor = Integer.parseInt(parts[1]);
+            if (minor >= 8 && minor < 13) {
                 versions.add(v)
             }
         }
-    })*/
-    return ["b1.7.3"]
+    })
+    return versions
 }
 
 class Version {
-    String id
-    String type
+    String version
+    boolean stable
 }
 
 modrinth {

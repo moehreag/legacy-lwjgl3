@@ -69,6 +69,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	}
 
 	public static void render() {
+
 		getInstance().draw();
 	}
 
