@@ -17,6 +17,18 @@ thanks as a big portion of this code is from that project.
 
 # Usage
 
+## Configuration
+
+The mod offers a handful of optional configuration options via system properties or
+environment variables.
+
+A list of currently available options is provided below.
+
+| Property Name                                 | Environment variable name                     | Description                                                                                        |
+|-----------------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------------------------------|
+| `legacy_lwjgl3.allow_virtual_cursor`          | `LEGACY_LWJGL3_ALLOW_VIRTUAL_CURSOR`          | Enable the virtual cursor when using wayland. Disabled by default due to slightly buggy behaviour. |
+| `legacy_lwjgl3.disable_desktopfile_injection` | `LEGACY_LWJGL3_DISABLE_DESKTOPFILE_INJECTION` | Disable desktop file injection. Used to provide a window icon on wayland environments.             |
+
 ## Dev Environments
 First head over to https://jitpack.io/#Zarzelcow/legacy-lwjgl3 and select the latest version in commits
 
