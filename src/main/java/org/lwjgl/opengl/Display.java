@@ -167,21 +167,22 @@ public final class Display {
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
 		// Setup an error callback. The default implementation
 		GLFWErrorCallback.createPrint(System.err).set();
-		if (GLFW.glfwPlatformSupported(GLFW.GLFW_PLATFORM_WAYLAND)) {
-			GLFW.glfwInitHint(GLFW.GLFW_PLATFORM, GLFW.GLFW_PLATFORM_WAYLAND); // enable wayland backend if supported
-		}
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
 		} else {
 			// Configure GLFW
 			GLFW.glfwDefaultWindowHints();
 
-			if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
-				GLFW.glfwWindowHint(GLFW.GLFW_FOCUS_ON_SHOW, GLFW.GLFW_FALSE); // disable an unsupported function on wayland
+			if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND){
 				DesktopFileInjector.inject();
 				GLFW.glfwWindowHintString(GLFW.GLFW_WAYLAND_APP_ID, DesktopFileInjector.APP_ID);
 			}
 
+			GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
+			GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, GLFW.GLFW_NATIVE_CONTEXT_API);
+			GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR,  3);
+			GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
+			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
 			GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pixelFormat.getAlphaBits());
 			GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pixelFormat.getDepthBits());
 			GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pixelFormat.getStencilBits());
@@ -260,18 +261,14 @@ public final class Display {
 
 	public static void destroy() {
 		// free callbacks
-		assert sizeCallback != null;
-		sizeCallback.free();
-		Mouse.destroy();
-		Keyboard.destroy();
-		// Destroy the window
-		GLFW.glfwDestroyWindow(handle);
-
-		GLFW.glfwTerminate();
+		Callbacks.glfwFreeCallbacks(handle);
 		GLFWErrorCallback callback = GLFW.glfwSetErrorCallback(null);
 		if (callback != null) {
 			callback.free();
 		}
+		// Destroy the window
+		GLFW.glfwDestroyWindow(handle);
+		GLFW.glfwTerminate();
 	}
 
 	public static boolean isCreated() {
@@ -297,12 +294,12 @@ public final class Display {
 		Sync.sync(fps);
 	}
 
-
+	
 	public static void setVSyncEnabled(boolean enabled) {
 		GLFW.glfwSwapInterval(enabled ? 1 : 0);
 	}
 
-
+	
 	public static boolean wasResized() {
 		return window_resized;
 	}

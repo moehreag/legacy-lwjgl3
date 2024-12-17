@@ -25,6 +25,9 @@ public class DesktopFileInjector {
 	private static final List<Path> injectedLocations = new ArrayList<>();
 
 	public static void inject() {
+		if (Boolean.getBoolean("legacy_lwjgl3.disable_desktopfile_injection") || System.getenv("LEGACY_LWJGL3_DISABLE_DESKTOPFILE_INJECTION") != null) {
+			return;
+		}
 		Runtime.getRuntime().addShutdownHook(new Thread(DesktopFileInjector::uninject));
 
 		try (InputStream stream = DesktopFileInjector.class.getResourceAsStream(RESOURCE_LOCATION)) {
