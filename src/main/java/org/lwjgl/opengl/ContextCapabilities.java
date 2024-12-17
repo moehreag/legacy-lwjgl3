@@ -31,18 +31,15 @@
  */
 package org.lwjgl.opengl;
 
-import org.lwjgl.LWJGLException;
-import org.lwjgl.LWJGLUtil;
-import org.lwjgl.opengl.GL;
-import org.lwjgl.opengl.GLCapabilities;
-import org.lwjgl.opengl.OpenGLException;
-import org.lwjgl.opengl.Util;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.StringTokenizer;
+
+import org.lwjgl.LWJGLException;
+import org.lwjgl.LWJGLUtil;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL30.GL_NUM_EXTENSIONS;
@@ -55,7 +52,8 @@ import static org.lwjgl.opengl.GL32.GL_CONTEXT_PROFILE_MASK;
  * <p>
  * LWJGL3
  */
-public class ContextCapabilities{
+@SuppressWarnings({"unused", "DataFlowIssue"})
+public class ContextCapabilities {
     static final boolean DEBUG = false;
     //TODO?
     //final StateTracker tracker = new StateTracker();
@@ -2587,16 +2585,16 @@ public class ContextCapabilities{
 
     private boolean AMD_debug_output_initNativeFunctionAddresses() {
         return
-                (glDebugMessageEnableAMD = getFunctionAddress(new String[] {"glDebugMessageEnableAMD","glDebugMessageEnableAMDX"})) != 0 &
-                        (glDebugMessageInsertAMD = getFunctionAddress(new String[] {"glDebugMessageInsertAMD","glDebugMessageInsertAMDX"})) != 0 &
-                        (glDebugMessageCallbackAMD = getFunctionAddress(new String[] {"glDebugMessageCallbackAMD","glDebugMessageCallbackAMDX"})) != 0 &
-                        (glGetDebugMessageLogAMD = getFunctionAddress(new String[] {"glGetDebugMessageLogAMD","glGetDebugMessageLogAMDX"})) != 0;
+                (glDebugMessageEnableAMD = getFunctionAddress(new String[]{"glDebugMessageEnableAMD", "glDebugMessageEnableAMDX"})) != 0 &
+                        (glDebugMessageInsertAMD = getFunctionAddress(new String[]{"glDebugMessageInsertAMD", "glDebugMessageInsertAMDX"})) != 0 &
+                        (glDebugMessageCallbackAMD = getFunctionAddress(new String[]{"glDebugMessageCallbackAMD", "glDebugMessageCallbackAMDX"})) != 0 &
+                        (glGetDebugMessageLogAMD = getFunctionAddress(new String[]{"glGetDebugMessageLogAMD", "glGetDebugMessageLogAMDX"})) != 0;
     }
 
-    private long getFunctionAddress(String[] strings){
-        for(String string : strings){
+    private long getFunctionAddress(String[] strings) {
+        for (String string : strings) {
             long address = GL.getFunctionProvider().getFunctionAddress(string);
-            if(address != 0){
+            if (address != 0) {
                 return address;
             }
         }
@@ -3262,7 +3260,7 @@ public class ContextCapabilities{
                 (glProvokingVertex = GL.getFunctionProvider().getFunctionAddress("glProvokingVertex")) != 0;
     }
 
-    private boolean ARB_robustness_initNativeFunctionAddresses(boolean forwardCompatible,Set<String> supported_extensions) {
+    private boolean ARB_robustness_initNativeFunctionAddresses(boolean forwardCompatible, Set<String> supported_extensions) {
         return
                 (glGetGraphicsResetStatusARB = GL.getFunctionProvider().getFunctionAddress("glGetGraphicsResetStatusARB")) != 0 &
                         (forwardCompatible || (glGetnMapdvARB = GL.getFunctionProvider().getFunctionAddress("glGetnMapdvARB")) != 0) &
@@ -3520,12 +3518,12 @@ public class ContextCapabilities{
 
     private boolean ARB_texture_storage_initNativeFunctionAddresses(Set<String> supported_extensions) {
         return
-                (glTexStorage1D = getFunctionAddress(new String[] {"glTexStorage1D","glTexStorage1DEXT"})) != 0 &
-                        (glTexStorage2D = getFunctionAddress(new String[] {"glTexStorage2D","glTexStorage2DEXT"})) != 0 &
-                        (glTexStorage3D = getFunctionAddress(new String[] {"glTexStorage3D","glTexStorage3DEXT"})) != 0 &
-                        (!supported_extensions.contains("GL_EXT_direct_state_access") || (glTextureStorage1DEXT = getFunctionAddress(new String[] {"glTextureStorage1DEXT","glTextureStorage1DEXTEXT"})) != 0) &
-                        (!supported_extensions.contains("GL_EXT_direct_state_access") || (glTextureStorage2DEXT = getFunctionAddress(new String[] {"glTextureStorage2DEXT","glTextureStorage2DEXTEXT"})) != 0) &
-                        (!supported_extensions.contains("GL_EXT_direct_state_access") || (glTextureStorage3DEXT = getFunctionAddress(new String[] {"glTextureStorage3DEXT","glTextureStorage3DEXTEXT"})) != 0);
+                (glTexStorage1D = getFunctionAddress(new String[]{"glTexStorage1D", "glTexStorage1DEXT"})) != 0 &
+                        (glTexStorage2D = getFunctionAddress(new String[]{"glTexStorage2D", "glTexStorage2DEXT"})) != 0 &
+                        (glTexStorage3D = getFunctionAddress(new String[]{"glTexStorage3D", "glTexStorage3DEXT"})) != 0 &
+                        (!supported_extensions.contains("GL_EXT_direct_state_access") || (glTextureStorage1DEXT = getFunctionAddress(new String[]{"glTextureStorage1DEXT", "glTextureStorage1DEXTEXT"})) != 0) &
+                        (!supported_extensions.contains("GL_EXT_direct_state_access") || (glTextureStorage2DEXT = getFunctionAddress(new String[]{"glTextureStorage2DEXT", "glTextureStorage2DEXTEXT"})) != 0) &
+                        (!supported_extensions.contains("GL_EXT_direct_state_access") || (glTextureStorage3DEXT = getFunctionAddress(new String[]{"glTextureStorage3DEXT", "glTextureStorage3DEXTEXT"})) != 0);
     }
 
     private boolean ARB_texture_storage_multisample_initNativeFunctionAddresses(Set<String> supported_extensions) {
@@ -3904,7 +3902,7 @@ public class ContextCapabilities{
                 (glDepthBoundsEXT = GL.getFunctionProvider().getFunctionAddress("glDepthBoundsEXT")) != 0;
     }
 
-    private boolean EXT_direct_state_access_initNativeFunctionAddresses(boolean forwardCompatible,Set<String> supported_extensions) {
+    private boolean EXT_direct_state_access_initNativeFunctionAddresses(boolean forwardCompatible, Set<String> supported_extensions) {
         return
                 (forwardCompatible || (glClientAttribDefaultEXT = GL.getFunctionProvider().getFunctionAddress("glClientAttribDefaultEXT")) != 0) &
                         (forwardCompatible || (glPushClientAttribDefaultEXT = GL.getFunctionProvider().getFunctionAddress("glPushClientAttribDefaultEXT")) != 0) &
@@ -5742,9 +5740,9 @@ public class ContextCapabilities{
     }
 
     static long getPlatformSpecificFunctionAddress(String function_prefix, String[] os_prefixes, String[] os_function_prefixes, String function) {
-        String os_name = AccessController.doPrivileged((PrivilegedAction<String>)()->System.getProperty("os.name"));
-        for ( int i = 0; i < os_prefixes.length; i++ )
-            if ( os_name.startsWith(os_prefixes[i]) ) {
+        String os_name = System.getProperty("os.name");
+        for (int i = 0; i < os_prefixes.length; i++)
+            if (os_name.startsWith(os_prefixes[i])) {
                 String platform_function_name = function.replaceFirst(function_prefix, os_function_prefixes[i]);
                 long address = GL.getFunctionProvider().getFunctionAddress(platform_function_name);
                 return address;
@@ -5851,7 +5849,7 @@ public class ContextCapabilities{
     }
 
 
-    private static void remove(Set supported_extensions, String extension) {
+    private static void remove(Set<String> supported_extensions, String extension) {
         LWJGLUtil.log(extension + " was reported as available but an entry point is missing");
         supported_extensions.remove(extension);
     }
@@ -5865,7 +5863,7 @@ public class ContextCapabilities{
         //GL.getFunctionProvider().setCapabilities(this);
         Set<String> supported_extensions = new HashSet<>(256);
         int profileMask = getSupportedExtensions(supported_extensions);
-        if ( supported_extensions.contains("OpenGL31") && !(supported_extensions.contains("GL_ARB_compatibility") || (profileMask & GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) != 0) )
+        if (supported_extensions.contains("OpenGL31") && !(supported_extensions.contains("GL_ARB_compatibility") || (profileMask & GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) != 0))
             forwardCompatible = true;
         if (!GL11_initNativeFunctionAddresses(forwardCompatible))
             throw new LWJGLException("GL11 not supported");
@@ -6013,7 +6011,7 @@ public class ContextCapabilities{
             remove(supported_extensions, "GL_ARB_program_interface_query");
         if (supported_extensions.contains("GL_ARB_provoking_vertex") && !ARB_provoking_vertex_initNativeFunctionAddresses())
             remove(supported_extensions, "GL_ARB_provoking_vertex");
-        if (supported_extensions.contains("GL_ARB_robustness") && !ARB_robustness_initNativeFunctionAddresses(forwardCompatible,supported_extensions))
+        if (supported_extensions.contains("GL_ARB_robustness") && !ARB_robustness_initNativeFunctionAddresses(forwardCompatible, supported_extensions))
             remove(supported_extensions, "GL_ARB_robustness");
         if (supported_extensions.contains("GL_ARB_sample_shading") && !ARB_sample_shading_initNativeFunctionAddresses())
             remove(supported_extensions, "GL_ARB_sample_shading");
@@ -6124,7 +6122,7 @@ public class ContextCapabilities{
         if (supported_extensions.contains("GL_EXT_depth_bounds_test") && !EXT_depth_bounds_test_initNativeFunctionAddresses())
             remove(supported_extensions, "GL_EXT_depth_bounds_test");
         supported_extensions.add("GL_EXT_direct_state_access");
-        if (supported_extensions.contains("GL_EXT_direct_state_access") && !EXT_direct_state_access_initNativeFunctionAddresses(forwardCompatible,supported_extensions))
+        if (supported_extensions.contains("GL_EXT_direct_state_access") && !EXT_direct_state_access_initNativeFunctionAddresses(forwardCompatible, supported_extensions))
             remove(supported_extensions, "GL_EXT_direct_state_access");
         if (supported_extensions.contains("GL_EXT_draw_buffers2") && !EXT_draw_buffers2_initNativeFunctionAddresses())
             remove(supported_extensions, "GL_EXT_draw_buffers2");
@@ -6302,7 +6300,7 @@ public class ContextCapabilities{
         // Detect OpenGL version first
 
         final String version = glGetString(GL_VERSION);
-        if ( version == null )
+        if (version == null)
             throw new IllegalStateException("glGetString(GL_VERSION) returned null - possibly caused by missing current context.");
 
         final StringTokenizer version_tokenizer = new StringTokenizer(version, ". ");
@@ -6319,40 +6317,40 @@ public class ContextCapabilities{
         }
 
         final int[][] GL_VERSIONS = {
-                { 1, 2, 3, 4, 5 },      // OpenGL 1
-                { 0, 1 },               // OpenGL 2
-                { 0, 1, 2, 3 },         // OpenGL 3
-                { 0, 1, 2, 3, 4, 5 },   // OpenGL 4
+                {1, 2, 3, 4, 5},      // OpenGL 1
+                {0, 1},               // OpenGL 2
+                {0, 1, 2, 3},         // OpenGL 3
+                {0, 1, 2, 3, 4, 5},   // OpenGL 4
         };
 
-        for ( int major = 1; major <= GL_VERSIONS.length; major++ ) {
+        for (int major = 1; major <= GL_VERSIONS.length; major++) {
             int[] minors = GL_VERSIONS[major - 1];
-            for ( int minor : minors ) {
-                if ( major < majorVersion || (major == majorVersion && minor <= minorVersion) )
+            for (int minor : minors) {
+                if (major < majorVersion || (major == majorVersion && minor <= minorVersion))
                     supported_extensions.add("OpenGL" + Integer.toString(major) + Integer.toString(minor));
             }
         }
 
         int profileMask = 0;
 
-        if ( majorVersion < 3 ) {
+        if (majorVersion < 3) {
             // Parse EXTENSIONS string
             final String extensions_string = glGetString(GL_EXTENSIONS);
-            if ( extensions_string == null )
+            if (extensions_string == null)
                 throw new IllegalStateException("glGetString(GL_EXTENSIONS) returned null - is there a context current?");
 
             final StringTokenizer tokenizer = new StringTokenizer(extensions_string);
-            while ( tokenizer.hasMoreTokens() )
+            while (tokenizer.hasMoreTokens())
                 supported_extensions.add(tokenizer.nextToken());
         } else {
             // Use forward compatible indexed EXTENSIONS
             final int extensionCount = glGetInteger(GL_NUM_EXTENSIONS);
 
-            for ( int i = 0; i < extensionCount; i++ )
+            for (int i = 0; i < extensionCount; i++)
                 supported_extensions.add(glGetStringi(GL_EXTENSIONS, i));
 
             // Get the context profile mask for versions >= 3.2
-            if ( 3 < majorVersion || 2 <= minorVersion ) {
+            if (3 < majorVersion || 2 <= minorVersion) {
                 Util.checkGLError(); // Make sure we have no errors up to this point
 
                 try {
@@ -6369,7 +6367,8 @@ public class ContextCapabilities{
         return profileMask;
     }
 
-    static void unloadAllStubs() {}
+    static void unloadAllStubs() {
+    }
 
     ContextCapabilities(boolean forwardCompatible) throws LWJGLException {
         /*Set<String> supported_extensions = initAllStubs(forwardCompatible);
@@ -6765,18 +6764,16 @@ public class ContextCapabilities{
         //tracker.initGLFW();
 
 
-
-
-        try{
+        try {
             GLCapabilities capabilities = GL.getCapabilities();
             Field[] theirFields = GLCapabilities.class.getDeclaredFields();
             Field[] ourFields = ContextCapabilities.class.getDeclaredFields();
-            for(Field ourField : ourFields){
+            for (Field ourField : ourFields) {
                 int mods = ourField.getModifiers();
-                if(ourField.getType() == Boolean.TYPE &&
+                if (ourField.getType() == Boolean.TYPE &&
                         !Modifier.isStatic(mods) &&
                         Modifier.isPublic(mods) &&
-                        !Modifier.isFinal(mods)){
+                        !Modifier.isFinal(mods)) {
 
                     String name = ourField.getName();
                     Field theirField = Arrays.stream(theirFields).filter(it -> it.getName().equals(name)).findFirst().orElse(null);
@@ -6785,7 +6782,7 @@ public class ContextCapabilities{
                     }
                 }
             }
-        }catch(ReflectiveOperationException e){
+        } catch (ReflectiveOperationException e) {
             throw new RuntimeException(e);
         }
     }

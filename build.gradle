@@ -11,8 +11,8 @@ plugins {
     id 'com.modrinth.minotaur' version "2.+"
 }
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
 
 base.archivesName = project.archives_base_name
 version = project.mod_version+"+"+project.minecraft_version
@@ -35,7 +35,7 @@ loom {
     }
 }
 
-project.ext.lwjglVersion = "3.3.4"
+project.ext.lwjglVersion = "3.3.5"
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -79,7 +79,7 @@ processResources {
 // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
 tasks.withType(JavaCompile).configureEach {
     it.options.encoding = "UTF-8"
-    if (JavaVersion.current().isJava9Compatible()) it.options.release = 8
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_18)) it.options.release = 17
 }
 
 java {
