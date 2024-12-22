@@ -19,10 +19,6 @@ version = project.mod_version+"+"+project.minecraft_version
 group = project.maven_group
 
 repositories {
-    maven {
-        name = "legacy-fabric"
-        url = "https://maven.legacyfabric.net"
-    }
     maven { url "https://jitpack.io" }
     mavenCentral()
 }
@@ -155,8 +151,8 @@ static def fetchGameVersions(){
     json.forEach(ve -> {
         if (ve.stable) {
             def v = ve.version
-            String[] parts = v.split("\\.");
-            int minor = Integer.parseInt(parts[1]);
+            String[] parts = v.split("\\.")
+            int minor = Integer.parseInt(parts[1])
             if (minor >= 8 && minor < 13) {
                 versions.add(v)
             }
