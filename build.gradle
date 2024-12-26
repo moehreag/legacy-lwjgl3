@@ -161,7 +161,7 @@ static def fetchGameVersions(){
             }
         }
     })*/
-    return ["1.2.5"]
+    return ["1.5.2"]
 }
 
 class Version {

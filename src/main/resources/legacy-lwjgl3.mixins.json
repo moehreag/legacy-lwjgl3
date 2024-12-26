@@ -11,6 +11,7 @@
 		"MixinMinecraftDrawVirtualCursor",
 		"MixinMinecraftFixEarlyCrashNoReports",
 		"MixinScreenFixClipboard",
+		"MixinTitleScreen",
 		"MouseMixin",
 		"MixinResourceDownloadThread"
 	],
