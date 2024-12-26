@@ -1,5 +1,6 @@
 package org.lwjgl.opengl;
 
+import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -261,7 +262,10 @@ public final class Display {
 
 	public static void destroy() {
 		// free callbacks
-		Callbacks.glfwFreeCallbacks(handle);
+		assert sizeCallback != null;
+		sizeCallback.free();
+		Mouse.destroy();
+		Keyboard.destroy();
 		GLFWErrorCallback callback = GLFW.glfwSetErrorCallback(null);
 		if (callback != null) {
 			callback.free();
@@ -318,5 +322,9 @@ public final class Display {
 
 	public static void swapBuffers(){
 		GLFW.glfwSwapBuffers(handle);
+	}
+
+	public static void setParent(Canvas c) {
+		/* no-op */
 	}
 }
