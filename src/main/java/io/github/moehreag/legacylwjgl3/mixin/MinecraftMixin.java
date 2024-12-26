@@ -101,7 +101,7 @@ public abstract class MinecraftMixin {
 
 	@Inject(method = "runGame", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;canvas:Ljava/awt/Canvas;", remap = false, ordinal = 1))
 	private void resizeCallback(CallbackInfo ci){
-		if (!this.fullscreen && (Display.getWidth() != this.width || Display.getHeight() != this.height)) {
+		if ((Display.getWidth() != this.width || Display.getHeight() != this.height)) {
 			this.width = Display.getWidth();
 			this.height = Display.getHeight();
 			if (this.width <= 0) {
