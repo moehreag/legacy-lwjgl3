@@ -45,7 +45,7 @@ dependencies {
     implementation "org.lwjgl:lwjgl-glfw"
     implementation "org.lwjgl:lwjgl-openal"
     implementation "org.lwjgl:lwjgl-opengl"
-    for (String platform : ["linux", "windows", "macos", "windows-arm64", "macos-arm64"]){
+    for (String platform : ["linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64"]){
         runtimeOnly "org.lwjgl:lwjgl::natives-$platform"
         runtimeOnly "org.lwjgl:lwjgl-glfw::natives-$platform"
         runtimeOnly "org.lwjgl:lwjgl-openal::natives-$platform"
