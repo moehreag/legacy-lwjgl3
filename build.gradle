@@ -3,11 +3,11 @@ import net.fabricmc.loom.task.RemapJarTask
 import net.ornithemc.ploceus.api.GameSide
 
 plugins {
-    id 'fabric-loom' version "1.8.+"
+    id 'fabric-loom' version "1.9.+"
     id 'com.gradleup.shadow' version '8.+'
     id 'io.freefair.lombok' version "8.+"
     id 'maven-publish'
-    id 'ploceus' version "1.8.+"
+    id 'ploceus' version "1.9.+"
     id 'com.modrinth.minotaur' version "2.+"
 }
 
@@ -52,10 +52,7 @@ dependencies {
         runtimeOnly "org.lwjgl:lwjgl-opengl::natives-$platform"
     }
 
-    //ploceus.addCommonLibraries()
     ploceus.dependOsl("modRuntimeOnly", osl_version, GameSide.MERGED)
-
-
 }
 
 configurations.configureEach {

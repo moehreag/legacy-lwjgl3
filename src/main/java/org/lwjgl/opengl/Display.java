@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import io.github.moehreag.legacylwjgl3.DesktopFileInjector;
+import io.github.moehreag.legacylwjgl3.util.OptifineReflector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.LWJGLException;
@@ -30,6 +31,7 @@ public final class Display {
 	private static GLFWWindowSizeCallback sizeCallback;
 	@Nullable
 	private static ByteBuffer[] cached_icons = null;
+	private static boolean focused;
 
 	private Display() {
 	}
@@ -95,10 +97,9 @@ public final class Display {
 		yPos = YPos;
 	}
 
-	@Nullable
 	public static DisplayMode getDesktopDisplayMode() {
 		DisplayMode[] availableDisplayModes = getAvailableDisplayModes();
-		return Arrays.stream(availableDisplayModes).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
+		return Arrays.stream(availableDisplayModes).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(displayMode);
 	}
 
 	
@@ -191,12 +192,18 @@ public final class Display {
 			// create general callbacks
 			sizeCallback = GLFWWindowSizeCallback.create(Display::resizeCallback);
 			GLFW.glfwSetWindowSizeCallback(handle, sizeCallback);
+			GLFW.glfwSetWindowFocusCallback(handle, GLFWWindowFocusCallback.create((window, focused1) -> {
+				if (window == handle) {
+					focused = focused1;
+				}
+            }));
 			Mouse.create();
 			Keyboard.create();
 			GLFW.glfwShowWindow(handle);
 			if (cached_icons != null) {
 				setIcon(cached_icons);
 			}
+			OptifineReflector.setOFConfigDisplayMode(getDesktopDisplayMode());
 		}
 	}
 
@@ -272,7 +279,7 @@ public final class Display {
 	}
 
 	public static boolean isActive() {
-		return true;
+		return focused;
 	}
 
 	public static void setResizable(boolean isResizable) {
