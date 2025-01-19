@@ -126,14 +126,17 @@ public class GLFWMouseImplementation implements MouseImplementation {
 
     @Override
     public void setCursorPosition(double x, double y) {
-//        this.last_x = x;
-//        this.last_y = y;
+        this.last_x = x;
+        this.last_y = y;
         GLFW.glfwSetCursorPos(this.windowHandle, x, y);
     }
 
     @Override
     public void grabMouse(boolean grab) {
         GLFW.glfwSetInputMode(this.windowHandle, GLFW.GLFW_CURSOR, grab ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
+        if (!grab) {
+            GLFW.glfwSetCursorPos(this.windowHandle, last_x, last_y);
+        }
         this.grabbed = grab;
         this.reset();
     }
