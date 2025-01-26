@@ -12,6 +12,7 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.glfw.GLFWImage.Buffer;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
 public final class Display {
@@ -103,9 +104,15 @@ public final class Display {
         yPos = YPos;
     }
 
+    @Nullable
     public static DisplayMode getDesktopDisplayMode() {
-        DisplayMode[] availableDisplayModes = getAvailableDisplayModes();
-        return Arrays.stream(availableDisplayModes).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(displayMode);
+        long mon = GLFW.glfwGetPrimaryMonitor();
+        GLFWVidMode mode = GLFW.glfwGetVideoMode(mon);
+        if (mode == null) {
+            return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
+        }
+        return new DisplayMode(mode.width(), mode.height(), mode.redBits() + mode.greenBits() + mode.blueBits(),
+                mode.refreshRate());
     }
 
 
@@ -132,17 +139,20 @@ public final class Display {
             }).toArray(ByteBuffer[]::new);
         }
 
-        if (isCreated()) {
-            Buffer buffer = GLFWImage.create(icons.length);
+        if (isCreated() && GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_COCOA) {
+            try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+                Buffer buffer = GLFWImage.malloc(icons.length, memoryStack);
 
-            Arrays.stream(icons).forEach(buf -> {
-                GLFWImage image = GLFWImage.malloc();
-                int size = buf.limit() / 4;
-                int dimension = (int) Math.sqrt(size);
-                buffer.put(image.set(dimension, dimension, buf));
-            });
+                for (int j = 0; j < icons.length; j++) {
+                    var buf = icons[j];
 
-            GLFW.glfwSetWindowIcon(handle, buffer);
+                    int size = (int) Math.sqrt(buf.limit() / 4f);
+                    ByteBuffer byteBuffer = memoryStack.malloc(buf.limit()).put(buf).flip(); // have to copy the buffer from a heap buffer to a direct (off-heap) buffer
+                    buffer.position(j).width(size).height(size).pixels(byteBuffer);
+                }
+
+                GLFW.glfwSetWindowIcon(handle, buffer);
+            }
             return 1;
         } else {
             return 0;
@@ -164,8 +174,6 @@ public final class Display {
     }
 
     public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
-        // Setup an error callback. The default implementation
-
         // Configure GLFW
         GLFW.glfwDefaultWindowHints();
 
@@ -214,7 +222,10 @@ public final class Display {
             resizeCallback(handle, displayMode.getWidth(), displayMode.getHeight());
 
             if (fullscreen) {
-                long monitor = GLFW.glfwGetPrimaryMonitor();
+                long monitor = GLFW.glfwGetWindowMonitor(handle);
+                if (monitor == 0L) {
+                    monitor = GLFW.glfwGetPrimaryMonitor();
+                }
                 GLFW.glfwSetWindowMonitor(getHandle(),
                         monitor,
                         0,
@@ -236,7 +247,6 @@ public final class Display {
                         -1);
             }
 
-            GLFW.glfwSetWindowSize(getHandle(), getWidth(), getHeight());
         } catch (Throwable t) {
             t.printStackTrace();
         }
@@ -296,9 +306,10 @@ public final class Display {
 
 
     public static void setVSyncEnabled(boolean enabled) {
-        GLFW.glfwSwapInterval(enabled ? 1 : 0);
+        if (GLFW.glfwGetCurrentContext() != 0) {
+            GLFW.glfwSwapInterval(enabled ? 1 : 0);
+        }
     }
-
 
     public static boolean wasResized() {
         return window_resized;
