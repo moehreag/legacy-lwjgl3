@@ -26,7 +26,7 @@ public final class Display {
     private static int height;
     private static int xPos;
     private static int yPos;
-    private static boolean window_resized;
+    private static boolean window_resized = true;
     @Nullable
     private static GLFWWindowSizeCallback sizeCallback;
     @Nullable
@@ -321,6 +321,7 @@ public final class Display {
 
     private static void resizeCallback(long window, int width, int height) {
         if (window == handle) {
+            System.out.printf("Resize callback fired, new size = [%s, %s] was = [%s, %s]\n", width, height, Display.width, Display.height);
             window_resized = true;
             Display.width = width;
             Display.height = height;
