@@ -1,16 +1,19 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "io.github.moehreag.legacylwjgl3.mixin",
-  "plugin": "io.github.moehreag.legacylwjgl3.EarlyRiserLoader",
-  "compatibilityLevel": "JAVA_8",
-  "client": [
-    "MixinMinecraftDrawVirtualCursor",
-    "MixinMinecraftFixEarlyCrashNoReports",
-    "MixinMinecraftFixFullscreenResize",
-    "MixinScreenFixClipboard"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+    "required": true,
+    "minVersion": "0.8",
+    "package": "io.github.moehreag.legacylwjgl3.mixin",
+    "plugin": "io.github.moehreag.legacylwjgl3.Lwjgl3MixinPostProcessor",
+    "compatibilityLevel": "JAVA_8",
+    "client": [
+        "AL10Mixin",
+        "ALMixin",
+        "ARBShaderObjectsMixin",
+        "GL11Mixin",
+        "GL20Mixin",
+        "GLCapabilitiesMixin",
+        "MixinMinecraftDrawVirtualCursor",
+        "MixinMinecraftFixEarlyCrashNoReports",
+        "MixinMinecraftFixResize",
+        "MixinScreenFixClipboard"
+    ]
 }
