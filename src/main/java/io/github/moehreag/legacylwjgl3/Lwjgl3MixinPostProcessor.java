@@ -75,7 +75,7 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
             return;
         }
 
-        LOGGER.info("[L3MPP] Injected public static method {}::{}{}", target.name, method.name, method.desc);
+        LOGGER.debug("[L3MPP] Injected public static method {}::{}{}", target.name, method.name, method.desc);
         method.access &= ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
         method.access |= Opcodes.ACC_PUBLIC;
     }
@@ -88,7 +88,7 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 
         final var stub = CodeGen.createDelegatingMethod(target, method, Annotations.getValue(node));
         target.methods.add(stub);
-        LOGGER.info("[L3MPP] Created method {}::[{} -> {}]{}", target.name, stub.name, method.name, method.desc);
+        LOGGER.debug("[L3MPP] Created method {}::[{} -> {}]{}", target.name, stub.name, method.name, method.desc);
     }
 
     @Override

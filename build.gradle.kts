@@ -19,36 +19,25 @@ version = "${project.property("mod_version")}+${project.property("minecraft_vers
 group = project.property("maven_group") as String
 
 repositories {
-    maven("https://jitpack.io")
     mavenCentral()
 }
 
-val lwjglVersion = "3.3.5"
+val lwjglVersion = properties["lwjgl_version"]
 
 unimined {
     minecraft {
         ornitheMaven()
         fabricMaven()
 
-        version("1.8.9")
+        version(properties["minecraft_version"].toString())
 
-        merged {
-            legacyFabric {
-                loader("0.16.10")
-            }
-
-            /*customPatcher(object : JarModMinecraftTransformer(project, this@minecraft as MinecraftProvider) {}) {
-            }*/
+        legacyFabric {
+            loader(properties["loader_version"]!!)
         }
 
         mappings {
             calamus()
-            feather(build = 28)
-            /*stub.withMappings("intermediary", listOf("yarn")) {
-                c("net/minecraft/unmapped/C_6697291", listOf()) {
-                    f("f_8155902", "Ljava/lang/String;", listOf("id0"))
-                }
-            }*/
+            feather(build = properties["mappings_build"]?.toString()?.toInt()!!)
         }
 
         runs {
@@ -63,17 +52,12 @@ unimined {
 }
 
 dependencies {
-    // TODO: find a way to make custom minecraft provider for optifine patched jars
-    // "jarMod"(files("/home/flowey/dev/modding/legacy-optimization/work-0/merged.jar"))
-    // implementation(files("/home/flowey/dev/modding/legacy-optimization/work-0/launchwrapper-of-2.2.jar"))
-
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
     implementation("org.lwjgl:lwjgl")
     implementation("org.lwjgl:lwjgl-glfw")
     implementation("org.lwjgl:lwjgl-openal")
     implementation("org.lwjgl:lwjgl-opengl")
-
 
     listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
         runtimeOnly("org.lwjgl:lwjgl::natives-$platform")
@@ -116,7 +100,6 @@ tasks {
             exclude(dependency("org.lwjgl:lwjgl-opengl:$lwjglVersion"))
         }
         dependencies {
-            include(dependency("org.javassist:javassist:3.29.2-GA"))
             include(dependency("org.lwjgl:lwjgl:$lwjglVersion"))
             include(dependency("org.lwjgl:lwjgl-glfw:$lwjglVersion"))
             include(dependency("org.lwjgl:lwjgl-openal:$lwjglVersion"))
