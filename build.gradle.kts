@@ -1,5 +1,8 @@
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import java.net.URI
+
 plugins {
-    id("com.gradleup.shadow") version "8.+"
     id("io.freefair.lombok") version "8.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
@@ -45,9 +48,6 @@ unimined {
             config("client") { javaVersion = targetJava }
             config("server") { enabled = false }
         }
-
-        defaultRemapJar = false
-        remap(tasks.shadowJar.get())
     }
 }
 
@@ -65,6 +65,11 @@ dependencies {
         runtimeOnly("org.lwjgl:lwjgl-openal::natives-$platform")
         runtimeOnly("org.lwjgl:lwjgl-opengl::natives-$platform")
     }
+
+    "include"("org.lwjgl:lwjgl:$lwjglVersion")
+    "include"("org.lwjgl:lwjgl-glfw:$lwjglVersion")
+    "include"("org.lwjgl:lwjgl-openal:$lwjglVersion")
+    "include"("org.lwjgl:lwjgl-opengl:$lwjglVersion")
 }
 
 configurations.configureEach {
@@ -92,22 +97,53 @@ tasks {
         }
     }
 
-    shadowJar {
-        minimize {
-            exclude(dependency("org.lwjgl:lwjgl:$lwjglVersion"))
-            exclude(dependency("org.lwjgl:lwjgl-glfw:$lwjglVersion"))
-            exclude(dependency("org.lwjgl:lwjgl-openal:$lwjglVersion"))
-            exclude(dependency("org.lwjgl:lwjgl-opengl:$lwjglVersion"))
-        }
-        dependencies {
-            include(dependency("org.lwjgl:lwjgl:$lwjglVersion"))
-            include(dependency("org.lwjgl:lwjgl-glfw:$lwjglVersion"))
-            include(dependency("org.lwjgl:lwjgl-openal:$lwjglVersion"))
-            include(dependency("org.lwjgl:lwjgl-opengl:$lwjglVersion"))
+    this.modrinth {
+        dependsOn("publish")
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            artifact(tasks.getByName("remapJar"))
         }
     }
 
-    build {
-        dependsOn("remapShadowJar")
+    // select the repositories you want to publish to
+    repositories {
+        val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
+        val repository = if (isSnapshot) "snapshots" else "releases"
+        maven("https://moehreag.duckdns.org/maven/$repository") {
+            name = "owlMaven"
+            credentials(PasswordCredentials::class.java)
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+        }
+    }
+}
+
+modrinth {
+    token = System.getenv("MODRINTH_TOKEN")
+    projectId = "lpiIRiAZ"
+    versionType = "release"
+    uploadFile = "remapJar"
+    additionalFiles = listOf("sourcesJar")
+    loaders = listOf("fabric", "quilt")
+
+    gameVersions = run {
+        URI("https://meta.ornithemc.net/v3/versions/game")
+            .toURL()
+            .openStream()
+            .use { JsonParser.parseReader(it.bufferedReader()).asJsonArray }
+            .mapNotNull {
+                it as JsonObject
+                if (it["stable"].asBoolean) it["version"].asString else null
+            }
+    }
+
+    dependencies {
+        optional.project("osl")
     }
 }
