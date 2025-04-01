@@ -6,7 +6,7 @@ plugins {
     id("io.freefair.lombok") version "8.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("xyz.wagyourtail.unimined") version "1.3.13"
+    id("xyz.wagyourtail.unimined") version "1.3.14-SNAPSHOT"
 }
 
 val targetJava = JavaVersion.VERSION_17
@@ -53,23 +53,19 @@ unimined {
 
 dependencies {
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
-
-    implementation("org.lwjgl:lwjgl")
-    implementation("org.lwjgl:lwjgl-glfw")
-    implementation("org.lwjgl:lwjgl-openal")
-    implementation("org.lwjgl:lwjgl-opengl")
+    "include"(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
     listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
-        runtimeOnly("org.lwjgl:lwjgl::natives-$platform")
-        runtimeOnly("org.lwjgl:lwjgl-glfw::natives-$platform")
-        runtimeOnly("org.lwjgl:lwjgl-openal::natives-$platform")
-        runtimeOnly("org.lwjgl:lwjgl-opengl::natives-$platform")
+        "include"(runtimeOnly("org.lwjgl:lwjgl::natives-$platform")!!)
+        "include"(runtimeOnly("org.lwjgl:lwjgl-glfw::natives-$platform")!!)
+        "include"(runtimeOnly("org.lwjgl:lwjgl-openal::natives-$platform")!!)
+        "include"(runtimeOnly("org.lwjgl:lwjgl-opengl::natives-$platform")!!)
     }
 
-    "include"("org.lwjgl:lwjgl:$lwjglVersion")
-    "include"("org.lwjgl:lwjgl-glfw:$lwjglVersion")
-    "include"("org.lwjgl:lwjgl-openal:$lwjglVersion")
-    "include"("org.lwjgl:lwjgl-opengl:$lwjglVersion")
+    "include"(implementation("org.lwjgl:lwjgl:$lwjglVersion")!!)
+    "include"(implementation("org.lwjgl:lwjgl-glfw:$lwjglVersion")!!)
+    "include"(implementation("org.lwjgl:lwjgl-openal:$lwjglVersion")!!)
+    "include"(implementation("org.lwjgl:lwjgl-opengl:$lwjglVersion")!!)
 }
 
 configurations.configureEach {

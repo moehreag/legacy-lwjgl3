@@ -24,7 +24,7 @@ public abstract class GL11Mixin {
     public static void glFogfv(int pname, FloatBuffer params) {
     }
 
-    @CreateStub("glFog")
+    @CreateStub("glLight")
     @Shadow
     public static void glLightfv(int light, int pname, FloatBuffer params) {
     }
