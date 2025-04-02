@@ -6,7 +6,7 @@ plugins {
     id("io.freefair.lombok") version "8.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("xyz.wagyourtail.unimined") version "1.3.14-SNAPSHOT"
+    id("xyz.wagyourtail.unimined") version "1.3.14"
 }
 
 val targetJava = JavaVersion.VERSION_17
@@ -102,7 +102,6 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(tasks.getByName("remapJar"))
         }
     }
 
@@ -135,7 +134,10 @@ modrinth {
             .use { JsonParser.parseReader(it.bufferedReader()).asJsonArray }
             .mapNotNull {
                 it as JsonObject
-                if (it["stable"].asBoolean) it["version"].asString else null
+                if (it["stable"].asBoolean) {
+                    val minor = Integer.parseInt(it["version"].asString.split(".")[1])
+                    if (minor in 8..12) it["version"].asString else null
+                } else null
             }
     }
 
