@@ -5,7 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class LegacyLWJGL3 implements ModInitializer {
-	public static final Logger LOGGER = LogManager.getLogger();
+	public static final Logger LOGGER = LogManager.getLogger("LegacyLWJGL3");
 
 	@Override
 	public void onInitialize() {

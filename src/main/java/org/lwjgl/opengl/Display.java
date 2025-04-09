@@ -26,7 +26,7 @@ public final class Display {
     private static int height;
     private static int xPos;
     private static int yPos;
-    private static boolean window_resized;
+    private static boolean window_resized = true;
     @Nullable
     private static GLFWWindowSizeCallback sizeCallback;
     @Nullable
