@@ -102,6 +102,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
+            artifact(tasks["remapJar"])
         }
     }
 
@@ -123,8 +124,8 @@ modrinth {
     token = System.getenv("MODRINTH_TOKEN")
     projectId = "lpiIRiAZ"
     versionType = "release"
-    uploadFile = "remapJar"
-    additionalFiles = listOf("sourcesJar")
+    uploadFile = tasks["remapJar"]
+    additionalFiles = listOf(tasks["sourcesJar"])
     loaders = listOf("fabric", "quilt")
 
     gameVersions = run {
