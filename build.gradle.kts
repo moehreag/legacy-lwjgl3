@@ -45,7 +45,13 @@ unimined {
 
         runs {
             off = false
-            config("client") { javaVersion = targetJava }
+            config("client") {
+                javaVersion = targetJava
+                if (project.properties["native_glfw"] == "true") {
+                    val glfwPath = project.properties.getOrDefault("native_glfw_path", "/usr/lib/libglfw.so")
+                    jvmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
+                }
+            }
             config("server") { enabled = false }
         }
     }
