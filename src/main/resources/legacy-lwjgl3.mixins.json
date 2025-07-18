@@ -12,8 +12,9 @@
         "GL20Mixin",
         "GLCapabilitiesMixin",
         "LibraryLWJGLOpenALMixin",
+        "MinecraftAccessor",
+        "MinecraftAppletMixin",
         "MixinMinecraftDrawVirtualCursor",
-        "MixinMinecraftFixEarlyCrashNoReports",
         "MixinMinecraftFixResize",
         "MixinScreenFixClipboard"
     ]

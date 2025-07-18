@@ -3,10 +3,11 @@ import com.google.gson.JsonParser
 import java.net.URI
 
 plugins {
+    id("fabric-loom") version "1.11.+"
+    id("ploceus") version "1.11.+"
     id("io.freefair.lombok") version "8.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("xyz.wagyourtail.unimined") version "1.3.14"
 }
 
 val targetJava = JavaVersion.VERSION_17
@@ -27,8 +28,25 @@ repositories {
 
 val lwjglVersion = properties["lwjgl_version"]
 
-unimined {
+loom {
+    clientOnlyMinecraftJar()
+    runs {
+        getByName("client") {
+            if (project.properties["native_glfw"] == "true") {
+                val glfwPath = project.properties.getOrDefault("native_glfw_path", "/usr/lib/libglfw.so")
+                vmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
+            }
+        }
+    }
+}
+
+ploceus {
+    clientOnlyMappings()
+}
+
+/*unimined {
     minecraft {
+        side("client")
         ornitheMaven()
         fabricMaven()
 
@@ -55,9 +73,17 @@ unimined {
             config("server") { enabled = false }
         }
     }
-}
+}*/
 
 dependencies {
+    minecraft("com.mojang:minecraft:${properties["minecraft_version"].toString()}")
+    mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
+    exceptions(ploceus.raven(properties["raven_build"].toString()))
+    signatures(ploceus.sparrow(properties["sparrow_build"].toString()))
+    nests(ploceus.nests(properties["nests_build"].toString()))
+
+    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
+
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
     "include"(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 

@@ -25,11 +25,11 @@ public abstract class MixinMinecraftFixResize {
     @Shadow
     protected abstract void onResolutionChanged(int width, int height);
 
-    @Redirect(method = "updateWindow", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;" +
+    /*@Redirect(method = "updateWindow", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;" +
         "fullscreen:Z"))
     private boolean noFullscreenCheckForResize(Minecraft instance) {
         return GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WIN32 && fullscreen;
-    }
+    }*/
 
     // this makes optifine happy
     @Inject(method = "init", at = @At("TAIL"))

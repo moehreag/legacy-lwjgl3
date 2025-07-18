@@ -1,9 +1,7 @@
 package io.github.moehreag.legacylwjgl3.util;
 
-import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
-import org.lwjgl.opengl.Sync;
 
 public class GlStateManager {
 	public static void color4f(float r, float g, float b, float a) {

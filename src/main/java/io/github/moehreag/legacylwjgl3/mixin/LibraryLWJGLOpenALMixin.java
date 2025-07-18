@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import paulscode.sound.libraries.LibraryLWJGLOpenAL;
 
-@Mixin(LibraryLWJGLOpenAL.class)
+@Mixin(value = LibraryLWJGLOpenAL.class, remap = false)
 public class LibraryLWJGLOpenALMixin {
 
 	@Unique
@@ -25,7 +25,7 @@ public class LibraryLWJGLOpenALMixin {
 		}
 	}
 
-	@Redirect(method = "libraryCompatible", at = @At(value = "INVOKE", target = "Lorg/lwjgl/openal/AL;destroy()V"))
+	@Redirect(method = "libraryCompatible", at = @At(value = "INVOKE", target = "Lorg/lwjgl/openal/AL;destroy()V", remap = false))
 	private static void libraryCompatible$replaceALDestroy() {
 		exitAL();
 	}

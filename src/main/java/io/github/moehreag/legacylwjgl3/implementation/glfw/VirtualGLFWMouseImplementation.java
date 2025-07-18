@@ -14,11 +14,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
+import io.github.moehreag.legacylwjgl3.mixin.MinecraftAccessor;
 import io.github.moehreag.legacylwjgl3.util.GlStateManager;
 import io.github.moehreag.legacylwjgl3.util.TextureUtil;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
-import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -152,14 +152,14 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 	}
 
 	private boolean mayVirtualize() {
-		return LegacyLWJGL3.getMinecraft().world != null;
+		return MinecraftAccessor.getInstance().world != null;
 	}
 
 	/*
 	 * whether we are on a screen where the virtual cursor is allowed
 	 */
 	private boolean isValidScreen() {
-		Screen s = LegacyLWJGL3.getMinecraft().screen;
+		Screen s = MinecraftAccessor.getInstance().screen;
 		return s instanceof InventoryMenuScreen || s instanceof ChatScreen;
 	}
 
@@ -278,11 +278,11 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			GlStateManager.enableTexture();
 			GlStateManager.enableAlphaTest();
 			GlStateManager.enableBlend();
-			GlStateManager.disableLighting();
 			GlStateManager.color3f(1, 1, 1);
 			GlStateManager.bindTexture(images[current]);
 
-			float scale = new Window(LegacyLWJGL3.getMinecraft().options, LegacyLWJGL3.getMinecraft().width, LegacyLWJGL3.getMinecraft().height).scale;
+			var mc = MinecraftAccessor.getInstance();
+			float scale = new Window(mc.options, mc.width, mc.height).scale;
 			double x = getX();
 			double y = getY();
 			drawTexture((x - getCurrent().xhot) / scale, (Display.getHeight() - y - getCurrent().yhot) / scale, getCurrent().width / scale, getCurrent().height / scale, getCurrent().width / scale, getCurrent().height / scale);
@@ -390,6 +390,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			}
 
 			LOGGER.info("Falling back to packaged cursor");
+
 			return this.getClass().getResourceAsStream("/assets/virtual_cursor/default");
 		}
 	}

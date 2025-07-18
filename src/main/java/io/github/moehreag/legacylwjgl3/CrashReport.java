@@ -22,7 +22,7 @@ public class CrashReport {
 		try {
 			report.append("Generated ").append(new SimpleDateFormat().format(new Date())).append("\n");
 			report.append("\n");
-			report.append("Minecraft: Minecraft 1.2.5\n");
+			report.append("Minecraft: Minecraft b1.7.3\n");
 			report.append("OS: ")
 				.append(System.getProperty("os.name"))
 				.append(" (")
@@ -80,6 +80,5 @@ public class CrashReport {
 		var6.append("\n");
 
 		System.out.println(var6);
-		//JOptionPane.showMessageDialog(null, var6, "Minecraft has crashed!", JOptionPane.ERROR_MESSAGE);
 	}
 }
