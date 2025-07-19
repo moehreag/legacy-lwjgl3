@@ -7,11 +7,11 @@
   "authors": [
     "All the LWJGL 2 and 3 people!",
     "gudenau for creating the original forge mod",
-    "Zarzelcow (me) porting it to fabric",
+    "Zarzelcow porting it to fabric",
     "moehreag (updating, fixing)"
   ],
   "contact": {
-    "sources": "https://github.com/Zarzelcow/legacy-lwjgl3"
+    "sources": "https://github.com/moehreag/legacy-lwjgl3"
   },
   "license": "LGPL-2.1-only",
   "icon": "assets/legacy-lwjgl3/icon.png",

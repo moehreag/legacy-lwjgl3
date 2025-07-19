@@ -7,6 +7,7 @@
     "client": [
         "AL10Mixin",
         "ALMixin",
+        "ARBOcclusionQueryMixin",
         "ARBShaderObjectsMixin",
         "GL11Mixin",
         "GL20Mixin",
@@ -16,6 +17,8 @@
         "MinecraftAppletMixin",
         "MixinMinecraftDrawVirtualCursor",
         "MixinMinecraftFixResize",
-        "MixinScreenFixClipboard"
+        "MixinResourceDownloadThread",
+        "MixinScreenFixClipboard",
+        "MouseMixin"
     ]
 }

@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@SuppressWarnings("removal")
 @Mixin(value = MinecraftApplet.class, priority = 1100)
 public abstract class MinecraftAppletMixin extends Applet {
 
@@ -53,7 +54,7 @@ public abstract class MinecraftAppletMixin extends Applet {
 		if (this.getParameter("server") != null && this.getParameter("port") != null) {
 			minecraft.setServerAddressAndPort(this.getParameter("server"), Integer.parseInt(this.getParameter("port")));
 		}
-		minecraft.paused = !"true".equals(this.getParameter("stand-alone"));
+		minecraft.appletMode = !"true".equals(this.getParameter("stand-alone"));
 		launcher.setVisible(false);
 		launcher.stop();
 		launcher.destroy();

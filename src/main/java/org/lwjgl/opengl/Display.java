@@ -143,13 +143,12 @@ public final class Display {
             try (MemoryStack memoryStack = MemoryStack.stackPush()) {
                 Buffer buffer = GLFWImage.malloc(icons.length, memoryStack);
 
-                for (int j = 0; j < icons.length; j++) {
-                    var buf = icons[j];
-
-                    int size = (int) Math.sqrt(buf.limit() / 4f);
-                    ByteBuffer byteBuffer = memoryStack.malloc(buf.limit()).put(buf).flip(); // have to copy the buffer from a heap buffer to a direct (off-heap) buffer
-                    buffer.position(j).width(size).height(size).pixels(byteBuffer);
-                }
+                Arrays.stream(icons).forEach(buf -> {
+                    GLFWImage image = GLFWImage.malloc();
+                    int size = buf.limit() / 4;
+                    int dimension = (int) Math.sqrt(size);
+                    buffer.put(image.set(dimension, dimension, buf));
+                });
 
                 GLFW.glfwSetWindowIcon(handle, buffer);
             }
@@ -173,6 +172,14 @@ public final class Display {
         GLFW.glfwSwapBuffers(handle);
     }
 
+    public static void create() {
+        try {
+            create(new PixelFormat());
+        } catch (LWJGLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
         // Configure GLFW
         GLFW.glfwDefaultWindowHints();
@@ -184,7 +191,7 @@ public final class Display {
 
         GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, GLFW.GLFW_NATIVE_CONTEXT_API);
-        if (!System.getProperty("os.name").contains("mac")) { // macOS does not support the compat profile
+        if (GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_COCOA) { // macOS does not support the compat profile
             GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
             GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
             GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
@@ -195,7 +202,7 @@ public final class Display {
         GLFW.glfwWindowHint(GLFW.GLFW_STEREO, pixelFormat.isStereo() ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
 
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, 0);
-        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
+        GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, 1);
         handle =
                 GLFW.glfwCreateWindow(displayMode.getWidth(), displayMode.getHeight(), title, MemoryUtil.NULL, MemoryUtil.NULL);
         width = displayMode.getWidth();
@@ -273,7 +280,10 @@ public final class Display {
 
     public static void destroy() {
         // free callbacks
-        Callbacks.glfwFreeCallbacks(handle);
+        assert sizeCallback != null;
+        sizeCallback.free();
+        Mouse.destroy();
+        Keyboard.destroy();
         GLFWErrorCallback callback = GLFW.glfwSetErrorCallback(null);
         if (callback != null) {
             callback.free();
@@ -327,5 +337,9 @@ public final class Display {
             Display.width = width;
             Display.height = height;
         }
+    }
+
+    public static void swapBuffers(){
+        GLFW.glfwSwapBuffers(handle);
     }
 }
