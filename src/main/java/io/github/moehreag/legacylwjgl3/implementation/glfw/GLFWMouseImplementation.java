@@ -48,8 +48,8 @@ public class GLFWMouseImplementation implements MouseImplementation {
                 button_states[button] = state;
         });
         this.posCallback = GLFWCursorPosCallback.create((window, xpos, ypos) -> {
-            int x = (int) (xpos * Display.getXScale());
-            int y = (int) (Display.getHeight() - ypos * Display.getYScale()); // I don't know why but this un-inverts the y motion of mouse inputs
+            int x = (int) (xpos);
+            int y = (int) (Display.getHeight() - ypos); // I don't know why but this un-inverts the y motion of mouse inputs
             double dx = x - last_x;
             double dy = y - last_y;
             if (dx != 0 || dy != 0) {

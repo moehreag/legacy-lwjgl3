@@ -10,7 +10,7 @@ public final class DisplayMode {
     private final boolean fullscreen;
 
     public DisplayMode(int width, int height) {
-        this(width, height, 0, 0, false);
+        this(width, height, 0, -1, false);
     }
 
     DisplayMode(int width, int height, int bpp, int freq) {

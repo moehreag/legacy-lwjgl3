@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import io.github.moehreag.legacylwjgl3.DesktopFileInjector;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.LWJGLException;
@@ -23,16 +25,21 @@ public final class Display {
 	private static boolean resizable;
 	@NotNull
 	private static DisplayMode displayMode = new DisplayMode(640, 480, 24, 60);
-	private static int scaledWidth;
-	private static int scaledHeight;
+	private static int width, height,
+			framebufferWidth, framebufferHeight,
+			windowedWidth, windowedHeight;
 	@Getter
-	private static float xScale = 1, yScale = 1;
-	private static int unscaledWidth, unscaledHeight;
-	private static int xPos;
-	private static int yPos;
+	@Setter
+	private static int x;
+	private static int windowedX;
+	@Setter
+	@Getter
+	private static int y;
+	private static int windowedY;
 	private static boolean window_resized = true;
-	@Nullable
-	private static GLFWWindowSizeCallback sizeCallback;
+	private static boolean minimized;
+	@Getter
+	private static boolean iconified;
 	@Nullable
 	private static ByteBuffer[] cached_icons = null;
 	private static boolean focused;
@@ -77,41 +84,44 @@ public final class Display {
 	}
 
 	public static int getWidth() {
-		return scaledWidth;
+		return framebufferWidth;
 	}
 
 	public static void setWidth(int width) {
-		Display.scaledWidth = width;
+		Display.framebufferWidth = width;
 	}
 
 	public static int getHeight() {
-		return scaledHeight;
+		return framebufferHeight;
 	}
 
 	public static void setHeight(int height) {
-		Display.scaledHeight = height;
+		Display.framebufferHeight = height;
 	}
 
-	public static int getXPos() {
-		return xPos;
+	public static void setScreenWidth(int width) {
+		Display.width = width;
 	}
 
-	public static void setXPos(int XPos) {
-		xPos = XPos;
+	public static int getScreenWidth() {
+		return width;
 	}
 
-	public static int getYPos() {
-		return yPos;
+	public static void setScreenHeight(int height) {
+		Display.height = height;
 	}
 
-	public static void setYPos(int YPos) {
-		yPos = YPos;
+	public static int getScreenHeight() {
+		return height;
 	}
 
 	@Nullable
 	public static DisplayMode getDesktopDisplayMode() {
-		long mon = GLFW.glfwGetPrimaryMonitor();
-		GLFWVidMode mode = GLFW.glfwGetVideoMode(mon);
+		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
+		if (primaryMonitor == 0) {
+			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		}
+		GLFWVidMode mode = GLFW.glfwGetVideoMode(primaryMonitor);
 		if (mode == null) {
 			return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
 		}
@@ -178,6 +188,9 @@ public final class Display {
 	}
 
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
+		windowedWidth = width = displayMode.getWidth();
+		windowedHeight = height = displayMode.getHeight();
+		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
 		// Configure GLFW
 		GLFW.glfwDefaultWindowHints();
 
@@ -202,23 +215,43 @@ public final class Display {
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
 		handle =
 				GLFW.glfwCreateWindow(displayMode.getWidth(), displayMode.getHeight(), title, MemoryUtil.NULL, MemoryUtil.NULL);
-		unscaledWidth = displayMode.getWidth();
-		unscaledHeight = displayMode.getHeight();
+
 		GLFW.glfwMakeContextCurrent(handle);
 		GL.createCapabilities();
+
+		if (primaryMonitor != 0) {
+			var mode = GLFW.glfwGetVideoMode(primaryMonitor);
+			var xBox = new int[1];
+			var yBox = new int[1];
+			GLFW.glfwGetMonitorPos(primaryMonitor, xBox, yBox);
+			windowedX = x = xBox[0] + mode.width()/2 - width/2;
+			windowedY = y = yBox[0] + mode.height()/2 - height/2;
+		} else if (GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_WAYLAND) {
+			var xBox = new int[1];
+			var yBox = new int[1];
+			GLFW.glfwGetWindowPos(handle, xBox, yBox);
+			windowedX = x = xBox[0];
+			windowedY = y = yBox[0];
+		}
+		setFullscreen(false);
+		int[] xBox = new int[1];
+		int[] yBox = new int[1];
+		GLFW.glfwGetFramebufferSize(handle, xBox, yBox);
+		framebufferWidth = xBox[0] <= 0 ? 1 : xBox[0];
+		framebufferHeight = yBox[0] <= 0 ? 1 : yBox[0];
+
 		// create general callbacks
-		sizeCallback = GLFWWindowSizeCallback.create(Display::resizeCallback);
-		GLFW.glfwSetWindowSizeCallback(handle, sizeCallback);
+		GLFW.glfwSetWindowSizeCallback(handle, GLFWWindowSizeCallback.create(Display::resizeCallback));
+		GLFW.glfwSetFramebufferSizeCallback(handle, GLFWFramebufferSizeCallback.create(Display::onFramebufferResize));
 		GLFW.glfwSetWindowFocusCallback(handle, (window, focused1) -> {
 			if (window == handle) {
 				focused = focused1;
 			}
 		});
-		GLFW.glfwSetWindowContentScaleCallback(handle, GLFWWindowContentScaleCallback.create((window, xscale, yscale) -> {
-			if (window != handle) return;
-			xScale = xscale;
-			yScale = yscale;
-			resizeCallback(handle, unscaledWidth, unscaledHeight);
+		GLFW.glfwSetWindowIconifyCallback(handle, GLFWWindowIconifyCallback.create(Display::onIconify));
+		GLFW.glfwSetWindowPosCallback(handle, GLFWWindowPosCallback.create((window, xpos, ypos) -> {
+			x = xpos;
+			y = ypos;
 		}));
 		Mouse.create();
 		Keyboard.create();
@@ -228,46 +261,128 @@ public final class Display {
 		}
 	}
 
+	private static void onIconify(long window, boolean iconified) {
+		Display.iconified = iconified;
+	}
+
+	private static void onFramebufferResize(long window, int framebufferWidth, int framebufferHeight) {
+		if (window != handle) return;
+		int prevWidth = Display.framebufferWidth;
+		int prevHeight = Display.framebufferHeight;
+		if (framebufferWidth != 0 && framebufferHeight != 0) {
+			minimized = false;
+			Display.framebufferWidth = framebufferWidth;
+			Display.framebufferHeight = framebufferHeight;
+			if (Display.framebufferWidth != prevWidth || Display.framebufferHeight != prevHeight) {
+				window_resized = true;
+			}
+		} else {
+			minimized = true;
+		}
+	}
+
 	public static void setFullscreen(boolean fullscreen) {
 
 		try {
-			resizeCallback(handle, displayMode.getWidth(), displayMode.getHeight());
+			boolean isFullscreen = GLFW.glfwGetWindowMonitor(handle) != 0;
 
 			if (fullscreen) {
-				long monitor = GLFW.glfwGetWindowMonitor(handle);
-				if (monitor == 0L) {
-					monitor = GLFW.glfwGetPrimaryMonitor();
+				var monitor = getPrimaryMonitor();
+				if (monitor == 0) {
+					LegacyLWJGL3.LOGGER.warn("Failed to find monitor for fullscreen");
+					return;
 				}
+				if (!isFullscreen) {
+					windowedX = x;
+					windowedY = y;
+					windowedWidth = width;
+					windowedHeight = height;
+				}
+				x = 0;
+				y = 0;
+				var mode = GLFW.glfwGetVideoMode(monitor);
+				width = mode.width();
+				height = mode.height();
 				GLFW.glfwSetWindowMonitor(getHandle(),
 						monitor,
-						0,
-						0,
-						getWidth(),
-						getHeight(),
-						getDisplayMode().getFrequency());
-				setXPos(getDisplayMode().getWidth() / 2);
-				setYPos(getDisplayMode().getHeight() / 2);
+						x,
+						y,
+						width,
+						height,
+						mode.refreshRate());
 			} else {
-				setXPos(getXPos() - getWidth() / 2);
-				setYPos(getYPos() - getHeight() / 2);
+				x = windowedX;
+				y = windowedY;
+				width = windowedWidth;
+				height = windowedHeight;
 				GLFW.glfwSetWindowMonitor(getHandle(),
 						0L,
-						getXPos(), // need a xPos
-						getYPos(), // need a yPos
-						getWidth(),
-						getHeight(),
-						-1);
+						x,
+						y,
+						width,
+						height,
+						GLFW.GLFW_DONT_CARE);
 			}
+			window_resized = true;
 
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
 	}
 
+	private static int clamp(int value, int min, int max) {
+		return value < min ? min : Math.min(value, max);
+	}
+
+	private static long getPrimaryMonitor() {
+		long l = GLFW.glfwGetWindowMonitor(handle);
+		if (l != 0L) {
+			return l;
+		} else {
+			int xStart = x;
+			int xEnd = xStart + getScreenWidth();
+			int yStart = y;
+			int yEnd = yStart + getScreenHeight();
+			int largestArea = -1;
+			long monitor = 0;
+			long primary = GLFW.glfwGetPrimaryMonitor();
+			var buf = GLFW.glfwGetMonitors();
+			if (buf == null) return 0;
+			for (int i = 0; i < buf.limit(); i++) {
+				long monitor2 = buf.get(i);
+				int[] posXBox = new int[1], posYBox = new int[1];
+				GLFW.glfwGetMonitorPos(monitor2, posXBox, posYBox);
+				var currentMode = GLFW.glfwGetVideoMode(monitor2);
+				int monitorXStart = posXBox[0];
+				int monitorXEnd = monitorXStart + currentMode.width();
+				int monitorYStart = posYBox[0];
+				int monitorYEnd = monitorYStart + currentMode.height();
+				int left = clamp(xStart, monitorXStart, monitorXEnd);
+				int right = clamp(xEnd, monitorXStart, monitorXEnd);
+				int top = clamp(yStart, monitorYStart, monitorYEnd);
+				int bottom = clamp(yEnd, monitorYStart, monitorYEnd);
+				int maxWidth = Math.max(0, right - left);
+				int maxHeight = Math.max(0, bottom - top);
+				int maxArea = maxWidth * maxHeight;
+				if (maxArea > largestArea) {
+					monitor = monitor2;
+					largestArea = maxArea;
+				} else if (maxArea == largestArea && primary == monitor2) {
+					monitor = monitor2;
+				}
+			}
+
+			return monitor;
+		}
+	}
+
 	@NotNull
 	public static DisplayMode[] getAvailableDisplayModes() {
-		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
-		if (primaryMonitor == MemoryUtil.NULL) {
+		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
+		if (primaryMonitor == 0) {
+			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		}
+		if (primaryMonitor == 0) {
 			return new DisplayMode[0];
 		} else {
 			GLFWVidMode.Buffer videoModes = GLFW.glfwGetVideoModes(primaryMonitor);
@@ -328,16 +443,14 @@ public final class Display {
 	}
 
 	public static boolean isVisible() {
-		return GLFW.glfwGetWindowAttrib(handle, GLFW.GLFW_VISIBLE) != 0;
+		return !minimized;
 	}
 
 	private static void resizeCallback(long window, int width, int height) {
 		if (window == handle) {
 			window_resized = true;
-			Display.unscaledWidth = width;
-			Display.unscaledHeight = height;
-			scaledWidth = (int) (width*xScale);
-			scaledHeight = (int) (height*yScale);
+			Display.width = width;
+			Display.height = height;
 		}
 	}
 }
