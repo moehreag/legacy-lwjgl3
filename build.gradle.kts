@@ -23,6 +23,7 @@ group = project.property("maven_group") as String
 
 repositories {
     mavenCentral()
+    maven("https://central.sonatype.com/repository/maven-snapshots")
 }
 
 val lwjglVersion = properties["lwjgl_version"]
@@ -63,13 +64,13 @@ dependencies {
 
     listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
         "include"(runtimeOnly("org.lwjgl:lwjgl::natives-$platform")!!)
-        "include"(runtimeOnly("org.lwjgl:lwjgl-glfw::natives-$platform")!!)
+        "include"(runtimeOnly("org.lwjgl:lwjgl-sdl::natives-$platform")!!)
         "include"(runtimeOnly("org.lwjgl:lwjgl-openal::natives-$platform")!!)
         "include"(runtimeOnly("org.lwjgl:lwjgl-opengl::natives-$platform")!!)
     }
 
     "include"(implementation("org.lwjgl:lwjgl:$lwjglVersion")!!)
-    "include"(implementation("org.lwjgl:lwjgl-glfw:$lwjglVersion")!!)
+    "include"(implementation("org.lwjgl:lwjgl-sdl:$lwjglVersion")!!)
     "include"(implementation("org.lwjgl:lwjgl-openal:$lwjglVersion")!!)
     "include"(implementation("org.lwjgl:lwjgl-opengl:$lwjglVersion")!!)
 }

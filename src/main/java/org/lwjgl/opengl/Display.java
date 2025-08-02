@@ -1,26 +1,46 @@
 package org.lwjgl.opengl;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
+import io.github.moehreag.legacylwjgl3.SDLPlatforms;
 import lombok.Getter;
 import lombok.Setter;
+import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.LWJGLException;
-import org.lwjgl.glfw.*;
-import org.lwjgl.glfw.GLFWImage.Buffer;
+import org.lwjgl.PointerBuffer;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.sdl.SDL;
+import org.lwjgl.sdl.SDLPlatform;
+import org.lwjgl.sdl.SDLVideo;
+import org.lwjgl.sdl.SDL_PixelFormatDetails;
+import org.lwjgl.system.Callback;
+import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
+
+import static org.lwjgl.sdl.SDLVideo.*;
+import static org.lwjgl.sdl.SDLError.*;
+import static org.lwjgl.sdl.SDLEvents.*;
+import static org.lwjgl.sdl.SDLInit.*;
+import static org.lwjgl.sdl.SDLKeycode.*;
+import static org.lwjgl.sdl.SDLMouse.*;
+import static org.lwjgl.sdl.SDLProperties.*;
+import static org.lwjgl.sdl.SDLStdinc.*;
+import static org.lwjgl.sdl.SDLVideo.*;
+import static org.lwjgl.system.MemoryStack.*;
+import static org.lwjgl.system.MemoryUtil.*;
 
 public final class Display {
 	@NotNull
 	private static String title = "";
-	private static long handle = -1L;
+	private static long handle = -1L, glContext = 0;
 	private static boolean resizable;
 	@NotNull
 	private static DisplayMode displayMode = new DisplayMode(640, 480, 24, 60);
@@ -47,9 +67,22 @@ public final class Display {
 	}
 
 	static {
-		GLFWErrorCallback.createPrint(System.err).set();
-		if (!GLFW.glfwInit()) {
-			throw new IllegalStateException("Unable to initialize GLFW");
+		SDL_SetMemoryFunctions(
+				MemoryUtil::nmemAllocChecked,
+				MemoryUtil::nmemCallocChecked,
+				MemoryUtil::nmemReallocChecked,
+				MemoryUtil::nmemFree
+		);
+
+		checkSdlError(SDL_SetAppMetadata("Minecraft", FabricLoader.getInstance().getModContainer("minecraft").orElseThrow(IllegalStateException::new)
+				.getMetadata().getVersion().getFriendlyString(), "com.mojang.minecraft"));
+		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://minecraft.net"));
+		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Mojang AB"));
+		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "Minecraft EULA: https://minecraft.net/eula"));
+		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "game"));
+
+		if (!SDL_Init(SDL_INIT_VIDEO)) {
+			throw new IllegalStateException("Unable to initialize SDL" + SDL_GetError());
 		}
 	}
 
@@ -61,7 +94,7 @@ public final class Display {
 	public static void setTitle(@NotNull String title) {
 		Display.title = title;
 		if (isCreated()) {
-			GLFW.glfwSetWindowTitle(handle, title);
+			SDLVideo.SDL_SetWindowTitle(handle, title);
 		}
 	}
 
@@ -116,7 +149,13 @@ public final class Display {
 
 	@Nullable
 	public static DisplayMode getDesktopDisplayMode() {
-		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		try (var mode = SDLVideo.SDL_GetDesktopDisplayMode(SDLVideo.SDL_GetPrimaryDisplay())) {
+			return new DisplayMode(mode.w(), mode.h(), SDL_PixelFormatDetails.mode.format());
+		}
+		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
+		if (primaryMonitor == 0) {
+			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		}
 		GLFWVidMode mode = GLFW.glfwGetVideoMode(primaryMonitor);
 		if (mode == null) {
 			return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
@@ -127,6 +166,7 @@ public final class Display {
 
 
 	public static int setIcon(@NotNull ByteBuffer[] icons) {
+		SDLVideo.SDL_SetWindowIcon(handle, )
 
 		// LWJGL2 doesn't enforce this to be called after window creation,
 		// meaning you have to keep hold the icons to use them when the window is created
@@ -162,8 +202,11 @@ public final class Display {
 		}
 	}
 
+
+
 	public static void update() {
 		window_resized = false;
+		SDL_PollEvent()
 		GLFW.glfwPollEvents();
 		if (Mouse.isCreated()) {
 			Mouse.poll();
@@ -173,7 +216,20 @@ public final class Display {
 			Keyboard.poll();
 		}
 
-		GLFW.glfwSwapBuffers(handle);
+		checkSdlError(SDL_GL_SwapWindow(handle));
+	}
+
+	private static void checkSdlError(boolean success) {
+		if (!success) {
+			throw new IllegalStateException("SDL error encountered: " + SDL_GetError());
+		}
+	}
+
+	private static long checkSdlError(long resultPointer) {
+		if (resultPointer == 0) {
+			throw new IllegalStateException("SDL error encountered: " + SDL_GetError());
+		}
+		return resultPointer;
 	}
 
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
@@ -181,31 +237,36 @@ public final class Display {
 		windowedHeight = height = displayMode.getHeight();
 		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
 		// Configure GLFW
-		GLFW.glfwDefaultWindowHints();
+		int props = SDL_CreateProperties();
+		checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED));
+		checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_CENTERED));
+		checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, width));
+		checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, height));
 
-		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
-			GLFW.glfwWindowHintString(GLFW.GLFW_WAYLAND_APP_ID, "com.mojang.minecraft");
+		checkSdlError(SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, title));
+		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN, true));
+		if (!SDLPlatforms.MAC_OS.equals(SDLPlatform.SDL_GetPlatform())) { // macOS does not support the compat profile
+			checkSdlError(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
+			checkSdlError(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2));
+			checkSdlError(SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY));
 		}
+		checkSdlError(SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1));
+		checkSdlError(SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, pixelFormat.getAlphaBits()));
+		checkSdlError(SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, pixelFormat.getDepthBits()));
+		checkSdlError(SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, pixelFormat.getStencilBits()));
+		checkSdlError(SDL_GL_SetAttribute(SDL_GL_STEREO, pixelFormat.isStereo() ? 1 : 0));
 
-		GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
-		GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, GLFW.GLFW_NATIVE_CONTEXT_API);
-		if (GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_COCOA) { // macOS does not support the compat profile
-			GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 3);
-			GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
-			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
-		}
-		GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pixelFormat.getAlphaBits());
-		GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pixelFormat.getDepthBits());
-		GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pixelFormat.getStencilBits());
-		GLFW.glfwWindowHint(GLFW.GLFW_STEREO, pixelFormat.isStereo() ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
+		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true));
+		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, resizable));
+		handle = checkSdlError(SDLVideo.SDL_CreateWindowWithProperties(props));
+		SDL_DestroyProperties(props);
 
-		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, 0);
-		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
-		handle =
-				GLFW.glfwCreateWindow(displayMode.getWidth(), displayMode.getHeight(), title, MemoryUtil.NULL, MemoryUtil.NULL);
-
-		GLFW.glfwMakeContextCurrent(handle);
-		GL.createCapabilities();
+		glContext = checkSdlError(SDL_GL_CreateContext(handle));
+		checkSdlError(SDL_GL_LoadLibrary((ByteBuffer) null));
+//		SDL_GL_MakeCurrent(handle, glContext);
+		Configuration.OPENGL_EXPLICIT_INIT.set(true);
+		GL.create(SDLVideo::SDL_GL_GetProcAddress);
+		GL.createCapabilities(MemoryUtil::memCallocPointer);
 
 		if (primaryMonitor != 0) {
 			var mode = GLFW.glfwGetVideoMode(primaryMonitor);
@@ -222,11 +283,13 @@ public final class Display {
 			windowedY = y = yBox[0];
 		}
 		setFullscreen(false);
-		int[] xBox = new int[1];
-		int[] yBox = new int[1];
-		GLFW.glfwGetFramebufferSize(handle, xBox, yBox);
-		framebufferWidth = xBox[0] <= 0 ? 1 : xBox[0];
-		framebufferHeight = yBox[0] <= 0 ? 1 : yBox[0];
+		try (MemoryStack ms = stackPush()) {
+			IntBuffer width = ms.mallocInt(1);
+			IntBuffer height = ms.mallocInt(1);
+			checkSdlError(SDL_GetWindowSizeInPixels(handle, width, height));
+			framebufferWidth = Math.min(1, width.get(0));
+			framebufferHeight = Math.min(1, height.get(0));
+		}
 
 		// create general callbacks
 		GLFW.glfwSetWindowSizeCallback(handle, GLFWWindowSizeCallback.create(Display::resizeCallback));
@@ -243,7 +306,7 @@ public final class Display {
 		}));
 		Mouse.create();
 		Keyboard.create();
-		GLFW.glfwShowWindow(handle);
+		checkSdlError(SDL_ShowWindow(handle));
 		if (cached_icons != null) {
 			setIcon(cached_icons);
 		}
@@ -366,7 +429,10 @@ public final class Display {
 
 	@NotNull
 	public static DisplayMode[] getAvailableDisplayModes() {
-		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
+		if (primaryMonitor == 0) {
+			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		}
 		if (primaryMonitor == 0) {
 			return new DisplayMode[0];
 		} else {
@@ -383,14 +449,37 @@ public final class Display {
 
 	public static void destroy() {
 		// free callbacks
-		Callbacks.glfwFreeCallbacks(handle);
-		GLFWErrorCallback callback = GLFW.glfwSetErrorCallback(null);
-		if (callback != null) {
-			callback.free();
+		Keyboard.destroy();
+		Mouse.destroy();
+		memFree(GL.getCapabilities().getAddressBuffer());
+		GL.setCapabilities(null);
+		GL.destroy();
+		if (glContext != 0) {
+			SDL_GL_DestroyContext(glContext);
+			glContext = 0;
 		}
-		// Destroy the window
-		GLFW.glfwDestroyWindow(handle);
-		GLFW.glfwTerminate();
+		if (handle != 0) {
+			SDL_DestroyWindow(handle);
+			handle = 0;
+		}
+		if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
+			SDL_QuitSubSystem(SDL_INIT_VIDEO);
+		}
+		SDL_Quit();
+		try (MemoryStack stack = stackPush()) {
+			PointerBuffer funcs = stack.mallocPointer(4);
+
+			nSDL_GetMemoryFunctions(
+					memAddress(funcs, 0),
+					memAddress(funcs, 1),
+					memAddress(funcs, 2),
+					memAddress(funcs, 3)
+			);
+
+			for (int i = 0; i < 4; i++) {
+				Callback.free(funcs.get(i));
+			}
+		}
 	}
 
 	public static boolean isCreated() {
