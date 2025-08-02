@@ -117,10 +117,7 @@ public final class Display {
 
 	@Nullable
 	public static DisplayMode getDesktopDisplayMode() {
-		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
-		if (primaryMonitor == 0) {
-			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
-		}
+		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
 		GLFWVidMode mode = GLFW.glfwGetVideoMode(primaryMonitor);
 		if (mode == null) {
 			return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
@@ -224,8 +221,8 @@ public final class Display {
 			var xBox = new int[1];
 			var yBox = new int[1];
 			GLFW.glfwGetMonitorPos(primaryMonitor, xBox, yBox);
-			windowedX = x = xBox[0] + mode.width()/2 - width/2;
-			windowedY = y = yBox[0] + mode.height()/2 - height/2;
+			windowedX = x = xBox[0] + mode.width() / 2 - width / 2;
+			windowedY = y = yBox[0] + mode.height() / 2 - height / 2;
 		} else if (GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_WAYLAND) {
 			var xBox = new int[1];
 			var yBox = new int[1];
@@ -378,10 +375,7 @@ public final class Display {
 
 	@NotNull
 	public static DisplayMode[] getAvailableDisplayModes() {
-		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
-		if (primaryMonitor == 0) {
-			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
-		}
+		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
 		if (primaryMonitor == 0) {
 			return new DisplayMode[0];
 		} else {
