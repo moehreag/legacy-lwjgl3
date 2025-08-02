@@ -3,6 +3,8 @@ package io.github.moehreag.legacylwjgl3.implementation.input;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 
+import org.lwjgl.sdl.SDL_Event;
+
 /**
  * @author Zarzelcow
  * @created 28/09/2022 - 8:58 PM
@@ -25,4 +27,6 @@ public interface MouseImplementation {
 	int getButtonCount();
 
 	boolean isInsideWindow();
+
+	void processMouseEvent(SDL_Event event);
 }

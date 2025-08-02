@@ -3,6 +3,8 @@ package io.github.moehreag.legacylwjgl3.implementation.input;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 
+import org.lwjgl.sdl.SDL_Event;
+
 /**
  * @author Zarzelcow
  * @created 28/09/2022 - 3:23 PM
@@ -35,6 +37,11 @@ public class CombinedInputImplementation implements InputImplementation {
     @Override
     public void readKeyboard(ByteBuffer readBuffer) {
         keyboardImpl.readKeyboard(readBuffer);
+    }
+
+    @Override
+    public void processKeyboardEvent(SDL_Event event) {
+        keyboardImpl.processKeyboardEvent(event);
     }
 
     // ~~~~~ MOUSE ~~~~~
@@ -82,5 +89,10 @@ public class CombinedInputImplementation implements InputImplementation {
     @Override
     public boolean isInsideWindow() {
         return mouseImpl.isInsideWindow();
+    }
+
+    @Override
+    public void processMouseEvent(SDL_Event event) {
+        mouseImpl.processMouseEvent(event);
     }
 }

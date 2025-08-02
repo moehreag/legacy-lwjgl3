@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import paulscode.sound.libraries.LibraryLWJGLOpenAL;
 
-@Mixin(LibraryLWJGLOpenAL.class)
+@Mixin(value = LibraryLWJGLOpenAL.class, remap = false)
 public class LibraryLWJGLOpenALMixin {
 
 	@Unique

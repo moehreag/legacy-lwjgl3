@@ -3,8 +3,7 @@ package io.github.moehreag.legacylwjgl3.mixin;
 import java.util.Objects;
 
 import net.minecraft.client.gui.screen.Screen;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.opengl.Display;
+import org.lwjgl.sdl.SDLClipboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
@@ -16,8 +15,8 @@ public class MixinScreenFixClipboard {
 	 * @reason Fix clipboard access with GLFW
 	 */
 	@Overwrite
-	public static String getClipboard(){
-        return Objects.requireNonNullElse(GLFW.glfwGetClipboardString(Display.getHandle()), "");
+	public static String getClipboard() {
+		return Objects.requireNonNullElse(SDLClipboard.SDL_GetClipboardText(), "");
 	}
 
 	/**
@@ -25,7 +24,7 @@ public class MixinScreenFixClipboard {
 	 * @reason Fix clipboard access with GLFW
 	 */
 	@Overwrite
-	public static void setClipboard(String string){
-		GLFW.glfwSetClipboardString(Display.getHandle(), string);
+	public static void setClipboard(String string) {
+		SDLClipboard.SDL_SetClipboardText(string);
 	}
 }

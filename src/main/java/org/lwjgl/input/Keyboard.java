@@ -34,10 +34,11 @@ package org.lwjgl.input;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
-import org.lwjgl.glfw.GLFW;
 import io.github.moehreag.legacylwjgl3.implementation.LWJGLImplementationUtils;
 import org.lwjgl.opengl.Display;
 import io.github.moehreag.legacylwjgl3.implementation.input.InputImplementation;
+import org.lwjgl.sdl.SDLKeyboard;
+import org.lwjgl.sdl.SDL_Event;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -58,7 +59,7 @@ public class Keyboard {
     /** Buffer size in events */
     private static final int BUFFER_SIZE = 50;
 
-    public static final int KEYBOARD_SIZE = GLFW.GLFW_KEY_LAST + 1;
+    public static final int KEYBOARD_SIZE = SDLKeyboard.SDL_HasKeyboard() ? SDLKeyboard.SDL_GetKeyboardState().limit() + 1 : 0;
 
     /** Has the keyboard been created? */
     private static boolean created;
@@ -192,6 +193,10 @@ public class Keyboard {
             implementation.pollKeyboard(keyDownBuffer);
             read();
 //        }
+    }
+
+    public static void processKeyboardEvent(SDL_Event event) {
+        implementation.processKeyboardEvent(event);
     }
 
     private static void read() {

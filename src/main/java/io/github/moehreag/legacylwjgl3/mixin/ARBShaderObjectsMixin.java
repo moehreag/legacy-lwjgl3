@@ -7,7 +7,7 @@ import org.lwjgl.opengl.ARBShaderObjects;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(ARBShaderObjects.class)
+@Mixin(value = ARBShaderObjects.class, remap = false)
 public abstract class ARBShaderObjectsMixin {
     @CreateStub("glGetObjectParameterARB")
     @Shadow

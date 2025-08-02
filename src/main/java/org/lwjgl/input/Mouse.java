@@ -36,12 +36,14 @@ import java.nio.DoubleBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import io.github.moehreag.legacylwjgl3.implementation.LWJGLImplementationUtils;
 import org.lwjgl.opengl.Display;
 import io.github.moehreag.legacylwjgl3.implementation.input.InputImplementation;
+import org.lwjgl.sdl.SDL_Event;
 
 
 /**
@@ -701,5 +703,9 @@ public class Mouse {
      */
     public static boolean isInsideWindow() {
         return implementation.isInsideWindow();
+    }
+
+    public static void processMouseEvent(@Nullable SDL_Event event) {
+        implementation.processMouseEvent(event);
     }
 }

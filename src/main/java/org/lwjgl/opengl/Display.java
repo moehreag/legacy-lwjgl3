@@ -4,6 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.stream.IntStream;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.SDLPlatforms;
@@ -16,31 +17,29 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.sdl.SDL;
-import org.lwjgl.sdl.SDLPlatform;
-import org.lwjgl.sdl.SDLVideo;
-import org.lwjgl.sdl.SDL_PixelFormatDetails;
+import org.lwjgl.sdl.*;
 import org.lwjgl.system.Callback;
 import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
-import static org.lwjgl.sdl.SDLVideo.*;
-import static org.lwjgl.sdl.SDLError.*;
+import static org.lwjgl.sdl.SDLError.SDL_GetError;
 import static org.lwjgl.sdl.SDLEvents.*;
 import static org.lwjgl.sdl.SDLInit.*;
-import static org.lwjgl.sdl.SDLKeycode.*;
-import static org.lwjgl.sdl.SDLMouse.*;
 import static org.lwjgl.sdl.SDLProperties.*;
-import static org.lwjgl.sdl.SDLStdinc.*;
+import static org.lwjgl.sdl.SDLStdinc.SDL_SetMemoryFunctions;
+import static org.lwjgl.sdl.SDLStdinc.nSDL_GetMemoryFunctions;
 import static org.lwjgl.sdl.SDLVideo.*;
-import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.memAddress;
+import static org.lwjgl.system.MemoryUtil.memFree;
 
 public final class Display {
 	@NotNull
 	private static String title = "";
-	private static long handle = -1L, glContext = 0;
+	@Getter
+	private static long handle = -1L;
+	private static long glContext = 0;
 	private static boolean resizable;
 	@NotNull
 	private static DisplayMode displayMode = new DisplayMode(640, 480, 24, 60);
@@ -57,11 +56,18 @@ public final class Display {
 	private static int windowedY;
 	private static boolean window_resized = true;
 	private static boolean minimized;
+	private static boolean isFullscreen;
 	@Getter
 	private static boolean iconified;
-	@Nullable
-	private static ByteBuffer[] cached_icons = null;
+	private static ByteBuffer @Nullable[] cached_icons = null;
 	private static boolean focused;
+	@Getter
+	private static boolean closeRequested;
+	@Nullable
+	@Getter
+	private static SDL_Event event = SDL_Event.calloc();
+	@Nullable
+	private static SDL_WindowEvent windowEvent = event.window();
 
 	private Display() {
 	}
@@ -96,10 +102,6 @@ public final class Display {
 		if (isCreated()) {
 			SDLVideo.SDL_SetWindowTitle(handle, title);
 		}
-	}
-
-	public static long getHandle() {
-		return handle;
 	}
 
 	public static void setHandle(long handle) {
@@ -150,23 +152,16 @@ public final class Display {
 	@Nullable
 	public static DisplayMode getDesktopDisplayMode() {
 		try (var mode = SDLVideo.SDL_GetDesktopDisplayMode(SDLVideo.SDL_GetPrimaryDisplay())) {
-			return new DisplayMode(mode.w(), mode.h(), SDL_PixelFormatDetails.mode.format());
+			if (mode == null) {
+				return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
+			}
+			var format = SDLPixels.SDL_GetPixelFormatDetails(mode.format());
+			return new DisplayMode(mode.w(), mode.h(), format.bits_per_pixel(), (int) mode.refresh_rate());
 		}
-		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
-		if (primaryMonitor == 0) {
-			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
-		}
-		GLFWVidMode mode = GLFW.glfwGetVideoMode(primaryMonitor);
-		if (mode == null) {
-			return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
-		}
-		return new DisplayMode(mode.width(), mode.height(), mode.redBits() + mode.greenBits() + mode.blueBits(),
-				mode.refreshRate());
 	}
 
 
 	public static int setIcon(@NotNull ByteBuffer[] icons) {
-		SDLVideo.SDL_SetWindowIcon(handle, )
 
 		// LWJGL2 doesn't enforce this to be called after window creation,
 		// meaning you have to keep hold the icons to use them when the window is created
@@ -182,19 +177,20 @@ public final class Display {
 			}).toArray(ByteBuffer[]::new);
 		}
 
-		if (isCreated() && GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_COCOA) {
+		if (isCreated() && icons.length > 0) {
 			try (MemoryStack memoryStack = MemoryStack.stackPush()) {
-				Buffer buffer = GLFWImage.malloc(icons.length, memoryStack);
-
-				for (int j = 0; j < icons.length; j++) {
-					var buf = icons[j];
-
-					int size = (int) Math.sqrt(buf.limit() / 4f);
-					ByteBuffer byteBuffer = memoryStack.malloc(buf.limit()).put(buf).flip(); // have to copy the buffer from a heap buffer to a direct (off-heap) buffer
-					buffer.position(j).width(size).height(size).pixels(byteBuffer);
+				var first = icons[0];
+				int size = (int) Math.sqrt(first.limit() / 4f);
+				try (var surface = SDLSurface.SDL_CreateSurface(size, size, SDLPixels.SDL_PIXELFORMAT_RGBA32)) {
+					surface.pixels(memoryStack.malloc(first.limit()).put(first).flip());
+					for (int j = 1; j < icons.length; j++) {
+						var buf = icons[j];
+						int currentSize = (int) Math.sqrt(buf.limit() / 4f);
+						SDLSurface.SDL_AddSurfaceAlternateImage(surface, SDLSurface.SDL_CreateSurface(currentSize, currentSize, SDLPixels.SDL_PIXELFORMAT_RGBA32)
+								.pixels(memoryStack.malloc(buf.limit()).put(buf).flip()));
+					}
+					SDLVideo.SDL_SetWindowIcon(handle, surface);
 				}
-
-				GLFW.glfwSetWindowIcon(handle, buffer);
 			}
 			return 1;
 		} else {
@@ -203,23 +199,45 @@ public final class Display {
 	}
 
 
-
 	public static void update() {
 		window_resized = false;
-		SDL_PollEvent()
-		GLFW.glfwPollEvents();
-		if (Mouse.isCreated()) {
-			Mouse.poll();
-		}
+		while (SDL_PollEvent(event)) {
+			switch (event.type()) {
+				case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED -> closeRequested = true;
+				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING -> {
+					if (Keyboard.isCreated()) {
+						Keyboard.processKeyboardEvent(event);
+					}
+				}
+				case SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP, SDL_EVENT_MOUSE_MOTION, SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE ->{
+					if (Mouse.isCreated()) {
+						Mouse.processMouseEvent(event);
+					}
+				}
+				case SDL_EVENT_WINDOW_FOCUS_GAINED -> focused = true;
+				case SDL_EVENT_WINDOW_FOCUS_LOST -> focused = false;
+				case SDL_EVENT_WINDOW_SHOWN, SDL_EVENT_WINDOW_RESTORED, SDL_EVENT_WINDOW_MAXIMIZED -> minimized = false;
+				case SDL_EVENT_WINDOW_HIDDEN, SDL_EVENT_WINDOW_MINIMIZED -> minimized = true;
+				case SDL_EVENT_WINDOW_RESIZED -> {
+					resizeCallback(handle, windowEvent.data1(), windowEvent.data2());
+				}
+				case SDL_EVENT_WINDOW_MOVED -> {
+					x = windowEvent.data1();
+					y = windowEvent.data2();
+				}
+				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED -> {
 
-		if (Keyboard.isCreated()) {
-			Keyboard.poll();
+				}
+
+			}
 		}
+		Keyboard.poll();
+		Mouse.poll();
 
 		checkSdlError(SDL_GL_SwapWindow(handle));
 	}
 
-	private static void checkSdlError(boolean success) {
+	public static void checkSdlError(boolean success) {
 		if (!success) {
 			throw new IllegalStateException("SDL error encountered: " + SDL_GetError());
 		}
@@ -235,7 +253,7 @@ public final class Display {
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
 		windowedWidth = width = displayMode.getWidth();
 		windowedHeight = height = displayMode.getHeight();
-		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		int primaryMonitor = SDL_GetPrimaryDisplay();
 		// Configure GLFW
 		int props = SDL_CreateProperties();
 		checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED));
@@ -268,31 +286,23 @@ public final class Display {
 		GL.create(SDLVideo::SDL_GL_GetProcAddress);
 		GL.createCapabilities(MemoryUtil::memCallocPointer);
 
-		if (primaryMonitor != 0) {
-			var mode = GLFW.glfwGetVideoMode(primaryMonitor);
-			var xBox = new int[1];
-			var yBox = new int[1];
-			GLFW.glfwGetMonitorPos(primaryMonitor, xBox, yBox);
-			windowedX = x = xBox[0] + mode.width() / 2 - width / 2;
-			windowedY = y = yBox[0] + mode.height() / 2 - height / 2;
-		} else if (GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_WAYLAND) {
-			var xBox = new int[1];
-			var yBox = new int[1];
-			GLFW.glfwGetWindowPos(handle, xBox, yBox);
-			windowedX = x = xBox[0];
-			windowedY = y = yBox[0];
-		}
-		setFullscreen(false);
 		try (MemoryStack ms = stackPush()) {
+			var xBox = ms.mallocInt(1);
+			var yBox = ms.mallocInt(1);
+			SDL_GetWindowPosition(handle, xBox, yBox);
+			windowedX = x = xBox.get(0);
+			windowedY = y = yBox.get(0);
+			setFullscreen(false);
+
 			IntBuffer width = ms.mallocInt(1);
 			IntBuffer height = ms.mallocInt(1);
 			checkSdlError(SDL_GetWindowSizeInPixels(handle, width, height));
-			framebufferWidth = Math.min(1, width.get(0));
-			framebufferHeight = Math.min(1, height.get(0));
+			framebufferWidth = Math.max(1, width.get(0));
+			framebufferHeight = Math.max(1, height.get(0));
 		}
 
 		// create general callbacks
-		GLFW.glfwSetWindowSizeCallback(handle, GLFWWindowSizeCallback.create(Display::resizeCallback));
+		/*GLFW.glfwSetWindowSizeCallback(handle, GLFWWindowSizeCallback.create(Display::resizeCallback));
 		GLFW.glfwSetFramebufferSizeCallback(handle, GLFWFramebufferSizeCallback.create(Display::onFramebufferResize));
 		GLFW.glfwSetWindowFocusCallback(handle, (window, focused1) -> {
 			if (window == handle) {
@@ -303,7 +313,7 @@ public final class Display {
 		GLFW.glfwSetWindowPosCallback(handle, GLFWWindowPosCallback.create((window, xpos, ypos) -> {
 			x = xpos;
 			y = ypos;
-		}));
+		}));*/
 		Mouse.create();
 		Keyboard.create();
 		checkSdlError(SDL_ShowWindow(handle));
@@ -335,10 +345,9 @@ public final class Display {
 	public static void setFullscreen(boolean fullscreen) {
 
 		try {
-			boolean isFullscreen = GLFW.glfwGetWindowMonitor(handle) != 0;
 
 			if (fullscreen) {
-				var monitor = getPrimaryMonitor();
+				int monitor = SDL_GetPrimaryDisplay();
 				if (monitor == 0) {
 					LegacyLWJGL3.LOGGER.warn("Failed to find monitor for fullscreen");
 					return;
@@ -351,29 +360,21 @@ public final class Display {
 				}
 				x = 0;
 				y = 0;
-				var mode = GLFW.glfwGetVideoMode(monitor);
-				width = mode.width();
-				height = mode.height();
-				GLFW.glfwSetWindowMonitor(getHandle(),
-						monitor,
-						x,
-						y,
-						width,
-						height,
-						mode.refreshRate());
+				try (var stack = MemoryStack.stackPush(); var mode = SDL_DisplayMode.malloc(stack)) {
+					SDL_GetClosestFullscreenDisplayMode(monitor, width, height, -1, true, mode);
+					SDL_SetWindowFullscreenMode(handle, mode);
+					width = mode.w();
+					height = mode.h();
+				}
+				isFullscreen = true;
 			} else {
 				x = windowedX;
 				y = windowedY;
 				width = windowedWidth;
 				height = windowedHeight;
-				GLFW.glfwSetWindowMonitor(getHandle(),
-						0L,
-						x,
-						y,
-						width,
-						height,
-						GLFW.GLFW_DONT_CARE);
+				isFullscreen = false;
 			}
+			SDL_SetWindowFullscreen(handle, fullscreen);
 			window_resized = true;
 
 		} catch (Throwable t) {
@@ -381,68 +382,26 @@ public final class Display {
 		}
 	}
 
-	private static int clamp(int value, int min, int max) {
-		return value < min ? min : Math.min(value, max);
-	}
-
-	private static long getPrimaryMonitor() {
-		long l = GLFW.glfwGetWindowMonitor(handle);
-		if (l != 0L) {
-			return l;
-		} else {
-			int xStart = x;
-			int xEnd = xStart + getScreenWidth();
-			int yStart = y;
-			int yEnd = yStart + getScreenHeight();
-			int largestArea = -1;
-			long monitor = 0;
-			long primary = GLFW.glfwGetPrimaryMonitor();
-			var buf = GLFW.glfwGetMonitors();
-			if (buf == null) return 0;
-			for (int i = 0; i < buf.limit(); i++) {
-				long monitor2 = buf.get(i);
-				int[] posXBox = new int[1], posYBox = new int[1];
-				GLFW.glfwGetMonitorPos(monitor2, posXBox, posYBox);
-				var currentMode = GLFW.glfwGetVideoMode(monitor2);
-				int monitorXStart = posXBox[0];
-				int monitorXEnd = monitorXStart + currentMode.width();
-				int monitorYStart = posYBox[0];
-				int monitorYEnd = monitorYStart + currentMode.height();
-				int left = clamp(xStart, monitorXStart, monitorXEnd);
-				int right = clamp(xEnd, monitorXStart, monitorXEnd);
-				int top = clamp(yStart, monitorYStart, monitorYEnd);
-				int bottom = clamp(yEnd, monitorYStart, monitorYEnd);
-				int maxWidth = Math.max(0, right - left);
-				int maxHeight = Math.max(0, bottom - top);
-				int maxArea = maxWidth * maxHeight;
-				if (maxArea > largestArea) {
-					monitor = monitor2;
-					largestArea = maxArea;
-				} else if (maxArea == largestArea && primary == monitor2) {
-					monitor = monitor2;
-				}
-			}
-
-			return monitor;
-		}
-	}
-
 	@NotNull
 	public static DisplayMode[] getAvailableDisplayModes() {
-		long primaryMonitor = GLFW.glfwGetWindowMonitor(handle);
-		if (primaryMonitor == 0) {
-			primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+
+		int currentMonitor = handle != 0 ? SDL_GetDisplayForWindow(handle) : 0;
+		if (currentMonitor == 0) {
+			currentMonitor = SDL_GetPrimaryDisplay();
 		}
-		if (primaryMonitor == 0) {
+		if (currentMonitor == 0) {
 			return new DisplayMode[0];
 		} else {
-			GLFWVidMode.Buffer videoModes = GLFW.glfwGetVideoModes(primaryMonitor);
-			if (videoModes == null) {
+			var buf = SDL_GetFullscreenDisplayModes(SDL_GetPrimaryDisplay());
+			if (buf == null) {
 				throw new IllegalStateException("No video modes found");
 			} else {
-				return videoModes.stream().map(mode -> new DisplayMode(mode.width(),
-						mode.height(), mode.redBits() + mode.blueBits() + mode.greenBits(),
-						mode.refreshRate())).toArray(DisplayMode[]::new);
+				return IntStream.range(0, buf.limit()).mapToLong(buf::get)
+						.mapToObj(l ->
+								new DisplayMode(SDL_DisplayMode.nw(l), SDL_DisplayMode.nh(l),
+										SDL_PixelFormatDetails.nbits_per_pixel(
+												SDLPixels.nSDL_GetPixelFormatDetails(SDL_DisplayMode.nformat(l))),
+										(int) SDL_DisplayMode.nrefresh_rate(l))).toArray(DisplayMode[]::new);
 			}
 		}
 	}
@@ -465,6 +424,11 @@ public final class Display {
 		if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
 			SDL_QuitSubSystem(SDL_INIT_VIDEO);
 		}
+		if (event != null) {
+			event.free();
+		}
+		Mouse.destroy();
+		Keyboard.destroy();
 		SDL_Quit();
 		try (MemoryStack stack = stackPush()) {
 			PointerBuffer funcs = stack.mallocPointer(4);
@@ -486,10 +450,6 @@ public final class Display {
 		return handle != -1L;
 	}
 
-	public static boolean isCloseRequested() {
-		return GLFW.glfwWindowShouldClose(handle);
-	}
-
 	public static boolean isActive() {
 		return focused;
 	}
@@ -497,7 +457,7 @@ public final class Display {
 	public static void setResizable(boolean isResizable) {
 		resizable = isResizable;
 		if (isCreated()) {
-			GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
+			SDL_SetWindowResizable(handle, resizable);
 		}
 	}
 
@@ -507,8 +467,8 @@ public final class Display {
 
 
 	public static void setVSyncEnabled(boolean enabled) {
-		if (GLFW.glfwGetCurrentContext() != 0) {
-			GLFW.glfwSwapInterval(enabled ? 1 : 0);
+		if (glContext != 0) {
+			SDL_GL_SetSwapInterval(enabled ? 1 : 0);
 		}
 	}
 

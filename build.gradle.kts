@@ -6,7 +6,8 @@ plugins {
     id("io.freefair.lombok") version "8.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("xyz.wagyourtail.unimined") version "1.3.14"
+    id("fabric-loom") version "1.11.+"
+    id("ploceus") version "1.11.+"
 }
 
 val targetJava = JavaVersion.VERSION_17
@@ -28,37 +29,22 @@ repositories {
 
 val lwjglVersion = properties["lwjgl_version"]
 
-unimined {
-    minecraft {
-        ornitheMaven()
-        fabricMaven()
-
-        version(properties["minecraft_version"].toString())
-
-        legacyFabric {
-            loader(properties["loader_version"]!!)
-        }
-
-        mappings {
-            calamus()
-            feather(build = properties["mappings_build"]?.toString()?.toInt()!!)
-        }
-
-        runs {
-            off = false
-            config("client") {
-                javaVersion = targetJava
-                if (project.properties["native_glfw"] == "true") {
-                    val glfwPath = project.properties.getOrDefault("native_glfw_path", "/usr/lib/libglfw.so")
-                    jvmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
-                }
+loom {
+    runs {
+        getByName("client") {
+            if (project.properties["native_glfw"] == "true") {
+                val glfwPath = project.properties.getOrDefault("native_glfw_path", "/usr/lib/libglfw.so")
+                vmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
             }
-            config("server") { enabled = false }
         }
     }
 }
 
 dependencies {
+    minecraft("com.mojang:minecraft:${properties["minecraft_version"]}")
+    mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
+    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
+
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
     "include"(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 

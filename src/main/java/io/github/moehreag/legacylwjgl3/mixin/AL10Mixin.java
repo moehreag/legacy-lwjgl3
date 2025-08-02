@@ -7,7 +7,7 @@ import org.lwjgl.openal.AL10;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(AL10.class)
+@Mixin(value = AL10.class, remap = false)
 public abstract class AL10Mixin {
     @CreateStub("alListener")
     @Shadow

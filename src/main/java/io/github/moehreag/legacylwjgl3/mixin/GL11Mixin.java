@@ -7,7 +7,7 @@ import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-@Mixin(GL11.class)
+@Mixin(value = GL11.class, remap = false)
 public abstract class GL11Mixin {
     @CreateStub("glGetFloat")
     @Shadow
