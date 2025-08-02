@@ -4,7 +4,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import io.github.moehreag.legacylwjgl3.DesktopFileInjector;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import lombok.Getter;
 import lombok.Setter;
@@ -129,13 +128,6 @@ public final class Display {
 
 	public static int setIcon(@NotNull ByteBuffer[] icons) {
 
-		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
-			// Wayland does not have a standardised way of setting window icons, see
-			// https://www.glfw.org/docs/latest/group__window.html#gadd7ccd39fe7a7d1f0904666ae5932dc5
-			// for more information.
-			return DesktopFileInjector.setIcon(icons);
-		}
-
 		// LWJGL2 doesn't enforce this to be called after window creation,
 		// meaning you have to keep hold the icons to use them when the window is created
 		if (!Arrays.equals(cached_icons, icons)) {
@@ -192,8 +184,7 @@ public final class Display {
 		GLFW.glfwDefaultWindowHints();
 
 		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
-			DesktopFileInjector.inject();
-			GLFW.glfwWindowHintString(GLFW.GLFW_WAYLAND_APP_ID, DesktopFileInjector.APP_ID);
+			GLFW.glfwWindowHintString(GLFW.GLFW_WAYLAND_APP_ID, "com.mojang.minecraft");
 		}
 
 		GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API);
