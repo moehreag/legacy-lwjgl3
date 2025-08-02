@@ -8,6 +8,7 @@ plugins {
     id("com.modrinth.minotaur") version "2.+"
     id("fabric-loom") version "1.11.+"
     id("ploceus") version "1.11.+"
+    id("io.github.p03w.machete") version "2.+"
 }
 
 val targetJava = JavaVersion.VERSION_17
@@ -48,7 +49,7 @@ dependencies {
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
     "include"(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
-    listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
+    listOf("linux", /*"windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64"*/).forEach { platform ->
         "include"(runtimeOnly("org.lwjgl:lwjgl::natives-$platform")!!)
         "include"(runtimeOnly("org.lwjgl:lwjgl-sdl::natives-$platform")!!)
         "include"(runtimeOnly("org.lwjgl:lwjgl-openal::natives-$platform")!!)

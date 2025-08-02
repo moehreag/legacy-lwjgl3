@@ -1,4 +1,4 @@
-package io.github.moehreag.legacylwjgl3.implementation.glfw;
+package io.github.moehreag.legacylwjgl3.implementation.sdl;
 
 import java.nio.ByteBuffer;
 
@@ -8,13 +8,9 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.EventQueue;
-import org.lwjgl.sdl.SDLKeycode;
-import org.lwjgl.sdl.SDL_Event;
-import org.lwjgl.sdl.SDL_KeyboardEvent;
-import org.lwjgl.sdl.SDL_TextEditingEvent;
+import org.lwjgl.sdl.*;
 
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_DOWN;
-import static org.lwjgl.sdl.SDLEvents.SDL_EVENT_KEY_UP;
+import static org.lwjgl.sdl.SDLEvents.*;
 
 /**
  * @author Zarzelcow
@@ -30,15 +26,10 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 	private final ByteBuffer tmp_event = ByteBuffer.allocate(Keyboard.EVENT_SIZE);
 	private final SDL_KeyboardEvent keyboardEvent = Display.getEvent().key();
 	private final SDL_TextEditingEvent textEditingEvent = Display.getEvent().edit();
+	private final SDL_TextInputEvent textInputEvent = Display.getEvent().text();
 
 	@Override
 	public void createKeyboard() {
-        /*this.charCallback = GLFWCharCallback.create((window, codepoint) -> {
-            // if the keycode is 0 minecraft instead uses the character code as the key pressed, not sure why
-            // but a keycode of -1 is used instead to fix this issue
-            putKeyboardEvent(-1, (byte) 1, codepoint, System.nanoTime(), false);
-        });*/
-
 		this.windowHandle = Display.getHandle();
 
 	}
@@ -88,10 +79,14 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 				}
 				putKeyboardEvent(key, this.key_down_buffer[key], 0, System.nanoTime(), keyboardEvent.repeat());
 			}
-            /*case SDL_EVENT_TEXT_EDITING -> {
-                event.edit(textEditingEvent);
-                textEditingEvent.textString()
-            }*/
+            case SDL_EVENT_TEXT_EDITING -> {
+				textEditingEvent.textString().codePoints().forEach(codepoint ->
+						putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
+            }
+			case SDL_EVENT_TEXT_INPUT -> {
+				textInputEvent.textString().codePoints().forEach(codepoint ->
+						putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
+			}
 		}
 	}
 

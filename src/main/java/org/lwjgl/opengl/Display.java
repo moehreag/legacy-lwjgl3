@@ -57,17 +57,13 @@ public final class Display {
 	private static boolean window_resized = true;
 	private static boolean minimized;
 	private static boolean isFullscreen;
-	@Getter
-	private static boolean iconified;
-	private static ByteBuffer @Nullable[] cached_icons = null;
+	private static ByteBuffer @Nullable [] cached_icons = null;
 	private static boolean focused;
 	@Getter
 	private static boolean closeRequested;
-	@Nullable
 	@Getter
-	private static SDL_Event event = SDL_Event.calloc();
-	@Nullable
-	private static SDL_WindowEvent windowEvent = event.window();
+	private static final SDL_Event event = SDL_Event.calloc();
+	private static final SDL_WindowEvent windowEvent = event.window();
 
 	private Display() {
 	}
@@ -151,13 +147,12 @@ public final class Display {
 
 	@Nullable
 	public static DisplayMode getDesktopDisplayMode() {
-		try (var mode = SDLVideo.SDL_GetDesktopDisplayMode(SDLVideo.SDL_GetPrimaryDisplay())) {
-			if (mode == null) {
-				return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
-			}
-			var format = SDLPixels.SDL_GetPixelFormatDetails(mode.format());
-			return new DisplayMode(mode.w(), mode.h(), format.bits_per_pixel(), (int) mode.refresh_rate());
+		var mode = SDLVideo.SDL_GetDesktopDisplayMode(SDLVideo.SDL_GetPrimaryDisplay());
+		if (mode == null) {
+			return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
 		}
+		return new DisplayMode(mode.w(), mode.h(), SDL_PixelFormatDetails.nbits_per_pixel(SDLPixels.nSDL_GetPixelFormatDetails(mode.format())), (int) mode.refresh_rate());
+
 	}
 
 
@@ -209,7 +204,8 @@ public final class Display {
 						Keyboard.processKeyboardEvent(event);
 					}
 				}
-				case SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP, SDL_EVENT_MOUSE_MOTION, SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE ->{
+				case SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP, SDL_EVENT_MOUSE_MOTION,
+					 SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE -> {
 					if (Mouse.isCreated()) {
 						Mouse.processMouseEvent(event);
 					}
@@ -218,16 +214,15 @@ public final class Display {
 				case SDL_EVENT_WINDOW_FOCUS_LOST -> focused = false;
 				case SDL_EVENT_WINDOW_SHOWN, SDL_EVENT_WINDOW_RESTORED, SDL_EVENT_WINDOW_MAXIMIZED -> minimized = false;
 				case SDL_EVENT_WINDOW_HIDDEN, SDL_EVENT_WINDOW_MINIMIZED -> minimized = true;
-				case SDL_EVENT_WINDOW_RESIZED -> {
-					resizeCallback(handle, windowEvent.data1(), windowEvent.data2());
-				}
+				case SDL_EVENT_WINDOW_RESIZED -> resizeCallback(handle, windowEvent.data1(), windowEvent.data2());
 				case SDL_EVENT_WINDOW_MOVED -> {
 					x = windowEvent.data1();
 					y = windowEvent.data2();
 				}
-				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED -> {
-
-				}
+				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ->
+						onFramebufferResize(handle, windowEvent.data1(), windowEvent.data2());
+				case SDL_EVENT_WINDOW_ENTER_FULLSCREEN -> isFullscreen = true;
+				case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN -> isFullscreen = false;
 
 			}
 		}
@@ -301,29 +296,13 @@ public final class Display {
 			framebufferHeight = Math.max(1, height.get(0));
 		}
 
-		// create general callbacks
-		/*GLFW.glfwSetWindowSizeCallback(handle, GLFWWindowSizeCallback.create(Display::resizeCallback));
-		GLFW.glfwSetFramebufferSizeCallback(handle, GLFWFramebufferSizeCallback.create(Display::onFramebufferResize));
-		GLFW.glfwSetWindowFocusCallback(handle, (window, focused1) -> {
-			if (window == handle) {
-				focused = focused1;
-			}
-		});
-		GLFW.glfwSetWindowIconifyCallback(handle, GLFWWindowIconifyCallback.create(Display::onIconify));
-		GLFW.glfwSetWindowPosCallback(handle, GLFWWindowPosCallback.create((window, xpos, ypos) -> {
-			x = xpos;
-			y = ypos;
-		}));*/
 		Mouse.create();
 		Keyboard.create();
+		SDLKeyboard.SDL_StartTextInput(Display.getHandle());
 		checkSdlError(SDL_ShowWindow(handle));
 		if (cached_icons != null) {
 			setIcon(cached_icons);
 		}
-	}
-
-	private static void onIconify(long window, boolean iconified) {
-		Display.iconified = iconified;
 	}
 
 	private static void onFramebufferResize(long window, int framebufferWidth, int framebufferHeight) {
@@ -360,19 +339,27 @@ public final class Display {
 				}
 				x = 0;
 				y = 0;
-				try (var stack = MemoryStack.stackPush(); var mode = SDL_DisplayMode.malloc(stack)) {
-					SDL_GetClosestFullscreenDisplayMode(monitor, width, height, -1, true, mode);
+
+				// This code would enable exclusive fullscreen. It doesn't work.
+				// mode.internal() ends up being 0 which lwjgl checks for.
+				//var mode = SDL_GetCurrentDisplayMode(monitor);
+				//SDL_GetClosestFullscreenDisplayMode(monitor, width, height, -1, true, mode);
+				/*if (mode != null) {
+					if (mode.internal() == 0) {
+						mode = null;
+					}
 					SDL_SetWindowFullscreenMode(handle, mode);
-					width = mode.w();
-					height = mode.h();
-				}
-				isFullscreen = true;
+					if (mode != null) {
+						width = mode.w();
+						height = mode.h();
+					}
+				}*/
+
 			} else {
 				x = windowedX;
 				y = windowedY;
 				width = windowedWidth;
 				height = windowedHeight;
-				isFullscreen = false;
 			}
 			SDL_SetWindowFullscreen(handle, fullscreen);
 			window_resized = true;
@@ -392,22 +379,22 @@ public final class Display {
 		if (currentMonitor == 0) {
 			return new DisplayMode[0];
 		} else {
-			var buf = SDL_GetFullscreenDisplayModes(SDL_GetPrimaryDisplay());
+			var buf = SDL_GetFullscreenDisplayModes(currentMonitor);
 			if (buf == null) {
 				throw new IllegalStateException("No video modes found");
 			} else {
 				return IntStream.range(0, buf.limit()).mapToLong(buf::get)
-						.mapToObj(l ->
-								new DisplayMode(SDL_DisplayMode.nw(l), SDL_DisplayMode.nh(l),
-										SDL_PixelFormatDetails.nbits_per_pixel(
-												SDLPixels.nSDL_GetPixelFormatDetails(SDL_DisplayMode.nformat(l))),
-										(int) SDL_DisplayMode.nrefresh_rate(l))).toArray(DisplayMode[]::new);
+						.mapToObj(l -> new DisplayMode(SDL_DisplayMode.nw(l), SDL_DisplayMode.nh(l),
+								SDL_PixelFormatDetails.nbits_per_pixel(
+										SDLPixels.nSDL_GetPixelFormatDetails(SDL_DisplayMode.nformat(l))),
+								(int) SDL_DisplayMode.nrefresh_rate(l))).toArray(DisplayMode[]::new);
 			}
 		}
 	}
 
 	public static void destroy() {
 		// free callbacks
+		SDLKeyboard.SDL_StopTextInput(Display.getHandle());
 		Keyboard.destroy();
 		Mouse.destroy();
 		memFree(GL.getCapabilities().getAddressBuffer());

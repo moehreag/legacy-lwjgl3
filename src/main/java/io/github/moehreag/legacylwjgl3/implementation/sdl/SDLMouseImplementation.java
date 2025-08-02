@@ -1,4 +1,4 @@
-package io.github.moehreag.legacylwjgl3.implementation.glfw;
+package io.github.moehreag.legacylwjgl3.implementation.sdl;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;

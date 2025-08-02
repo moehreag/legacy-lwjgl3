@@ -1,7 +1,7 @@
 package io.github.moehreag.legacylwjgl3.implementation;
 
-import io.github.moehreag.legacylwjgl3.implementation.glfw.SDLKeyboardImplementation;
-import io.github.moehreag.legacylwjgl3.implementation.glfw.SDLMouseImplementation;
+import io.github.moehreag.legacylwjgl3.implementation.sdl.SDLKeyboardImplementation;
+import io.github.moehreag.legacylwjgl3.implementation.sdl.SDLMouseImplementation;
 import io.github.moehreag.legacylwjgl3.implementation.input.CombinedInputImplementation;
 import io.github.moehreag.legacylwjgl3.implementation.input.InputImplementation;
 
