@@ -56,10 +56,10 @@ dependencies {
         "include"(runtimeOnly("org.lwjgl:lwjgl-opengl::natives-$platform")!!)
     }
 
-    "include"(implementation("org.lwjgl:lwjgl:$lwjglVersion")!!)
-    "include"(implementation("org.lwjgl:lwjgl-sdl:$lwjglVersion")!!)
-    "include"(implementation("org.lwjgl:lwjgl-openal:$lwjglVersion")!!)
-    "include"(implementation("org.lwjgl:lwjgl-opengl:$lwjglVersion")!!)
+    "include"(api("org.lwjgl:lwjgl:$lwjglVersion")!!)
+    "include"(api("org.lwjgl:lwjgl-sdl:$lwjglVersion")!!)
+    "include"(api("org.lwjgl:lwjgl-openal:$lwjglVersion")!!)
+    "include"(api("org.lwjgl:lwjgl-opengl:$lwjglVersion")!!)
 }
 
 configurations.configureEach {
@@ -96,7 +96,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(tasks["remapJar"])
+            //artifact(tasks["remapJar"])
         }
     }
 

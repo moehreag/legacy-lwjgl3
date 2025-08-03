@@ -3,8 +3,6 @@ package org.lwjgl.opengl;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.stream.IntStream;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.SDLPlatforms;
@@ -149,7 +147,13 @@ public final class Display {
 	public static DisplayMode getDesktopDisplayMode() {
 		var mode = SDLVideo.SDL_GetDesktopDisplayMode(SDLVideo.SDL_GetPrimaryDisplay());
 		if (mode == null) {
-			return Arrays.stream(getAvailableDisplayModes()).max(Comparator.comparingInt(d -> d.getWidth() * d.getHeight())).orElse(null);
+			DisplayMode best = null;
+			for (DisplayMode displayMode : getAvailableDisplayModes()) {
+				if (best == null || displayMode.getWidth() * displayMode.getHeight() > best.getWidth() * best.getHeight()) {
+					best = displayMode;
+				}
+			}
+			return best;
 		}
 		return new DisplayMode(mode.w(), mode.h(), SDL_PixelFormatDetails.nbits_per_pixel(SDLPixels.nSDL_GetPixelFormatDetails(mode.format())), (int) mode.refresh_rate());
 
@@ -199,17 +203,6 @@ public final class Display {
 		while (SDL_PollEvent(event)) {
 			switch (event.type()) {
 				case SDL_EVENT_QUIT, SDL_EVENT_WINDOW_CLOSE_REQUESTED -> closeRequested = true;
-				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING -> {
-					if (Keyboard.isCreated()) {
-						Keyboard.processKeyboardEvent(event);
-					}
-				}
-				case SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP, SDL_EVENT_MOUSE_MOTION,
-					 SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE -> {
-					if (Mouse.isCreated()) {
-						Mouse.processMouseEvent(event);
-					}
-				}
 				case SDL_EVENT_WINDOW_FOCUS_GAINED -> focused = true;
 				case SDL_EVENT_WINDOW_FOCUS_LOST -> focused = false;
 				case SDL_EVENT_WINDOW_SHOWN, SDL_EVENT_WINDOW_RESTORED, SDL_EVENT_WINDOW_MAXIMIZED -> minimized = false;
@@ -223,7 +216,17 @@ public final class Display {
 						onFramebufferResize(handle, windowEvent.data1(), windowEvent.data2());
 				case SDL_EVENT_WINDOW_ENTER_FULLSCREEN -> isFullscreen = true;
 				case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN -> isFullscreen = false;
-
+				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING -> {
+					if (Keyboard.isCreated()) {
+						Keyboard.processKeyboardEvent(event);
+					}
+				}
+				case SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP, SDL_EVENT_MOUSE_MOTION,
+					 SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE -> {
+					if (Mouse.isCreated()) {
+						Mouse.processMouseEvent(event);
+					}
+				}
 			}
 		}
 		Keyboard.poll();
@@ -248,7 +251,6 @@ public final class Display {
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
 		windowedWidth = width = displayMode.getWidth();
 		windowedHeight = height = displayMode.getHeight();
-		int primaryMonitor = SDL_GetPrimaryDisplay();
 		// Configure GLFW
 		int props = SDL_CreateProperties();
 		checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED));
@@ -276,7 +278,6 @@ public final class Display {
 
 		glContext = checkSdlError(SDL_GL_CreateContext(handle));
 		checkSdlError(SDL_GL_LoadLibrary((ByteBuffer) null));
-//		SDL_GL_MakeCurrent(handle, glContext);
 		Configuration.OPENGL_EXPLICIT_INIT.set(true);
 		GL.create(SDLVideo::SDL_GL_GetProcAddress);
 		GL.createCapabilities(MemoryUtil::memCallocPointer);
@@ -383,18 +384,24 @@ public final class Display {
 			if (buf == null) {
 				throw new IllegalStateException("No video modes found");
 			} else {
-				return IntStream.range(0, buf.limit()).mapToLong(buf::get)
-						.mapToObj(l -> new DisplayMode(SDL_DisplayMode.nw(l), SDL_DisplayMode.nh(l),
-								SDL_PixelFormatDetails.nbits_per_pixel(
-										SDLPixels.nSDL_GetPixelFormatDetails(SDL_DisplayMode.nformat(l))),
-								(int) SDL_DisplayMode.nrefresh_rate(l))).toArray(DisplayMode[]::new);
+				int bound = buf.limit();
+				DisplayMode[] modes = new DisplayMode[bound];
+				for (int i = 0; i < bound; i++) {
+					long l = buf.get(i);
+					DisplayMode mode = new DisplayMode(SDL_DisplayMode.nw(l), SDL_DisplayMode.nh(l),
+							SDL_PixelFormatDetails.nbits_per_pixel(
+									SDLPixels.nSDL_GetPixelFormatDetails(SDL_DisplayMode.nformat(l))),
+							(int) SDL_DisplayMode.nrefresh_rate(l));
+					modes[i] = mode;
+				}
+				return modes;
 			}
 		}
 	}
 
 	public static void destroy() {
 		// free callbacks
-		SDLKeyboard.SDL_StopTextInput(Display.getHandle());
+		SDLKeyboard.SDL_StopTextInput(getHandle());
 		Keyboard.destroy();
 		Mouse.destroy();
 		memFree(GL.getCapabilities().getAddressBuffer());
@@ -411,9 +418,7 @@ public final class Display {
 		if (SDL_WasInit(SDL_INIT_VIDEO) != 0) {
 			SDL_QuitSubSystem(SDL_INIT_VIDEO);
 		}
-		if (event != null) {
-			event.free();
-		}
+		event.free();
 		Mouse.destroy();
 		Keyboard.destroy();
 		SDL_Quit();

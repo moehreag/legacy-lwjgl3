@@ -43,6 +43,7 @@ import org.lwjgl.sdl.SDL_Event;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A raw Keyboard interface. This can be used to poll the current state of the
@@ -59,7 +60,7 @@ public class Keyboard {
     /** Buffer size in events */
     private static final int BUFFER_SIZE = 50;
 
-    public static final int KEYBOARD_SIZE = SDLKeyboard.SDL_HasKeyboard() ? SDLKeyboard.SDL_GetKeyboardState().limit() + 1 : 0;
+    public static final int KEYBOARD_SIZE = SDLKeyboard.SDL_GetKeyboardState().limit() + 1;
 
     /** Has the keyboard been created? */
     private static boolean created;
