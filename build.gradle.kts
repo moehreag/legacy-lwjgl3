@@ -134,7 +134,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(tasks["remapJar"])
+            //artifact(tasks["remapJar"])
         }
     }
 
