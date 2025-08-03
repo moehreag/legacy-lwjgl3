@@ -3,11 +3,14 @@ package io.github.moehreag.legacylwjgl3;
 import io.github.moehreag.legacylwjgl3.annotations.CreateStub;
 import io.github.moehreag.legacylwjgl3.annotations.Public;
 import io.github.moehreag.legacylwjgl3.util.CodeGen;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import io.github.moehreag.legacylwjgl3.util.LibraryExtractor;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
@@ -30,8 +33,9 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
         // meaning it will load LWJGL 3 classes from the knot classpath instead of LWJGL 2 from the system classpath
         //
         // This was such a pain to figure out and caused me so much trouble
-        getPaulscodePath().ifPresent(FabricLauncherBase.getLauncher()::addToClassPath);
-    }
+		getPaulscodePath().ifPresent(FabricLauncherBase.getLauncher()::addToClassPath);
+        new LibraryExtractor().run(FabricLauncherBase.getLauncher()::addToClassPath);
+	}
 
     public static Optional<Path> getPaulscodePath() {
         for (Path path : FabricLauncherBase.getLauncher().getClassPath()) {

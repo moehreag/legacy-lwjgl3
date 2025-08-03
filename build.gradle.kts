@@ -1,6 +1,26 @@
+import com.google.common.jimfs.Jimfs
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import org.kamranzafar.jtar.TarEntry
+import org.kamranzafar.jtar.TarHeader
+import org.kamranzafar.jtar.TarOutputStream
+import org.tukaani.xz.LZMA2Options
+import org.tukaani.xz.X86Options
+import org.tukaani.xz.XZ
+import org.tukaani.xz.XZOutputStream
+import java.io.BufferedOutputStream
 import java.net.URI
+import java.nio.file.FileSystems
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
+import kotlin.io.path.copyTo
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.fileSize
+import kotlin.io.path.outputStream
+import kotlin.io.path.readBytes
 
 plugins {
     id("io.freefair.lombok") version "8.+"
@@ -41,25 +61,43 @@ loom {
     }
 }
 
+configurations {
+    create("embedCompressed")
+}
+
 dependencies {
     minecraft("com.mojang:minecraft:${properties["minecraft_version"]}")
     mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
     modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
 
     implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
-    "include"(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
+    //"embedCompressed"(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
 
-    listOf("linux", /*"windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64"*/).forEach { platform ->
-        "include"(runtimeOnly("org.lwjgl:lwjgl::natives-$platform")!!)
-        "include"(runtimeOnly("org.lwjgl:lwjgl-sdl::natives-$platform")!!)
-        "include"(runtimeOnly("org.lwjgl:lwjgl-openal::natives-$platform")!!)
-        "include"(runtimeOnly("org.lwjgl:lwjgl-opengl::natives-$platform")!!)
+    listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
+        "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-$platform")!!)
+        "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion:natives-$platform")!!)
+        "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-openal:$lwjglVersion:natives-$platform")!!)
+        "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-$platform")!!)
     }
 
     "include"(api("org.lwjgl:lwjgl:$lwjglVersion")!!)
-    "include"(api("org.lwjgl:lwjgl-sdl:$lwjglVersion")!!)
+    "embedCompressed"(api("org.lwjgl:lwjgl-sdl:$lwjglVersion")!!)
     "include"(api("org.lwjgl:lwjgl-openal:$lwjglVersion")!!)
     "include"(api("org.lwjgl:lwjgl-opengl:$lwjglVersion")!!)
+
+    include(implementation("org.kamranzafar:jtar:2.3")!!)
+    include(implementation("org.tukaani:xz:1.10")!!)
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.kamranzafar:jtar:2.3")
+        classpath("org.tukaani:xz:1.10")
+        classpath("com.google.jimfs:jimfs:1.3.0")
+    }
 }
 
 configurations.configureEach {
@@ -72,6 +110,56 @@ tasks {
         filesMatching("fabric.mod.json") {
             expand(mapOf("version" to project.version))
         }
+
+        val out = layout.buildDirectory.dir("resources").get().asFile.toPath().resolve("main")
+            .resolve("libraries.tar.xz")
+        actions.addLast {
+            val jijs = configurations.getByName("include").dependencies.toSet()
+            val includes = configurations.getByName("embedCompressed").resolvedConfiguration
+                .resolvedArtifacts
+                .filter { jijs.none { jij -> it.moduleVersion.toString()+(if (it.classifier != null) ":"+it.classifier else "") == jij.toString() } }
+                .map { it.file.toPath() }
+
+
+            out.parent.createDirectories()
+            out.deleteIfExists()
+            Jimfs.newFileSystem().use { memFs ->
+                out.outputStream().use { outputStream ->
+                    BufferedOutputStream(outputStream).use { buf ->
+                        XZOutputStream(buf, arrayOf(X86Options(), LZMA2Options(9)), XZ.CHECK_SHA256).use { xz ->
+                            TarOutputStream(xz).use { tar ->
+                                includes.forEach { jar ->
+                                    val memPath = memFs.getPath(jar.fileName.toString())
+                                    FileSystems.newFileSystem(memPath, mapOf("create" to "true", "noCompression" to "true")).use { fs ->
+                                        FileSystems.newFileSystem(jar).use { file ->
+                                            Files.walkFileTree(
+                                                file.getPath("/"),
+                                                object : SimpleFileVisitor<java.nio.file.Path>() {
+                                                    override fun visitFile(
+                                                        file: java.nio.file.Path,
+                                                        attrs: BasicFileAttributes
+                                                    ): FileVisitResult {
+                                                        val f = fs.getPath(file.toString())
+                                                        f.parent.createDirectories()
+                                                        file.copyTo(f)
+                                                        return super.visitFile(file, attrs)
+                                                    }
+                                                })
+                                        }
+                                    }
+                                    val e = TarEntry(TarHeader.createHeader(memPath.fileName.toString(), memPath.fileSize(), 0, false, 444))
+                                    tar.putNextEntry(e)
+                                    tar.write(memPath.readBytes())
+                                    tar.flush()
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        outputs.file(out)
     }
 
     withType<JavaCompile>().configureEach {
