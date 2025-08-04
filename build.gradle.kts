@@ -5,15 +5,16 @@ import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarHeader
 import org.kamranzafar.jtar.TarOutputStream
 import org.tukaani.xz.LZMA2Options
-import org.tukaani.xz.X86Options
 import org.tukaani.xz.XZ
 import org.tukaani.xz.XZOutputStream
 import java.io.BufferedOutputStream
 import java.net.URI
+import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.SimpleFileVisitor
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -173,6 +174,43 @@ tasks {
             }
         }
         outputs.file(out)
+    }
+
+    processIncludeJars.configure {
+        fun recompressNestedJar(memFs: FileSystem, jar: java.nio.file.Path) {
+            val memPath = memFs.getPath(jar.fileName.toString())
+            FileSystems.newFileSystem(
+                memPath,
+                mapOf("create" to "true", "noCompression" to "true")
+            ).use { fs ->
+                FileSystems.newFileSystem(jar).use { file ->
+                    Files.walkFileTree(
+                        file.getPath("/"),
+                        object : SimpleFileVisitor<java.nio.file.Path>() {
+                            override fun visitFile(
+                                file: java.nio.file.Path,
+                                attrs: BasicFileAttributes
+                            ): FileVisitResult {
+                                val f = fs.getPath(file.toString())
+                                f.parent.createDirectories()
+                                file.copyTo(f)
+                                if (file.fileName.toString().endsWith(".jar")) {
+                                    recompressNestedJar(memFs, file)
+                                }
+                                return super.visitFile(file, attrs)
+                            }
+                        })
+                }
+            }
+            Files.copy(memPath, jar, StandardCopyOption.REPLACE_EXISTING)
+        }
+
+        outputs.upToDateWhen { false }
+        actions.addLast {
+            Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix()).use { memFs ->
+                outputs.files.asFileTree.files.forEach { recompressNestedJar(memFs, it.toPath()) }
+            }
+        }
     }
 
     withType<JavaCompile>().configureEach {
