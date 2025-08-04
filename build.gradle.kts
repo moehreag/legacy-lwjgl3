@@ -15,12 +15,9 @@ import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.io.path.copyTo
-import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.fileSize
-import kotlin.io.path.outputStream
-import kotlin.io.path.readBytes
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedDeque
+import kotlin.io.path.*
 
 plugins {
     id("io.freefair.lombok") version "8.+"
@@ -70,9 +67,6 @@ dependencies {
     mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
     modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
 
-    implementation(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
-    //"embedCompressed"(platform("org.lwjgl:lwjgl-bom:$lwjglVersion"))
-
     listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion:natives-$platform")!!)
@@ -96,7 +90,7 @@ buildscript {
     dependencies {
         classpath("org.kamranzafar:jtar:2.3")
         classpath("org.tukaani:xz:1.10")
-        classpath("com.google.jimfs:jimfs:1.3.0")
+        classpath("com.google.jimfs:jimfs:1.3.1")
     }
 }
 
@@ -117,46 +111,65 @@ tasks {
             val jijs = configurations.getByName("include").dependencies.toSet()
             val includes = configurations.getByName("embedCompressed").resolvedConfiguration
                 .resolvedArtifacts
-                .filter { jijs.none { jij -> it.moduleVersion.toString()+(if (it.classifier != null) ":"+it.classifier else "") == jij.toString() } }
+                .filter { jijs.none { jij -> it.moduleVersion.toString() + (if (it.classifier != null) ":" + it.classifier else "") == jij.toString() } }
                 .map { it.file.toPath() }
 
 
             out.parent.createDirectories()
             out.deleteIfExists()
-            Jimfs.newFileSystem().use { memFs ->
+            Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix()).use { memFs ->
+
+                val memPaths = ConcurrentLinkedDeque<java.nio.file.Path>()
+                val futs = mutableListOf<CompletableFuture<*>>()
+                includes.forEach { jar ->
+                    futs.add(CompletableFuture.runAsync {
+                        val memPath = memFs.getPath(jar.fileName.toString())
+                        FileSystems.newFileSystem(
+                            memPath,
+                            mapOf("create" to "true", "noCompression" to "true")
+                        ).use { fs ->
+                            FileSystems.newFileSystem(jar).use { file ->
+                                Files.walkFileTree(
+                                    file.getPath("/"),
+                                    object : SimpleFileVisitor<java.nio.file.Path>() {
+                                        override fun visitFile(
+                                            file: java.nio.file.Path,
+                                            attrs: BasicFileAttributes
+                                        ): FileVisitResult {
+                                            val f = fs.getPath(file.toString())
+                                            f.parent.createDirectories()
+                                            file.copyTo(f)
+                                            return super.visitFile(file, attrs)
+                                        }
+                                    })
+                            }
+                        }
+                        memPaths.add(memPath)
+                    })
+                }
+                CompletableFuture.allOf(*futs.toTypedArray()).join()
                 out.outputStream().use { outputStream ->
                     BufferedOutputStream(outputStream).use { buf ->
-                        XZOutputStream(buf, arrayOf(X86Options(), LZMA2Options(9)), XZ.CHECK_SHA256).use { xz ->
+                        XZOutputStream(buf, LZMA2Options(6), XZ.CHECK_SHA256).use { xz ->
                             TarOutputStream(xz).use { tar ->
-                                includes.forEach { jar ->
-                                    val memPath = memFs.getPath(jar.fileName.toString())
-                                    FileSystems.newFileSystem(memPath, mapOf("create" to "true", "noCompression" to "true")).use { fs ->
-                                        FileSystems.newFileSystem(jar).use { file ->
-                                            Files.walkFileTree(
-                                                file.getPath("/"),
-                                                object : SimpleFileVisitor<java.nio.file.Path>() {
-                                                    override fun visitFile(
-                                                        file: java.nio.file.Path,
-                                                        attrs: BasicFileAttributes
-                                                    ): FileVisitResult {
-                                                        val f = fs.getPath(file.toString())
-                                                        f.parent.createDirectories()
-                                                        file.copyTo(f)
-                                                        return super.visitFile(file, attrs)
-                                                    }
-                                                })
-                                        }
-                                    }
-                                    val e = TarEntry(TarHeader.createHeader(memPath.fileName.toString(), memPath.fileSize(), 0, false, 444))
+                                memPaths.forEach { memPath ->
+                                    val e = TarEntry(
+                                        TarHeader.createHeader(
+                                            memPath.fileName.toString(),
+                                            memPath.fileSize(),
+                                            0,
+                                            false,
+                                            444
+                                        )
+                                    )
                                     tar.putNextEntry(e)
-                                    tar.write(memPath.readBytes())
+                                    Files.copy(memPath, tar)
                                     tar.flush()
                                 }
                             }
                         }
                     }
                 }
-
             }
         }
         outputs.file(out)
