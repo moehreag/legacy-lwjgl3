@@ -11,8 +11,6 @@ import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.entrypoint.PreLaunchEntrypoint;
-import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kamranzafar.jtar.TarEntry;
@@ -20,7 +18,7 @@ import org.kamranzafar.jtar.TarInputStream;
 import org.tukaani.xz.XZInputStream;
 
 @Slf4j
-public class LibraryExtractor implements PreLaunchEntrypoint {
+public class LibraryExtractor {
 
 	public void run(Consumer<Path> classpathAdder) {
 		if (FabricLoader.getInstance().isDevelopmentEnvironment()) return;
@@ -39,17 +37,17 @@ public class LibraryExtractor implements PreLaunchEntrypoint {
 					return;
 				}
 
-				 try (var buf = new BufferedInputStream(in);
-				 var xz = new XZInputStream(buf);
-				 var tar = new TarInputStream(xz)) {
-					 TarEntry currentEntry;
-					 while ((currentEntry = tar.getNextEntry()) != null) {
-						 var entry = tar.readNBytes((int) currentEntry.getSize());
-						 var res = out.resolve(currentEntry.getName());
-						 Files.write(res, entry);
-						 classpathAdder.accept(res);
-					 }
-				 }
+				try (var buf = new BufferedInputStream(in);
+					 var xz = new XZInputStream(buf);
+					 var tar = new TarInputStream(xz)) {
+					TarEntry currentEntry;
+					while ((currentEntry = tar.getNextEntry()) != null) {
+						var entry = tar.readNBytes((int) currentEntry.getSize());
+						var res = out.resolve(currentEntry.getName());
+						Files.write(res, entry);
+						classpathAdder.accept(res);
+					}
+				}
 
 			}
 		} catch (IOException e) {
@@ -73,10 +71,5 @@ public class LibraryExtractor implements PreLaunchEntrypoint {
 			}
 		});
 		Files.deleteIfExists(p);
-	}
-
-	@Override
-	public void onPreLaunch() {
-		run(FabricLauncherBase.getLauncher()::addToClassPath);
 	}
 }

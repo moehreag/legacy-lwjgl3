@@ -419,8 +419,6 @@ public final class Display {
 			SDL_QuitSubSystem(SDL_INIT_VIDEO);
 		}
 		event.free();
-		Mouse.destroy();
-		Keyboard.destroy();
 		SDL_Quit();
 		try (MemoryStack stack = stackPush()) {
 			PointerBuffer funcs = stack.mallocPointer(4);

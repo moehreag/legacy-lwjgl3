@@ -18,6 +18,9 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import kotlin.io.path.*
 
 plugins {
@@ -47,17 +50,6 @@ repositories {
 }
 
 val lwjglVersion = properties["lwjgl_version"]
-
-loom {
-    runs {
-        getByName("client") {
-            if (project.properties["native_glfw"] == "true") {
-                val glfwPath = project.properties.getOrDefault("native_glfw_path", "/usr/lib/libglfw.so")
-                vmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
-            }
-        }
-    }
-}
 
 configurations {
     create("embedCompressed")
@@ -127,7 +119,7 @@ tasks {
                         val memPath = memFs.getPath(jar.fileName.toString())
                         FileSystems.newFileSystem(
                             memPath,
-                            mapOf("create" to "true", "noCompression" to "true")
+                            mapOf("create" to "true", "compressionMethod" to "stored")
                         ).use { fs ->
                             FileSystems.newFileSystem(jar).use { file ->
                                 Files.walkFileTree(
@@ -177,39 +169,37 @@ tasks {
     }
 
     processIncludeJars.configure {
-        fun recompressNestedJar(memFs: FileSystem, jar: java.nio.file.Path) {
-            val memPath = memFs.getPath(jar.fileName.toString())
-            FileSystems.newFileSystem(
-                memPath,
-                mapOf("create" to "true", "noCompression" to "true")
-            ).use { fs ->
-                FileSystems.newFileSystem(jar).use { file ->
-                    Files.walkFileTree(
-                        file.getPath("/"),
-                        object : SimpleFileVisitor<java.nio.file.Path>() {
-                            override fun visitFile(
-                                file: java.nio.file.Path,
-                                attrs: BasicFileAttributes
-                            ): FileVisitResult {
-                                val f = fs.getPath(file.toString())
-                                f.parent.createDirectories()
-                                file.copyTo(f)
-                                if (file.fileName.toString().endsWith(".jar")) {
-                                    recompressNestedJar(memFs, file)
+        fun recompressNestedJar(jar: File) {
+            val out = jar.resolveSibling(jar.name+".stored")
+            out.toPath().deleteIfExists()
+            jar.inputStream().use { stream ->
+                ZipInputStream(stream).use { zipIn ->
+                    out.outputStream().use { outStream ->
+                        ZipOutputStream(outStream).use { zipOut ->
+                            zipOut.setMethod(ZipOutputStream.STORED)
+                            var entry: ZipEntry? = zipIn.nextEntry
+                            while (entry != null) {
+                                val entryBytes = zipIn.readAllBytes()
+                                if (entry.method == ZipEntry.DEFLATED) {
+                                    entry.method = ZipEntry.STORED
+                                    entry.size = entryBytes.size.toLong()
+                                    entry.compressedSize = entry.size
                                 }
-                                return super.visitFile(file, attrs)
+                                zipOut.putNextEntry(entry)
+                                zipOut.write(entryBytes)
+                                entry = zipIn.nextEntry
                             }
-                        })
+                            zipOut.closeEntry()
+                        }
+                    }
                 }
             }
-            Files.copy(memPath, jar, StandardCopyOption.REPLACE_EXISTING)
+            out.toPath().moveTo(jar.toPath(), StandardCopyOption.REPLACE_EXISTING)
         }
 
         outputs.upToDateWhen { false }
         actions.addLast {
-            Jimfs.newFileSystem(com.google.common.jimfs.Configuration.unix()).use { memFs ->
-                outputs.files.asFileTree.files.forEach { recompressNestedJar(memFs, it.toPath()) }
-            }
+            outputs.files.asFileTree.files.forEach { recompressNestedJar(it) }
         }
     }
 

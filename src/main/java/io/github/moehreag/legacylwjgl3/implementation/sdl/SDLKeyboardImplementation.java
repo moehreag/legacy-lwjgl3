@@ -79,14 +79,10 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 				}
 				putKeyboardEvent(key, this.key_down_buffer[key], 0, System.nanoTime(), keyboardEvent.repeat());
 			}
-            case SDL_EVENT_TEXT_EDITING -> {
-				textEditingEvent.textString().codePoints().forEach(codepoint ->
-						putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
-            }
-			case SDL_EVENT_TEXT_INPUT -> {
-				textInputEvent.textString().codePoints().forEach(codepoint ->
-						putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
-			}
+			case SDL_EVENT_TEXT_EDITING -> textEditingEvent.textString().codePoints().forEach(codepoint ->
+					putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
+			case SDL_EVENT_TEXT_INPUT -> textInputEvent.textString().codePoints().forEach(codepoint ->
+					putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
 		}
 	}
 
