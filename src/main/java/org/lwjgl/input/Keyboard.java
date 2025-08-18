@@ -299,11 +299,6 @@ public class Keyboard {
     public static void enableRepeatEvents(boolean enable) {
 //        synchronized (OpenGLPackageAccess.global_lock) {
             repeat_enabled = enable;
-            if (enable) {
-                SDLKeyboard.SDL_StartTextInput(Display.getHandle());
-            }else {
-                SDLKeyboard.SDL_StopTextInput(Display.getHandle());
-            }
 //        }
     }
 
