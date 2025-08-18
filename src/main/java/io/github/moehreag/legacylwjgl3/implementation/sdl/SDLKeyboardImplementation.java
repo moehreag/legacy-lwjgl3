@@ -2,6 +2,7 @@ package io.github.moehreag.legacylwjgl3.implementation.sdl;
 
 import java.nio.ByteBuffer;
 
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.implementation.input.KeyboardImplementation;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
@@ -88,7 +89,11 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 
 	public static int translateKeyFromSDL(int key) {
 		if (key < 0) key = SDLKeycode.SDLK_UNKNOWN;
-		return SDL2LWJGL.getOrDefault(key, key);
+		if (!SDL2LWJGL.containsKey(key)) {
+			LegacyLWJGL3.LOGGER.warn("Untranslated key: "+key+" ("+SDLKeyboard.SDL_GetKeyName(key)+")");
+			return Keyboard.KEY_NONE;
+		}
+		return SDL2LWJGL.get(key);
 	}
 
 	private static final Int2IntMap SDL2LWJGL = new Int2IntOpenHashMap();
@@ -215,6 +220,7 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 		SDL2LWJGL.put(SDLKeycode.SDLK_RCTRL, Keyboard.KEY_RCONTROL);
 		SDL2LWJGL.put(SDLKeycode.SDLK_RALT, Keyboard.KEY_RMENU);
 		SDL2LWJGL.put(SDLKeycode.SDLK_RMETA, Keyboard.KEY_RMETA);
+		SDL2LWJGL.put(SDLKeycode.SDLK_MODE, Keyboard.KEY_RMENU);
 		SDL2LWJGL.put(SDLKeycode.SDLK_RGUI, Keyboard.KEY_RMETA);
 		SDL2LWJGL.put(SDLKeycode.SDLK_MENU, Keyboard.KEY_MENU);
 	}
