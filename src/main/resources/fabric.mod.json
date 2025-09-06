@@ -28,5 +28,12 @@
     "fabricloader": ">=0.12.0",
     "minecraft": "<1.13 >=1.8.2",
     "java": ">=17"
+  },
+  "custom": {
+	"loom:injected_interfaces": {
+	  "net/minecraft/unmapped/C_3020744": [
+		"io/github/moehreag/legacylwjgl3/LegacyLWJGL3ScreenEx"
+	  ]
+	}
   }
 }

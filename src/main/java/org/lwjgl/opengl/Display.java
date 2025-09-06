@@ -2,9 +2,13 @@ package org.lwjgl.opengl;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3ScreenEx;
 import io.github.moehreag.legacylwjgl3.SDLPlatforms;
 import lombok.Getter;
 import lombok.Setter;
@@ -62,6 +66,8 @@ public final class Display {
 	@Getter
 	private static final SDL_Event event = SDL_Event.calloc();
 	private static final SDL_WindowEvent windowEvent = event.window();
+	private static final SDL_DropEvent dropEvent = event.drop();
+	private static final List<Path> currentEventDrops = new ArrayList<>(2);
 
 	private Display() {
 	}
@@ -225,6 +231,21 @@ public final class Display {
 					 SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE -> {
 					if (Mouse.isCreated()) {
 						Mouse.processMouseEvent(event);
+					}
+				}
+				case SDL_EVENT_DROP_BEGIN -> {
+					currentEventDrops.clear();
+				}
+				case SDL_EVENT_DROP_FILE -> {
+					var data = dropEvent.dataString();
+					if (data != null) {
+						currentEventDrops.add(Path.of(data));
+					}
+				}
+				case SDL_EVENT_DROP_COMPLETE -> {
+					if (!currentEventDrops.isEmpty()) {
+						LegacyLWJGL3ScreenEx.handleFileDrop(currentEventDrops);
+						currentEventDrops.clear();
 					}
 				}
 			}
