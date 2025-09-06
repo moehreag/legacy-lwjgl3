@@ -132,7 +132,7 @@ modrinth {
     versionType = "release"
     uploadFile = tasks["remapJar"]
     additionalFiles = listOf(tasks["sourcesJar"])
-    loaders = listOf("fabric", "quilt")
+    loaders = listOf("ornithe")
 
     gameVersions = run {
         URI("https://meta.ornithemc.net/v3/versions/game")

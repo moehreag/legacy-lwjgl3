@@ -1,11 +1,16 @@
 package org.lwjgl.opengl;
 
 import java.nio.ByteBuffer;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
+import java.util.stream.IntStream;
 
 import io.github.moehreag.legacylwjgl3.DesktopFileInjector;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3ScreenEx;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -249,6 +254,21 @@ public final class Display {
 		GLFW.glfwSetWindowPosCallback(handle, GLFWWindowPosCallback.create((window, xpos, ypos) -> {
 			x = xpos;
 			y = ypos;
+		}));
+		GLFW.glfwSetDropCallback(handle, GLFWDropCallback.create((window, count, names) -> {
+			var dropped = IntStream.range(0, count).mapToObj(i -> GLFWDropCallback.getName(names, i))
+					.map(s -> {
+						try {
+							return Path.of(s);
+						} catch (InvalidPathException e) {
+							LegacyLWJGL3.LOGGER.warn("Failed to parse dropped path! '{}'", s, e);
+						}
+						return null;
+					}).filter(Objects::nonNull).toList();
+
+			if (!dropped.isEmpty()) {
+				LegacyLWJGL3ScreenEx.handleFileDrop(dropped);
+			}
 		}));
 		Mouse.create();
 		Keyboard.create();
