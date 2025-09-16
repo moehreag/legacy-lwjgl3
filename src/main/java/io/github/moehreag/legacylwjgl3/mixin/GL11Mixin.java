@@ -74,7 +74,12 @@ public abstract class GL11Mixin {
 	public static void glNormalPointer(int type, int stride, ByteBuffer pointer) {
 	}
 
-    @SuppressWarnings({"unused", "MissingUnique"})
+	@CreateStub("glLoadMatrix")
+	@Shadow
+	public static void glLoadMatrixf(FloatBuffer m) {
+	}
+
+	@SuppressWarnings({"unused", "MissingUnique"})
 	@Public
 	private static void glTexCoordPointer(int i, int stride, FloatBuffer pointer) {
         glTexCoordPointer(i, 0x1406, stride, pointer);
