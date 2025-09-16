@@ -31,10 +31,6 @@
  */
 package org.lwjgl.util.glu;
 
-import java.nio.IntBuffer;
-
-import org.lwjgl.BufferUtils;
-
 import static org.lwjgl.opengl.ARBImaging.GL_TABLE_TOO_LARGE;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.*;
@@ -50,12 +46,7 @@ import static org.lwjgl.opengl.GL30.GL_INVALID_FRAMEBUFFER_OPERATION;
  */
 public class Util {
 
-    /**
-     * temp IntBuffer of one for getting an int from some GL functions
-     */
-    private static IntBuffer scratch = BufferUtils.createIntBuffer(16);
-
-    /**
+	/**
      * Return ceiling of integer division
      *
      * @param a
@@ -112,27 +103,14 @@ public class Util {
      */
     protected static int compPerPix(int format) {
         /* Determine number of components per pixel */
-        switch ( format ) {
-            case GL_COLOR_INDEX:
-            case GL_STENCIL_INDEX:
-            case GL_DEPTH_COMPONENT:
-            case GL_RED:
-            case GL_GREEN:
-            case GL_BLUE:
-            case GL_ALPHA:
-            case GL_LUMINANCE:
-                return 1;
-            case GL_LUMINANCE_ALPHA:
-                return 2;
-            case GL_RGB:
-            case GL_BGR:
-                return 3;
-            case GL_RGBA:
-            case GL_BGRA:
-                return 4;
-            default :
-                return -1;
-        }
+		return switch (format) {
+			case GL_COLOR_INDEX, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT, GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA,
+				 GL_LUMINANCE -> 1;
+			case GL_LUMINANCE_ALPHA -> 2;
+			case GL_RGB, GL_BGR -> 3;
+			case GL_RGBA, GL_BGRA -> 4;
+			default -> -1;
+		};
     }
 
     /**
@@ -175,85 +153,36 @@ public class Util {
     protected static int bytesPerPixel(int format, int type) {
         int n, m;
 
-        switch ( format ) {
-            case GL_COLOR_INDEX:
-            case GL_STENCIL_INDEX:
-            case GL_DEPTH_COMPONENT:
-            case GL_RED:
-            case GL_GREEN:
-            case GL_BLUE:
-            case GL_ALPHA:
-            case GL_LUMINANCE:
-                n = 1;
-                break;
-            case GL_LUMINANCE_ALPHA:
-                n = 2;
-                break;
-            case GL_RGB:
-            case GL_BGR:
-                n = 3;
-                break;
-            case GL_RGBA:
-            case GL_BGRA:
-                n = 4;
-                break;
-            default :
-                n = 0;
-        }
+		n = switch (format) {
+			case GL_COLOR_INDEX, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT, GL_RED, GL_GREEN, GL_BLUE, GL_ALPHA,
+				 GL_LUMINANCE -> 1;
+			case GL_LUMINANCE_ALPHA -> 2;
+			case GL_RGB, GL_BGR -> 3;
+			case GL_RGBA, GL_BGRA -> 4;
+			default -> 0;
+		};
 
-        switch ( type ) {
-            case GL_UNSIGNED_BYTE:
-                m = 1;
-                break;
-            case GL_BYTE:
-                m = 1;
-                break;
-            case GL_BITMAP:
-                m = 1;
-                break;
-            case GL_UNSIGNED_SHORT:
-                m = 2;
-                break;
-            case GL_SHORT:
-                m = 2;
-                break;
-            case GL_UNSIGNED_INT:
-                m = 4;
-                break;
-            case GL_INT:
-                m = 4;
-                break;
-            case GL_FLOAT:
-                m = 4;
-                break;
-            default :
-                m = 0;
-        }
+		m = switch (type) {
+			case GL_UNSIGNED_BYTE, GL_BYTE, GL_BITMAP -> 1;
+			case GL_UNSIGNED_SHORT, GL_SHORT -> 2;
+			case GL_UNSIGNED_INT, GL_INT, GL_FLOAT -> 4;
+			default -> 0;
+		};
 
         return n * m;
     }
     public static String translateGLErrorString(int error_code) {
-        switch (error_code) {
-            case GL_NO_ERROR:
-                return "No error";
-            case GL_INVALID_ENUM:
-                return "Invalid enum";
-            case GL_INVALID_VALUE:
-                return "Invalid value";
-            case GL_INVALID_OPERATION:
-                return "Invalid operation";
-            case GL_STACK_OVERFLOW:
-                return "Stack overflow";
-            case GL_STACK_UNDERFLOW:
-                return "Stack underflow";
-            case GL_OUT_OF_MEMORY:
-                return "Out of memory";
-            case GL_TABLE_TOO_LARGE:
-                return "Table too large";
-            case GL_INVALID_FRAMEBUFFER_OPERATION:
-                return "Invalid framebuffer operation";
-            default:
-                return null;
-        }
+		return switch (error_code) {
+			case GL_NO_ERROR -> "No error";
+			case GL_INVALID_ENUM -> "Invalid enum";
+			case GL_INVALID_VALUE -> "Invalid value";
+			case GL_INVALID_OPERATION -> "Invalid operation";
+			case GL_STACK_OVERFLOW -> "Stack overflow";
+			case GL_STACK_UNDERFLOW -> "Stack underflow";
+			case GL_OUT_OF_MEMORY -> "Out of memory";
+			case GL_TABLE_TOO_LARGE -> "Table too large";
+			case GL_INVALID_FRAMEBUFFER_OPERATION -> "Invalid framebuffer operation";
+			default -> null;
+		};
     }
 }

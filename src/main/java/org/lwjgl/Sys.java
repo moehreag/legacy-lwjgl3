@@ -31,10 +31,7 @@
  */
 package org.lwjgl;
 
-import java.awt.*;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import io.github.moehreag.legacylwjgl3.util.OS;
 
 /**
  * Created by gudenau on 5/30/2017.
@@ -87,11 +84,7 @@ public class Sys {
     }
 
     public static boolean openURL(String url) {
-        try {
-            Desktop.getDesktop().browse(new URI(url));
-            return true;
-        } catch (IOException | URISyntaxException | UnsupportedOperationException e) {
-            return false;
-        }
+		OS.current().open(url);
+		return true;
     }
 }
