@@ -36,6 +36,7 @@ import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.memAddress;
 import static org.lwjgl.system.MemoryUtil.memFree;
 
+@SuppressWarnings("unused")
 public final class Display {
 	@NotNull
 	private static String title = "";
@@ -80,6 +81,7 @@ public final class Display {
 				MemoryUtil::nmemFree
 		);
 
+		checkSdlError(SDLHints.SDL_SetHint(SDLHints.SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1"));
 		checkSdlError(SDL_SetAppMetadata("Minecraft", FabricLoader.getInstance().getModContainer("minecraft").orElseThrow(IllegalStateException::new)
 				.getMetadata().getVersion().getFriendlyString(), "com.mojang.minecraft"));
 		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING, "https://minecraft.net"));
@@ -100,7 +102,7 @@ public final class Display {
 	public static void setTitle(@NotNull String title) {
 		Display.title = title;
 		if (isCreated()) {
-			SDLVideo.SDL_SetWindowTitle(handle, title);
+			SDL_SetWindowTitle(handle, title);
 		}
 	}
 
@@ -151,7 +153,7 @@ public final class Display {
 
 	@Nullable
 	public static DisplayMode getDesktopDisplayMode() {
-		var mode = SDLVideo.SDL_GetDesktopDisplayMode(SDLVideo.SDL_GetPrimaryDisplay());
+		var mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
 		if (mode == null) {
 			DisplayMode best = null;
 			for (DisplayMode displayMode : getAvailableDisplayModes()) {
@@ -183,7 +185,7 @@ public final class Display {
 		}
 
 		if (isCreated() && icons.length > 0) {
-			try (MemoryStack memoryStack = MemoryStack.stackPush()) {
+			try (MemoryStack memoryStack = stackPush()) {
 				var first = icons[0];
 				int size = (int) Math.sqrt(first.limit() / 4f);
 				try (var surface = SDLSurface.SDL_CreateSurface(size, size, SDLPixels.SDL_PIXELFORMAT_RGBA32)) {
@@ -194,7 +196,7 @@ public final class Display {
 						SDLSurface.SDL_AddSurfaceAlternateImage(surface, SDLSurface.SDL_CreateSurface(currentSize, currentSize, SDLPixels.SDL_PIXELFORMAT_RGBA32)
 								.pixels(memoryStack.malloc(buf.limit()).put(buf).flip()));
 					}
-					SDLVideo.SDL_SetWindowIcon(handle, surface);
+					SDL_SetWindowIcon(handle, surface);
 				}
 			}
 			return 1;
@@ -294,7 +296,7 @@ public final class Display {
 
 		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true));
 		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, resizable));
-		handle = checkSdlError(SDLVideo.SDL_CreateWindowWithProperties(props));
+		handle = checkSdlError(SDL_CreateWindowWithProperties(props));
 		SDL_DestroyProperties(props);
 
 		glContext = checkSdlError(SDL_GL_CreateContext(handle));
