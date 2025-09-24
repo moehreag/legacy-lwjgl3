@@ -2,7 +2,6 @@ package io.github.moehreag.legacylwjgl3.util;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Locale;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
@@ -11,45 +10,41 @@ public enum OS {
 	LINUX(),
 	OSX() {
 		@Override
-		protected String[] getProcessArguments(URI uri) {
-			return new String[]{"open", uri.toString()};
+		protected String[] getProcessArguments(String uri) {
+			return new String[]{"open", uri};
 		}
 	},
 	SOLARIS(),
 	UNKNOWN(),
 	WINDOWS() {
 		@Override
-		protected String[] getProcessArguments(URI uri) {
-			return new String[]{"rundll32", "url.dll,FileProtocolHandler", uri.toString()};
+		protected String[] getProcessArguments(String uri) {
+			return new String[]{"rundll32", "url.dll,FileProtocolHandler", uri};
 		}
 	};
 
-	public void openUri(URI uri) {
+	public void open(String uri) {
 		try {
 			Process process = Runtime.getRuntime().exec(this.getProcessArguments(uri));
 			process.getInputStream().close();
 			process.getErrorStream().close();
 			process.getOutputStream().close();
 		} catch (IOException e) {
-			LegacyLWJGL3.LOGGER.error("Couldn't open location '{}'", uri, e);
+			LegacyLWJGL3.LOGGER.error("Couldn't open uri '{}'", uri, e);
 		}
 	}
 
-	protected String[] getProcessArguments(URI uri) {
-		String string = uri.toString();
-		if ("file".equals(uri.getScheme())) {
-			string = string.replace("file:", "file://");
+	protected String[] getProcessArguments(String uri) {
+		String string = uri;
+		try {
+			var parsed = new URI(uri);
+			if ("file".equals(parsed.getScheme())) {
+				string = string.replace("file:", "file://");
+			}
+		} catch (Exception ignored) {
 		}
 
 		return new String[]{"xdg-open", string};
-	}
-
-	public void open(String uri) {
-		try {
-			this.openUri(new URI(uri));
-		} catch (IllegalArgumentException | URISyntaxException var3) {
-			LegacyLWJGL3.LOGGER.error("Couldn't open uri '{}'", uri, var3);
-		}
 	}
 
 	private static final OS CURRENT = getPlatform();
