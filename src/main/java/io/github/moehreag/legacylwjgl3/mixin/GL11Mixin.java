@@ -1,11 +1,17 @@
 package io.github.moehreag.legacylwjgl3.mixin;
 
 import io.github.moehreag.legacylwjgl3.annotations.CreateStub;
+
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+
+import io.github.moehreag.legacylwjgl3.annotations.Public;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(GL11.class)
 public abstract class GL11Mixin {
@@ -48,4 +54,14 @@ public abstract class GL11Mixin {
     @Shadow
     public static void glTexGenfv(int coord, int pname, FloatBuffer params) {
     }
+
+	@Shadow
+	public static void nglDrawElements(int mode, int count, int type, long indices) {
+	}
+
+	@Unique
+	@Public
+	private static void glDrawElements(int mode, int count, int type, ByteBuffer indices) {
+		nglDrawElements(mode, count, type, MemoryUtil.memAddress(indices));
+	}
 }
