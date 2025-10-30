@@ -220,6 +220,6 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 		SDL_SCANCODE2LWJGL.put(SDLScancode.SDL_SCANCODE_RALT, Keyboard.KEY_RMENU);
 		SDL_SCANCODE2LWJGL.put(SDLScancode.SDL_SCANCODE_MODE, Keyboard.KEY_RMENU);
 		SDL_SCANCODE2LWJGL.put(SDLScancode.SDL_SCANCODE_RGUI, Keyboard.KEY_RMETA);
-		SDL_SCANCODE2LWJGL.put(SDLScancode.SDL_SCANCODE_MENU, Keyboard.KEY_MENU);
+		SDL_SCANCODE2LWJGL.put(SDLScancode.SDL_SCANCODE_MENU, Keyboard.KEY_APPS);
 	}
 }
