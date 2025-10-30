@@ -210,6 +210,6 @@ public class GLFWKeyboardImplementation implements KeyboardImplementation {
         GLFW2LWJGL[GLFW.GLFW_KEY_RIGHT_CONTROL] = Keyboard.KEY_RCONTROL;
         GLFW2LWJGL[GLFW.GLFW_KEY_RIGHT_ALT] = Keyboard.KEY_RMENU;
         GLFW2LWJGL[GLFW.GLFW_KEY_RIGHT_SUPER] = Keyboard.KEY_RMETA;
-        GLFW2LWJGL[GLFW.GLFW_KEY_MENU] = Keyboard.KEY_MENU;
+        GLFW2LWJGL[GLFW.GLFW_KEY_MENU] = Keyboard.KEY_APPS;
     }
 }
