@@ -9,7 +9,6 @@ import org.tukaani.xz.XZ
 import org.tukaani.xz.XZOutputStream
 import java.io.BufferedOutputStream
 import java.net.URI
-import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
@@ -24,6 +23,7 @@ import java.util.zip.ZipOutputStream
 import kotlin.io.path.*
 
 plugins {
+    `java-library`
     id("io.freefair.lombok") version "8.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
@@ -60,7 +60,7 @@ dependencies {
     mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
     modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
 
-    listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
+    listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64").forEach { platform ->
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-openal:$lwjglVersion:natives-$platform")!!)
