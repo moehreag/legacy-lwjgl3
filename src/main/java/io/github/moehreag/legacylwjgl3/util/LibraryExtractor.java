@@ -20,10 +20,12 @@ import org.tukaani.xz.XZInputStream;
 @Slf4j
 public class LibraryExtractor {
 
+	private static final String MODID = "legacy-lwjgl3";
+
 	public void run(Consumer<Path> classpathAdder) {
 		if (FabricLoader.getInstance().isDevelopmentEnvironment()) return;
 		try {
-			var out = Files.createTempDirectory("legacy-lwjgl3_dependencies");
+			var out = Files.createTempDirectory(MODID+"_dependencies");
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				try {
 					recursiveDelete(out);
@@ -31,11 +33,8 @@ public class LibraryExtractor {
 					log.warn("Failed to delete temp libraries dir!", e);
 				}
 			}));
-			try (var in = this.getClass().getResourceAsStream("/libraries.tar.xz")) {
-				if (in == null) {
-					log.warn("Can't unpack libraries, assuming they are already on the classpath!");
-					return;
-				}
+			var path = FabricLoader.getInstance().getModContainer(MODID).orElseThrow(IOException::new).findPath("libraries.tar.xz").orElseThrow(IOException::new);
+			try (var in = Files.newInputStream(path)) {
 
 				try (var buf = new BufferedInputStream(in);
 					 var xz = new XZInputStream(buf);
