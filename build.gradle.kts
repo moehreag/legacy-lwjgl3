@@ -24,11 +24,11 @@ import kotlin.io.path.*
 
 plugins {
     `java-library`
-    id("io.freefair.lombok") version "8.+"
+    id("io.freefair.lombok") version "9.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("fabric-loom") version "1.11.+"
-    id("ploceus") version "1.11.+"
+    id("fabric-loom") version "1.14.+"
+    id("ploceus") version "1.14.+"
     id("io.github.p03w.machete") version "2.+"
 }
 

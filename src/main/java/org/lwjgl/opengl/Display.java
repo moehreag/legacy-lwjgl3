@@ -222,8 +222,14 @@ public final class Display {
 				}
 				case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED ->
 						onFramebufferResize(handle, windowEvent.data1(), windowEvent.data2());
-				case SDL_EVENT_WINDOW_ENTER_FULLSCREEN -> isFullscreen = true;
-				case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN -> isFullscreen = false;
+				case SDL_EVENT_WINDOW_ENTER_FULLSCREEN -> {
+					isFullscreen = true;
+					window_resized = true;
+				}
+				case SDL_EVENT_WINDOW_LEAVE_FULLSCREEN -> {
+					isFullscreen = false;
+					window_resized = true;
+				}
 				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING -> {
 					if (Keyboard.isCreated()) {
 						Keyboard.processKeyboardEvent(event);
