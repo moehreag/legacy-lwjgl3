@@ -23,9 +23,11 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
+@SuppressWarnings("unused")
 public final class Display {
 	@NotNull
 	private static String title = "";
+	@Getter
 	private static long handle = -1L;
 	private static boolean resizable;
 	@NotNull
@@ -71,17 +73,13 @@ public final class Display {
 		}
 	}
 
-	public static long getHandle() {
-		return handle;
-	}
-
 	public static void setHandle(long handle) {
 		Display.handle = handle;
 	}
 
 	@NotNull
 	public static DisplayMode getDisplayMode() {
-		return displayMode;
+		return displayMode;//new DisplayMode(framebufferWidth, framebufferHeight, 24, 60);
 	}
 
 	public static void setDisplayMode(@NotNull DisplayMode mode) {
@@ -132,7 +130,7 @@ public final class Display {
 	}
 
 
-	public static int setIcon(@NotNull ByteBuffer[] icons) {
+	public static int setIcon(ByteBuffer[] icons) {
 
 		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
 			// Wayland does not have a standardised way of setting window icons, see
@@ -176,7 +174,6 @@ public final class Display {
 	}
 
 	public static void update() {
-		window_resized = false;
 		GLFW.glfwPollEvents();
 		if (Mouse.isCreated()) {
 			Mouse.poll();
@@ -343,7 +340,7 @@ public final class Display {
 			window_resized = true;
 
 		} catch (Throwable t) {
-			t.printStackTrace();
+			LegacyLWJGL3.LOGGER.warn("Failed to set fullscreen", t);
 		}
 	}
 
@@ -453,7 +450,9 @@ public final class Display {
 	}
 
 	public static boolean wasResized() {
-		return window_resized;
+		var bl = window_resized;
+		window_resized = false;
+		return bl;
 	}
 
 	public static boolean isVisible() {
