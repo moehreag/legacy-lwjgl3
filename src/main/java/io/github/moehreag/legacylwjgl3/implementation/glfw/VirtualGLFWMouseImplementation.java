@@ -14,11 +14,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.platform.TextureUtil;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tessellator;
 import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
 import io.github.moehreag.legacylwjgl3.util.XDGPathResolver;
 import lombok.Data;
@@ -31,10 +26,16 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.BookEditScreen;
 import net.minecraft.client.gui.screen.inventory.menu.InventoryMenuScreen;
 import net.minecraft.client.render.Window;
+import net.minecraft.client.render.platform.GlStateManager;
+import net.minecraft.client.render.texture.TextureUtil;
+import net.minecraft.client.render.vertex.BufferBuilder;
+import net.minecraft.client.render.vertex.DefaultVertexFormat;
+import net.minecraft.client.render.vertex.Tesselator;
 import net.minecraft.resource.Identifier;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.*;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
@@ -142,9 +143,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			accum_dz += yoffset;
 			putMouseEvent((byte) -1, (byte) 0, (int) yoffset, System.nanoTime());
 		});
-		this.cursorEnterCallback = GLFWCursorEnterCallback.create((window, entered) -> {
-			this.isInsideWindow = entered;
-		});
+		this.cursorEnterCallback = GLFWCursorEnterCallback.create((window, entered) -> this.isInsideWindow = entered);
 
 		GLFW.glfwSetMouseButtonCallback(this.windowHandle, this.buttonCallback);
 		GLFW.glfwSetCursorPosCallback(this.windowHandle, this.posCallback);
@@ -198,7 +197,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		this.cursorEnterCallback.free();
 		if (images[0] != 0) {
 			for (int i : images) {
-				GlStateManager.deleteTexture(i);
+				GlStateManager.deleteTextures(i);
 			}
 			images = new int[]{-1};
 		}
@@ -298,14 +297,14 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		double n = 1.0F / textureWidth;
 		double o = 1.0F / textureHeight;
 		double z = 1000;
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferBuilder = tessellator.getBuilder();
+		Tesselator tesselator = Tesselator.getInstance();
+		BufferBuilder bufferBuilder = tesselator.getBuffer();
 		bufferBuilder.begin(7, DefaultVertexFormat.POSITION_TEX);
 		bufferBuilder.vertex(x, y + height, z).texture(0, height * o).nextVertex();
 		bufferBuilder.vertex(x + width, y + height, z).texture(width * n, height * o).nextVertex();
 		bufferBuilder.vertex(x + width, y, z).texture(width * n, 0).nextVertex();
 		bufferBuilder.vertex(x, y, z).texture(0, 0).nextVertex();
-		tessellator.end();
+		tesselator.end();
 	}
 
 	private void advanceAnimation() {
@@ -336,8 +335,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 
 		chunks.clear();
 		for (XCursor.Chunk chunk : cursor.chunks) {
-			if (chunk instanceof XCursor.ImageChunk) {
-				XCursor.ImageChunk c = (XCursor.ImageChunk) chunk;
+			if (chunk instanceof XCursor.ImageChunk c) {
 				if (c.getSubtype() == XDGPathResolver.getCursorSize()) {
 					chunks.add(c);
 				}
@@ -455,17 +453,13 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		private static Chunk parseChunk(ByteBuffer buf, TableOfContents table) {
 			int pos = buf.position();
 			buf.position((int) table.position);
-			Chunk c;
-			switch ((int) table.type) {
-				case 0xfffe0001: // Comment
-					c = parseComment(buf, table); // I have yet to find a single cursor file that uses these, not even `xcursorgen` supports them.
-					break;
-				case 0xfffd0002: // Image
-					c = parseImage(buf, table);
-					break;
-				default:
-					throw new IllegalArgumentException("Unrecognized type: " + table.type);
-			}
+			Chunk c = switch ((int) table.type) {
+				case 0xfffe0001 -> // Comment
+						parseComment(buf, table); // I have yet to find a single cursor file that uses these, not even `xcursorgen` supports them.
+				case 0xfffd0002 -> // Image
+						parseImage(buf, table);
+				default -> throw new IllegalArgumentException("Unrecognized type: " + table.type);
+			};
 			buf.position(pos);
 			return c;
 		}
@@ -575,17 +569,17 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 			Path dir = Paths.get("cursors");
 			try {
 				Files.walkFileTree(dir,
-						new SimpleFileVisitor<Path>() {
+						new SimpleFileVisitor<>() {
 							@Override
-							public FileVisitResult postVisitDirectory(
-									Path dir, IOException exc) throws IOException {
+							public @NotNull FileVisitResult postVisitDirectory(
+									@NotNull Path dir, IOException exc) throws IOException {
 								Files.delete(dir);
 								return FileVisitResult.CONTINUE;
 							}
 
 							@Override
-							public FileVisitResult visitFile(
-									Path file, BasicFileAttributes attrs)
+							public @NotNull FileVisitResult visitFile(
+									@NotNull Path file, @NotNull BasicFileAttributes attrs)
 									throws IOException {
 								Files.delete(file);
 								return FileVisitResult.CONTINUE;
@@ -658,7 +652,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				}
 
 				try {
-					Files.write(Paths.get("cursors", name), comment.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
+					Files.writeString(Paths.get("cursors", name), comment, StandardOpenOption.CREATE);
 				} catch (IOException e) {
 					LOGGER.warn("Image export failed!", e);
 				}
@@ -751,7 +745,7 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 				try {
 					ImageIO.write(im, "png", new File("cursors", name + ".png"));
 					Files.write(Paths.get("cursors", name + ".txt"), lines, StandardOpenOption.CREATE);
-					Files.write(cursorFile, cursor.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+					Files.writeString(cursorFile, cursor, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 				} catch (IOException e) {
 					LOGGER.warn("Image export failed!", e);
 				}

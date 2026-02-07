@@ -2,6 +2,7 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
         mavenCentral()
-        maven("https://maven.wagyourtail.xyz/releases")
+        maven("https://maven.fabricmc.net")
+        maven("https://maven.ornithemc.net/releases")
     }
 }

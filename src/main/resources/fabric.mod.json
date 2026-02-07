@@ -6,12 +6,12 @@
   "description": "A Grotesque hack to bring LWJGL 3 back to legacy versions of Minecraft.",
   "authors": [
     "All the LWJGL 2 and 3 people!",
-    "gudenau for creating the original forge mod",
-    "Zarzelcow (me) porting it to fabric",
-    "moehreag (updating, fixing)"
+    "gudenau",
+    "Zarzelcow",
+    "moehreag"
   ],
   "contact": {
-    "sources": "https://github.com/Zarzelcow/legacy-lwjgl3"
+    "sources": "https://github.com/moehreag/legacy-lwjgl3"
   },
   "license": "LGPL-2.1-only",
   "icon": "assets/legacy-lwjgl3/icon.png",
@@ -31,7 +31,7 @@
   },
   "custom": {
 	"loom:injected_interfaces": {
-	  "net/minecraft/unmapped/C_3020744": [
+	  "net/minecraft/unmapped/C_85740840": [
 		"io/github/moehreag/legacylwjgl3/LegacyLWJGL3ScreenEx"
 	  ]
 	}
