@@ -27,8 +27,8 @@ plugins {
     id("io.freefair.lombok") version "9.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("fabric-loom") version "1.14.+"
-    id("ploceus") version "1.14.+"
+    id("fabric-loom") version "1.15.+"
+    id("ploceus") version "1.15.+"
     id("io.github.p03w.machete") version "2.+"
 }
 
@@ -53,6 +53,10 @@ val lwjglVersion = properties["lwjgl_version"]
 
 configurations {
     create("embedCompressed")
+}
+
+ploceus {
+    setIntermediaryGeneration(2)
 }
 
 dependencies {
