@@ -221,7 +221,7 @@ tasks {
     }
 
     this.modrinth {
-        dependsOn("publish")
+        dependsOn("optimizeOutputsOfRemapJar")
     }
 }
 
@@ -250,7 +250,7 @@ publishing {
 modrinth {
     token = System.getenv("MODRINTH_TOKEN")
     projectId = "lpiIRiAZ"
-    versionType = "release"
+    versionType = "beta"
     uploadFile = tasks["remapJar"]
     additionalFiles = listOf(tasks["sourcesJar"])
     loaders = listOf("ornithe")
