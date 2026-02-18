@@ -98,8 +98,9 @@ tasks {
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            from(components["java"])
+            //from(components["java"])
             artifact(tasks["remapJar"])
+            artifact(tasks["remapSourcesJar"])
         }
     }
 
@@ -107,7 +108,7 @@ publishing {
     repositories {
         val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
         val repository = if (isSnapshot) "snapshots" else "releases"
-        maven("https://moehreag.duckdns.org/maven/$repository") {
+        maven("https://maven.axolotlclient.com/$repository") {
             name = "owlMaven"
             credentials(PasswordCredentials::class.java)
             authentication {
