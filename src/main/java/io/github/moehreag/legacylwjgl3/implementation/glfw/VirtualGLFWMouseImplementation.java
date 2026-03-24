@@ -14,7 +14,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
 import io.github.moehreag.legacylwjgl3.mixin.MinecraftAccessor;
 import io.github.moehreag.legacylwjgl3.util.GlStateManager;
@@ -28,6 +27,7 @@ import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.menu.InventoryMenuScreen;
 import net.minecraft.client.render.Window;
+import net.minecraft.client.render.vertex.Tesselator;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -295,8 +295,8 @@ public class VirtualGLFWMouseImplementation implements MouseImplementation {
 		double n = 1.0F / textureWidth;
 		double o = 1.0F / textureHeight;
 		double z = 1000;
-		BufferBuilder bufferBuilder = BufferBuilder.INSTANCE;
-		bufferBuilder.start(7);
+		var bufferBuilder = Tesselator.INSTANCE;
+		bufferBuilder.begin(7);
 		bufferBuilder.vertex(x, y + height, z, 0, height * o);
 		bufferBuilder.vertex(x + width, y + height, z, width * n, height * o);
 		bufferBuilder.vertex(x + width, y, z, width * n, 0);

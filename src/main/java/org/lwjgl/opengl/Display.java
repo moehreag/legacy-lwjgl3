@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import io.github.moehreag.legacylwjgl3.DesktopFileInjector;
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.LWJGLException;
@@ -18,6 +20,7 @@ import org.lwjgl.system.MemoryUtil;
 public final class Display {
 	@NotNull
 	private static String title = "";
+	@Getter
 	private static long handle = -1L;
 	private static boolean resizable;
 	@NotNull
@@ -53,10 +56,6 @@ public final class Display {
 		if (isCreated()) {
 			GLFW.glfwSetWindowTitle(handle, title);
 		}
-	}
-
-	public static long getHandle() {
-		return handle;
 	}
 
 	public static void setHandle(long handle) {
@@ -159,7 +158,6 @@ public final class Display {
 	}
 
 	public static void update() {
-		window_resized = false;
 		GLFW.glfwPollEvents();
 		if (Mouse.isCreated()) {
 			Mouse.poll();
@@ -257,7 +255,7 @@ public final class Display {
 			}
 
 		} catch (Throwable t) {
-			t.printStackTrace();
+			LegacyLWJGL3.LOGGER.warn("Failed to set fullscreen", t);
 		}
 	}
 
@@ -324,7 +322,9 @@ public final class Display {
 	}
 
 	public static boolean wasResized() {
-		return window_resized;
+		var bl = window_resized;
+		window_resized = false;
+		return bl;
 	}
 
 	public static boolean isVisible() {

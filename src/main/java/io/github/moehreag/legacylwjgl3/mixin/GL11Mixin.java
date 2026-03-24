@@ -9,8 +9,10 @@ import java.nio.ShortBuffer;
 
 import io.github.moehreag.legacylwjgl3.annotations.Public;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
 @Mixin(value = GL11.class, remap = false)
 public abstract class GL11Mixin {
@@ -107,4 +109,14 @@ public abstract class GL11Mixin {
     private static void glNormalPointer(int stride, ByteBuffer pointer) {
         glNormalPointer(0x1400, stride, pointer);
     }
+
+	@Shadow
+	public static void nglDrawElements(int mode, int count, int type, long indices) {
+	}
+
+	@Unique
+	@Public
+	private static void glDrawElements(int mode, int count, int type, ByteBuffer indices) {
+		nglDrawElements(mode, count, type, MemoryUtil.memAddress(indices));
+	}
 }

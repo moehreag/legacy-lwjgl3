@@ -2,8 +2,8 @@ package io.github.moehreag.legacylwjgl3.util;
 
 import java.nio.IntBuffer;
 
-import com.mojang.blaze3d.platform.MemoryTracker;
 import io.github.moehreag.legacylwjgl3.mixin.MinecraftAccessor;
+import net.minecraft.client.render.platform.MemoryTracker;
 import org.lwjgl.opengl.GL11;
 
 public class TextureUtil {

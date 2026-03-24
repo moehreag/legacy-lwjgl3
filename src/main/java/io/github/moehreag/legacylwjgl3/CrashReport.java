@@ -4,17 +4,17 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
-import net.minecraft.client.crash.CrashSummary;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
 
 public class CrashReport {
-	public static void report(CrashSummary summary){
+	public static void report(net.minecraft.util.crash.CrashReport summary){
 		Display.destroy();
 		StringWriter var2 = new StringWriter();
-		summary.cause.printStackTrace(new PrintWriter(var2));
+		summary.exception.printStackTrace(new PrintWriter(var2));
 		String stackTrace = var2.toString();
 		String cardManufacturer = "";
 		StringBuilder report = new StringBuilder();
@@ -53,11 +53,11 @@ public class CrashReport {
 			var6.append("\n");
 			var6.append("Minecraft was unable to start because it failed to find an accelerated OpenGL mode.\n");
 			var6.append("This can usually be fixed by updating the video card drivers.\n");
-			if (cardManufacturer.toLowerCase().contains("nvidia")) {
+			if (cardManufacturer.toLowerCase(Locale.ROOT).contains("nvidia")) {
 				var6.append("\n");
 				var6.append("You might be able to find drivers for your video card here:\n");
 				var6.append("  http://www.nvidia.com/\n");
-			} else if (cardManufacturer.toLowerCase().contains("ati")) {
+			} else if (cardManufacturer.toLowerCase(Locale.ROOT).contains("ati")) {
 				var6.append("\n");
 				var6.append("You might be able to find drivers for your video card here:\n");
 				var6.append("  http://www.amd.com/\n");

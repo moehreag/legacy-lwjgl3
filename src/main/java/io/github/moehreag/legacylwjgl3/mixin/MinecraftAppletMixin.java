@@ -7,7 +7,6 @@ import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MinecraftApplet;
 import net.minecraft.client.Session;
-import net.minecraft.client.crash.CrashSummary;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,7 +21,7 @@ public abstract class MinecraftAppletMixin extends Applet {
 	public abstract void destroy();
 
 	@Shadow
-	public abstract void m_7026193();
+	public abstract void clearMemory();
 
 	@Inject(method = "init", remap = false, at = @At("HEAD"), cancellable = true)
 	private void onAppletInit(CallbackInfo ci){
@@ -36,14 +35,14 @@ public abstract class MinecraftAppletMixin extends Applet {
 		}
 
 		Minecraft minecraft = new Minecraft(null, null, null, 854, 480, var1) {
-			public void printCrashReport(CrashSummary crashSummary) {
+			public void handleCrash(net.minecraft.util.crash.CrashReport crashSummary) {
 				CrashReport.report(crashSummary);
 			}
 		};
 
 		if (this.getParameter("username") != null && this.getParameter("sessionid") != null) {
 			minecraft.session = new Session(this.getParameter("username"), this.getParameter("sessionid"));
-			System.out.println("Setting user: " + minecraft.session.username + ", " + minecraft.session.sessionId);
+			System.out.println("Setting user: " + minecraft.session.username + ", " + minecraft.session.id);
 			if (this.getParameter("mppass") != null) {
 				minecraft.session.password = this.getParameter("mppass");
 			}
@@ -52,13 +51,13 @@ public abstract class MinecraftAppletMixin extends Applet {
 		}
 
 		if (this.getParameter("server") != null && this.getParameter("port") != null) {
-			minecraft.setServerAddressAndPort(this.getParameter("server"), Integer.parseInt(this.getParameter("port")));
+			minecraft.setStartupServer(this.getParameter("server"), Integer.parseInt(this.getParameter("port")));
 		}
 		minecraft.appletMode = !"true".equals(this.getParameter("stand-alone"));
 		launcher.setVisible(false);
 		launcher.stop();
 		launcher.destroy();
-		m_7026193();
+		clearMemory();
 		setStub(null);
 		launcher.removeAll();
 		launcher.setSize(0, 0);

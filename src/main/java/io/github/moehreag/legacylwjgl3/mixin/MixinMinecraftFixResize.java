@@ -6,7 +6,6 @@ import io.github.moehreag.legacylwjgl3.CrashReport;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Session;
-import net.minecraft.client.crash.CrashSummary;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.Display;
@@ -30,9 +29,6 @@ public abstract class MixinMinecraftFixResize {
 	@Shadow
 	public int height;
 
-	@Shadow
-	protected abstract void onResolutionChanged(int width, int height);
-
     /*@Redirect(method = "updateWindow", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;" +
         "fullscreen:Z"))
     private boolean noFullscreenCheckForResize(Minecraft instance) {
@@ -41,6 +37,9 @@ public abstract class MixinMinecraftFixResize {
 
 	@Shadow
 	public Canvas canvas;
+
+	@Shadow
+	protected abstract void resize(int width, int height);
 
 	// this makes optifine happy
 	@Inject(method = "init", at = @At("TAIL"))
@@ -56,7 +55,7 @@ public abstract class MixinMinecraftFixResize {
 			this.height = 1;
 		}
 
-		this.onResolutionChanged(this.width, this.height);
+		this.resize(this.width, this.height);
 	}
 
 	/*@Inject(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;logGlError(Ljava/lang/String;)V", ordinal = 1))
@@ -78,7 +77,7 @@ public abstract class MixinMinecraftFixResize {
 			if (this.height <= 0) {
 				this.height = 1;
 			}
-			this.onResolutionChanged(this.width, this.height);
+			this.resize(this.width, this.height);
 		}
 	}
 
@@ -87,13 +86,13 @@ public abstract class MixinMinecraftFixResize {
 		return title.substring("Minecraft ".length());
 	}
 
-	@Inject(method = "m_6868991", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "startAndConnect", at = @At("HEAD"), cancellable = true)
 	private static void m_6868991(String userName, String sessionId, String serverAddress, CallbackInfo ci) {
 		ci.cancel();
 		LegacyLWJGL3.LOGGER.info("Creating GLFW window!");
 		Minecraft minecraft = new Minecraft(null, null, null, Display.getWidth(), Display.getHeight(), false) {
 			@Override
-			public void printCrashReport(CrashSummary crashSummary) {
+			public void handleCrash(net.minecraft.util.crash.CrashReport crashSummary) {
 				CrashReport.report(crashSummary);
 			}
 		};
@@ -104,7 +103,7 @@ public abstract class MixinMinecraftFixResize {
 		}
 		if (serverAddress != null) {
 			String[] address = serverAddress.split(":");
-			minecraft.setServerAddressAndPort(address[0], Integer.parseInt(address[1]));
+			minecraft.setStartupServer(address[0], Integer.parseInt(address[1]));
 		}
 		new Thread(minecraft, "Minecraft Main Thread").start();
 	}
@@ -126,7 +125,7 @@ public abstract class MixinMinecraftFixResize {
 		return true;
 	}
 
-	@Inject(method = "initTimerHackThread", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "initLicenseCheckThread", at = @At("HEAD"), cancellable = true)
 	private void killHttpRequestToDeadUrl(CallbackInfo ci) {
 		ci.cancel();
 	}

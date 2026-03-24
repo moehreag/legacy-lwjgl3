@@ -3,8 +3,8 @@ import com.google.gson.JsonParser
 import java.net.URI
 
 plugins {
-    id("fabric-loom") version "1.11.+"
-    id("ploceus") version "1.11.+"
+    id("net.fabricmc.fabric-loom-remap") version "1.15.+"
+    id("ploceus") version "1.15.+"
     id("io.freefair.lombok") version "8.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
@@ -41,46 +41,18 @@ loom {
 }
 
 ploceus {
-    clientOnlyMappings()
+    setIntermediaryGeneration(2)
 }
-
-/*unimined {
-    minecraft {
-        side("client")
-        ornitheMaven()
-        fabricMaven()
-
-        version(properties["minecraft_version"].toString())
-
-        legacyFabric {
-            loader(properties["loader_version"]!!)
-        }
-
-        mappings {
-            calamus()
-            feather(build = properties["mappings_build"]?.toString()?.toInt()!!)
-        }
-
-        runs {
-            off = false
-            config("client") {
-                javaVersion = targetJava
-                if (project.properties["native_glfw"] == "true") {
-                    val glfwPath = project.properties.getOrDefault("native_glfw_path", "/usr/lib/libglfw.so")
-                    jvmArgs("-Dorg.lwjgl.glfw.libname=$glfwPath")
-                }
-            }
-            config("server") { enabled = false }
-        }
-    }
-}*/
 
 dependencies {
     minecraft("com.mojang:minecraft:${properties["minecraft_version"].toString()}")
     mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
-    exceptions(ploceus.raven(properties["raven_build"].toString()))
-    signatures(ploceus.sparrow(properties["sparrow_build"].toString()))
-    nests(ploceus.nests(properties["nests_build"].toString()))
+    clientExceptions(ploceus.raven(properties["client_raven_build"].toString(), "client"))
+    serverExceptions(ploceus.raven(properties["server_raven_build"].toString(), "server"))
+    clientSignatures(ploceus.sparrow(properties["client_sparrow_build"].toString(), "client"))
+    serverSignatures(ploceus.sparrow(properties["server_sparrow_build"].toString(), "server"))
+    clientNests(ploceus.nests(properties["client_nests_build"].toString(), "client"))
+    serverNests(ploceus.nests(properties["server_nests_build"].toString(), "server"))
 
     modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
 
@@ -142,7 +114,7 @@ publishing {
     repositories {
         val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
         val repository = if (isSnapshot) "snapshots" else "releases"
-        maven("https://moehreag.duckdns.org/maven/$repository") {
+        maven("https://maven.axolotlclient.com/$repository") {
             name = "owlMaven"
             credentials(PasswordCredentials::class.java)
             authentication {
@@ -158,7 +130,7 @@ modrinth {
     versionType = "release"
     uploadFile = tasks["remapJar"]
     additionalFiles = listOf(tasks["sourcesJar"])
-    loaders = listOf("fabric", "quilt")
+    loaders = listOf("ornithe")
 
     gameVersions = run {
         URI("https://meta.ornithemc.net/v3/versions/game")
