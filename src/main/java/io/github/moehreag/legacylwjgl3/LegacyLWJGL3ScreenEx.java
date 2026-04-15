@@ -3,7 +3,7 @@ package io.github.moehreag.legacylwjgl3;
 import java.nio.file.Path;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
+import net.ornithemc.osl.lifecycle.impl.client.MinecraftAccess;
 
 public interface LegacyLWJGL3ScreenEx {
 	default void onFileDrop(List<Path> files) {
@@ -11,7 +11,7 @@ public interface LegacyLWJGL3ScreenEx {
 	}
 
 	static void handleFileDrop(List<Path> files) {
-		var screen = Minecraft.getInstance().screen;
+		var screen = MinecraftAccess.getInstance().screen;
 		if (screen != null) {
 			screen.onFileDrop(files);
 		}

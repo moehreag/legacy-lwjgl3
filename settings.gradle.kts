@@ -6,3 +6,6 @@ pluginManagement {
         maven("https://maven.ornithemc.net/releases")
     }
 }
+
+include("applet")
+include("common")

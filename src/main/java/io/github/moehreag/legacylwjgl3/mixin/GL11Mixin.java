@@ -5,6 +5,7 @@ import io.github.moehreag.legacylwjgl3.annotations.CreateStub;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 import io.github.moehreag.legacylwjgl3.annotations.Public;
 import org.lwjgl.opengl.GL11;
@@ -63,5 +64,59 @@ public abstract class GL11Mixin {
 	@Public
 	private static void glDrawElements(int mode, int count, int type, ByteBuffer indices) {
 		nglDrawElements(mode, count, type, MemoryUtil.memAddress(indices));
+	}
+
+	@Shadow
+	public static void glTexCoordPointer(int size, int type, int stride, FloatBuffer pointer) {
+	}
+
+	@Shadow
+	public static void glTexCoordPointer(int size, int type, int stride, ShortBuffer pointer) {
+	}
+
+	@Shadow
+	public static void glColorPointer(int size, int type, int stride, ByteBuffer pointer) {
+	}
+
+	@Shadow
+	public static void glVertexPointer(int size, int type, int stride, FloatBuffer pointer) {
+	}
+
+	@Shadow
+	public static void glNormalPointer(int type, int stride, ByteBuffer pointer) {
+	}
+
+	@CreateStub("glLoadMatrix")
+	@Shadow
+	public static void glLoadMatrixf(FloatBuffer m) {
+	}
+
+	@SuppressWarnings({"unused", "MissingUnique"})
+	@Public
+	private static void glTexCoordPointer(int i, int stride, FloatBuffer pointer) {
+		glTexCoordPointer(i, 0x1406, stride, pointer);
+	}
+
+	@SuppressWarnings({"unused", "MissingUnique"})
+	@Public
+	private static void glTexCoordPointer(int i, int stride, ShortBuffer pointer) {
+		glTexCoordPointer(i, 0x1402, stride, pointer);
+	}
+
+	@SuppressWarnings({"unused", "MissingUnique"})
+	@Public
+	private static void glColorPointer(int i, boolean bl, int i2, ByteBuffer pointer) {
+		glColorPointer(i, 0x1401, i2, pointer);
+	}
+
+	@SuppressWarnings({"unused", "MissingUnique"})
+	@Public
+	private static void glVertexPointer(int i, int i2, FloatBuffer pointer) {
+		glVertexPointer(i, 0x1406, i2, pointer);
+	}
+	@SuppressWarnings({"unused", "MissingUnique"})
+	@Public
+	private static void glNormalPointer(int stride, ByteBuffer pointer) {
+		glNormalPointer(0x1400, stride, pointer);
 	}
 }

@@ -1,6 +1,8 @@
 import com.google.common.jimfs.Jimfs
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import net.fabricmc.loader.api.Version
+import net.fabricmc.loader.impl.game.minecraft.McVersionLookup
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarHeader
 import org.kamranzafar.jtar.TarOutputStream
@@ -9,11 +11,7 @@ import org.tukaani.xz.XZ
 import org.tukaani.xz.XZOutputStream
 import java.io.BufferedOutputStream
 import java.net.URI
-import java.nio.file.FileSystems
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.StandardCopyOption
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -27,9 +25,32 @@ plugins {
     id("io.freefair.lombok") version "9.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("fabric-loom") version "1.15.+"
-    id("ploceus") version "1.15.+"
-    id("io.github.p03w.machete") version "2.+"
+    id("fabric-loom") version "1.16.+"
+    id("ploceus") version "1.16.+"
+}
+
+
+base.archivesName.set(project.property("archives_base_name") as String)
+version = "${project.property("mod_version")}+${project.property("minecraft_version")}"
+group = project.property("maven_group") as String
+
+repositories {
+    mavenCentral()
+}
+
+val lwjglVersion = properties["lwjgl_version"]
+
+configurations {
+    create("embedCompressed")
+    create("shadow")
+}
+
+ploceus {
+    setIntermediaryGeneration(2)
+}
+
+loom {
+    uncompressNestedJars = true
 }
 
 val targetJava = JavaVersion.VERSION_17
@@ -40,29 +61,12 @@ java {
     withSourcesJar()
 }
 
-base.archivesName.set(project.property("archives_base_name") as String)
-version = "${project.property("mod_version")}+${project.property("minecraft_version")}"
-group = project.property("maven_group") as String
-
-repositories {
-    mavenCentral()
-    maven("https://central.sonatype.com/repository/maven-snapshots")
-}
-
-val lwjglVersion = properties["lwjgl_version"]
-
-configurations {
-    create("embedCompressed")
-}
-
-ploceus {
-    setIntermediaryGeneration(2)
-}
-
 dependencies {
     minecraft("com.mojang:minecraft:${properties["minecraft_version"]}")
     mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
-    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"].toString()}")
+    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"]}")
+
+    ploceus.dependOsl(properties["osl_version"].toString())
 
     listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64").forEach { platform ->
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-$platform")!!)
@@ -78,6 +82,15 @@ dependencies {
 
     include(implementation("org.kamranzafar:jtar:2.3")!!)
     include(implementation("org.tukaani:xz:1.10")!!)
+    "shadow"(implementation(project(":common"))!!)
+    "shadow"(implementation(project(":applet"))!!)
+}
+
+subprojects {
+    apply(plugin = "java")
+    dependencies {
+        compileOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion")
+    }
 }
 
 buildscript {
@@ -88,6 +101,7 @@ buildscript {
         classpath("org.kamranzafar:jtar:2.3")
         classpath("org.tukaani:xz:1.10")
         classpath("com.google.jimfs:jimfs:1.3.1")
+        classpath("net.fabricmc:fabric-loader:${properties["loader_version"]}")
     }
 }
 
@@ -97,6 +111,7 @@ configurations.configureEach {
 
 tasks {
     processResources {
+        from(configurations.getByName("shadow").asFileTree.flatMap { zipTree(it) }.filter { it.name.endsWith(".class") })
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(mapOf("version" to project.version))
@@ -174,7 +189,7 @@ tasks {
 
     processIncludeJars.configure {
         fun recompressNestedJar(jar: File) {
-            val out = jar.resolveSibling(jar.name+".stored")
+            val out = jar.resolveSibling(jar.name + ".stored")
             out.toPath().deleteIfExists()
             jar.inputStream().use { stream ->
                 ZipInputStream(stream).use { zipIn ->
@@ -221,27 +236,31 @@ tasks {
     }
 
     this.modrinth {
-        dependsOn("optimizeOutputsOfRemapJar")
+        dependsOn("remapJar")
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            from(components["java"])
-            //artifact(tasks["remapJar"])
+allprojects {
+    apply(plugin = "maven-publish")
+    apply(plugin = "java")
+    publishing {
+        publications {
+            create<MavenPublication>("mavenJava") {
+                from(components["java"])
+                //artifact(tasks["remapJar"])
+            }
         }
-    }
 
-    // select the repositories you want to publish to
-    repositories {
-        val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
-        val repository = if (isSnapshot) "snapshots" else "releases"
-        maven("https://moehreag.duckdns.org/maven/$repository") {
-            name = "owlMaven"
-            credentials(PasswordCredentials::class.java)
-            authentication {
-                create<BasicAuthentication>("basic")
+        // select the repositories you want to publish to
+        repositories {
+            val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
+            val repository = if (isSnapshot) "snapshots" else "releases"
+            maven("https://moehreag.duckdns.org/maven/$repository") {
+                name = "owlMaven"
+                credentials(PasswordCredentials::class.java)
+                authentication {
+                    create<BasicAuthentication>("basic")
+                }
             }
         }
     }
@@ -252,24 +271,32 @@ modrinth {
     projectId = "lpiIRiAZ"
     versionType = "beta"
     uploadFile = tasks["remapJar"]
-    additionalFiles = listOf(tasks["sourcesJar"])
+    additionalFiles = listOf(tasks.getByName("remapSourcesJar"))
     loaders = listOf("ornithe")
 
     gameVersions = run {
-        URI("https://meta.ornithemc.net/v3/versions/game")
+        val firstLwjgl3 = Version.parse("1.13.0-alpha.17.43.a")
+        val earliestSupported = Version.parse("1.0.0-beta.6") // b1.6-tb3
+        URI("https://meta.ornithemc.net/v3/versions/gen2/game")
             .toURL()
             .openStream()
             .use { JsonParser.parseReader(it.bufferedReader()).asJsonArray }
             .mapNotNull {
                 it as JsonObject
-                if (it["stable"].asBoolean) {
+                val version = it["version"].asString
+                val parsed =
+                    Version.parse(McVersionLookup.normalizeVersion(version, McVersionLookup.getRelease(version)))
+                return@mapNotNull if (parsed < firstLwjgl3 && parsed >= earliestSupported)
+                    version else null
+                /*if (it["stable"].asBoolean) {
                     val minor = Integer.parseInt(it["version"].asString.split(".")[1])
                     if (minor in 8..12) it["version"].asString else null
-                } else null
+                } else null*/
             }
     }
+    debugMode = true
 
     dependencies {
-        optional.project("osl")
+        required.project("osl")
     }
 }

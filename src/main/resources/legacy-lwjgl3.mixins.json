@@ -14,7 +14,6 @@
 	"LibraryLWJGLOpenALMixin",
 	"MixinMinecraftFixEarlyCrashNoReports",
 	"MixinMinecraftFixResize",
-	"MixinScreenExtension",
-	"MixinScreenFixClipboard"
+	"MixinScreenExtension"
   ]
 }

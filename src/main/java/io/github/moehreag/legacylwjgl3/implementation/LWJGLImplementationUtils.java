@@ -10,7 +10,6 @@ import io.github.moehreag.legacylwjgl3.implementation.input.InputImplementation;
  * @created 28/09/2022 - 3:12 PM
  */
 public class LWJGLImplementationUtils {
-	private static final boolean allowVirtualCursor = Boolean.getBoolean("legacy_lwjgl3.allow_virtual_cursor") || System.getenv("LEGACY_LWJGL3_ALLOW_VIRTUAL_CURSOR") != null;
 	private static InputImplementation _inputImplementation;
 
 	public static InputImplementation getOrCreateInputImplementation() {

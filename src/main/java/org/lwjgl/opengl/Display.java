@@ -236,14 +236,12 @@ public final class Display {
 					}
 				}
 				case SDL_EVENT_MOUSE_BUTTON_DOWN, SDL_EVENT_MOUSE_BUTTON_UP, SDL_EVENT_MOUSE_MOTION,
-					 SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE -> {
+				     SDL_EVENT_MOUSE_WHEEL, SDL_EVENT_WINDOW_MOUSE_ENTER, SDL_EVENT_WINDOW_MOUSE_LEAVE -> {
 					if (Mouse.isCreated()) {
 						Mouse.processMouseEvent(event);
 					}
 				}
-				case SDL_EVENT_DROP_BEGIN -> {
-					currentEventDrops.clear();
-				}
+				case SDL_EVENT_DROP_BEGIN -> currentEventDrops.clear();
 				case SDL_EVENT_DROP_FILE -> {
 					var data = dropEvent.dataString();
 					if (data != null) {
@@ -275,6 +273,14 @@ public final class Display {
 			throw new IllegalStateException("SDL error encountered: " + SDL_GetError());
 		}
 		return resultPointer;
+	}
+
+	public static void create() {
+		try {
+			create(new PixelFormat());
+		} catch (LWJGLException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
@@ -505,5 +511,18 @@ public final class Display {
 			Display.width = width;
 			Display.height = height;
 		}
+	}
+
+	public static void makeCurrent() {
+		// No-Op
+		SDLVideo.SDL_GL_MakeCurrent(getHandle(), handle);
+	}
+
+	public static Drawable getDrawable() {
+		return Drawable.INSTANCE;
+	}
+
+	public static void swapBuffers() {
+		checkSdlError(SDLVideo.SDL_GL_SwapWindow(handle));
 	}
 }
