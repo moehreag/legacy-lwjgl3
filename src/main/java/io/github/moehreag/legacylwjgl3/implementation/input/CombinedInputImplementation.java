@@ -3,96 +3,85 @@ package io.github.moehreag.legacylwjgl3.implementation.input;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 
-import org.lwjgl.sdl.SDL_Event;
-
 /**
  * @author Zarzelcow
- * @created 28/09/2022 - 3:23 PM
+ *
+ * <p>28/09/2022 - 3:23 PM</p>
  */
 public class CombinedInputImplementation implements InputImplementation {
-    private KeyboardImplementation keyboardImpl;
-    private MouseImplementation mouseImpl;
+	private final KeyboardImplementation keyboardImpl;
+	private final MouseImplementation mouseImpl;
 
-    public CombinedInputImplementation(KeyboardImplementation keyboard, MouseImplementation mouse) {
-        this.keyboardImpl = keyboard;
-        this.mouseImpl = mouse;
-    }
+	public CombinedInputImplementation(KeyboardImplementation keyboard, MouseImplementation mouse) {
+		this.keyboardImpl = keyboard;
+		this.mouseImpl = mouse;
+	}
 
-    // ~~~~~ KEYBOARD ~~~~~
-    @Override
-    public void createKeyboard() {
-        keyboardImpl.createKeyboard();
-    }
+	// ~~~~~ KEYBOARD ~~~~~
+	@Override
+	public void createKeyboard() {
+		keyboardImpl.createKeyboard();
+	}
 
-    @Override
-    public void destroyKeyboard() {
-        keyboardImpl.destroyKeyboard();
-    }
+	@Override
+	public void destroyKeyboard() {
+		keyboardImpl.destroyKeyboard();
+	}
 
-    @Override
-    public void pollKeyboard(ByteBuffer keyDownBuffer) {
-        keyboardImpl.pollKeyboard(keyDownBuffer);
-    }
+	@Override
+	public void pollKeyboard(ByteBuffer keyDownBuffer) {
+		keyboardImpl.pollKeyboard(keyDownBuffer);
+	}
 
-    @Override
-    public void readKeyboard(ByteBuffer readBuffer) {
-        keyboardImpl.readKeyboard(readBuffer);
-    }
+	@Override
+	public void readKeyboard(ByteBuffer readBuffer) {
+		keyboardImpl.readKeyboard(readBuffer);
+	}
 
-    @Override
-    public void processKeyboardEvent(SDL_Event event) {
-        keyboardImpl.processKeyboardEvent(event);
-    }
+	// ~~~~~ MOUSE ~~~~~
 
-    // ~~~~~ MOUSE ~~~~~
+	@Override
+	public void createMouse() {
+		mouseImpl.createMouse();
+	}
 
-    @Override
-    public void createMouse() {
-        mouseImpl.createMouse();
-    }
+	@Override
+	public void destroyMouse() {
+		mouseImpl.destroyMouse();
+	}
 
-    @Override
-    public void destroyMouse() {
-        mouseImpl.destroyMouse();
-    }
+	@Override
+	public void pollMouse(DoubleBuffer coord_buffer, ByteBuffer buttons_buffer) {
+		mouseImpl.pollMouse(coord_buffer, buttons_buffer);
+	}
 
-    @Override
-    public void pollMouse(DoubleBuffer coord_buffer, ByteBuffer buttons_buffer) {
-        mouseImpl.pollMouse(coord_buffer, buttons_buffer);
-    }
+	@Override
+	public void readMouse(ByteBuffer readBuffer) {
+		mouseImpl.readMouse(readBuffer);
+	}
 
-    @Override
-    public void readMouse(ByteBuffer readBuffer) {
-        mouseImpl.readMouse(readBuffer);
-    }
+	@Override
+	public void setCursorPosition(double x, double y) {
+		mouseImpl.setCursorPosition(x, y);
+	}
 
-    @Override
-    public void setCursorPosition(double x, double y) {
-        mouseImpl.setCursorPosition(x, y);
-    }
+	@Override
+	public void grabMouse(boolean grab) {
+		mouseImpl.grabMouse(grab);
+	}
 
-    @Override
-    public void grabMouse(boolean grab) {
-        mouseImpl.grabMouse(grab);
-    }
+	@Override
+	public boolean hasWheel() {
+		return mouseImpl.hasWheel();
+	}
 
-    @Override
-    public boolean hasWheel() {
-        return mouseImpl.hasWheel();
-    }
+	@Override
+	public int getButtonCount() {
+		return mouseImpl.getButtonCount();
+	}
 
-    @Override
-    public int getButtonCount() {
-        return mouseImpl.getButtonCount();
-    }
-
-    @Override
-    public boolean isInsideWindow() {
-        return mouseImpl.isInsideWindow();
-    }
-
-    @Override
-    public void processMouseEvent(SDL_Event event) {
-        mouseImpl.processMouseEvent(event);
-    }
+	@Override
+	public boolean isInsideWindow() {
+		return mouseImpl.isInsideWindow();
+	}
 }

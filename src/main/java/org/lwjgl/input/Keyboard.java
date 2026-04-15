@@ -42,7 +42,6 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.sdl.SDLKeyboard;
-import org.lwjgl.sdl.SDL_Event;
 
 /**
  * A raw Keyboard interface. This can be used to poll the current state of the
@@ -52,6 +51,7 @@ import org.lwjgl.sdl.SDL_Event;
  * @author elias_naur <elias_naur@users.sourceforge.net>
  * @author Brian Matzon <brian@matzon.dk>
  */
+@SuppressWarnings("unused")
 public class Keyboard {
 	/**
 	 * Internal use - event size in bytes
@@ -90,12 +90,12 @@ public class Keyboard {
 	/**
 	 * current event
 	 */
-	private static KeyEvent current_event = new KeyEvent();
+	private static final KeyEvent current_event = new KeyEvent();
 
 	/**
 	 * scratch event
 	 */
-	private static KeyEvent tmp_event = new KeyEvent();
+	private static final KeyEvent tmp_event = new KeyEvent();
 
 	/**
 	 * One time initialization
@@ -209,10 +209,6 @@ public class Keyboard {
 		implementation.pollKeyboard(keyDownBuffer);
 		read();
 //        }
-	}
-
-	public static void processKeyboardEvent(SDL_Event event) {
-		implementation.processKeyboardEvent(event);
 	}
 
 	private static void read() {

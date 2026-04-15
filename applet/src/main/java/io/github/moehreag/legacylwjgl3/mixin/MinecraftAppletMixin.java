@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@SuppressWarnings("removal")
+@SuppressWarnings({"removal", "UnusedMixin"})
 @Mixin(value = MinecraftApplet.class, priority = 1100)
 public abstract class MinecraftAppletMixin extends Applet {
 

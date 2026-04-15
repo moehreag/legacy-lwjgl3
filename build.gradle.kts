@@ -42,7 +42,7 @@ val lwjglVersion = properties["lwjgl_version"]
 
 configurations {
     create("embedCompressed")
-    create("shadow")
+    create("shade")
 }
 
 ploceus {
@@ -71,25 +71,30 @@ dependencies {
     listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64").forEach { platform ->
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion:natives-$platform")!!)
+        "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-openal:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-opengl:$lwjglVersion:natives-$platform")!!)
     }
 
     "include"(api("org.lwjgl:lwjgl:$lwjglVersion")!!)
     "embedCompressed"(api("org.lwjgl:lwjgl-sdl:$lwjglVersion")!!)
+    "embedCompressed"(api("org.lwjgl:lwjgl-glfw:$lwjglVersion")!!)
     "include"(api("org.lwjgl:lwjgl-openal:$lwjglVersion")!!)
     "include"(api("org.lwjgl:lwjgl-opengl:$lwjglVersion")!!)
 
     include(implementation("org.kamranzafar:jtar:2.3")!!)
     include(implementation("org.tukaani:xz:1.10")!!)
-    "shadow"(implementation(project(":common"))!!)
-    "shadow"(implementation(project(":applet"))!!)
+    "shade"(implementation(project(":common"))!!)
+    "shade"(implementation(project(":applet"))!!)
+
+    compileOnly("org.jspecify:jspecify:1.0.0")
 }
 
 subprojects {
     apply(plugin = "java")
     dependencies {
         compileOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion")
+        compileOnly("org.lwjgl:lwjgl-glfw:${lwjglVersion}")
     }
 }
 
@@ -111,7 +116,7 @@ configurations.configureEach {
 
 tasks {
     processResources {
-        from(configurations.getByName("shadow").asFileTree.flatMap { zipTree(it) }.filter { it.name.endsWith(".class") })
+        from(configurations.getByName("shade").asFileTree.flatMap { zipTree(it) }.filter { it.name.endsWith(".class") })
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(mapOf("version" to project.version))

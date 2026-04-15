@@ -7,15 +7,15 @@ import io.github.moehreag.legacylwjgl3.implementation.input.MouseImplementation;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.EventQueue;
-import org.lwjgl.sdl.*;
+import org.lwjgl.opengl.SDLDisplay;
+import org.lwjgl.sdl.SDL_Event;
+import org.lwjgl.sdl.SDL_MouseButtonEvent;
+import org.lwjgl.sdl.SDL_MouseMotionEvent;
+import org.lwjgl.sdl.SDL_MouseWheelEvent;
 
 import static org.lwjgl.sdl.SDLEvents.*;
 import static org.lwjgl.sdl.SDLMouse.*;
 
-/**
- * @author Zarzelcow
- * @created 28/09/2022 - 8:58 PM
- */
 public class SDLMouseImplementation implements MouseImplementation {
 
 	private long windowHandle;
@@ -32,47 +32,13 @@ public class SDLMouseImplementation implements MouseImplementation {
 	private double accum_dy;
 	private double accum_dz;
 	protected byte[] button_states = new byte[this.getButtonCount()];
-	private long last_event_nanos;
-	private final SDL_MouseButtonEvent mouseButtonEvent = Display.getEvent().button();
-	private final SDL_MouseMotionEvent mouseMotionEvent = Display.getEvent().motion();
-	private final SDL_MouseWheelEvent mouseWheelEvent = Display.getEvent().wheel();
+	private final SDL_MouseButtonEvent mouseButtonEvent = SDLDisplay.getInstance().getEvent().button();
+	private final SDL_MouseMotionEvent mouseMotionEvent = SDLDisplay.getInstance().getEvent().motion();
+	private final SDL_MouseWheelEvent mouseWheelEvent = SDLDisplay.getInstance().getEvent().wheel();
 
 	@Override
 	public void createMouse() {
 		this.windowHandle = Display.getHandle();
-
-        /*if (GLFW.glfwRawMouseMotionSupported() && !Mouse.getPrivilegedBoolean("org.lwjgl.input.Mouse.disableRawInput"))
-            GLFW.glfwSetInputMode(this.windowHandle, GLFW.GLFW_RAW_MOUSE_MOTION, GLFW.GLFW_TRUE);
-
-        this.buttonCallback = GLFWMouseButtonCallback.create((window, button, action, mods) -> {
-            byte state = action == GLFW.GLFW_PRESS ? (byte)1 : (byte)0;
-            putMouseEvent((byte) button, state, 0, System.nanoTime());
-            if (button < button_states.length)
-                button_states[button] = state;
-        });
-        this.posCallback = GLFWCursorPosCallback.create((window, xpos, ypos) -> {
-            int x = (int) (xpos);
-            int y = (int) (Display.getHeight() - ypos); // I don't know why but this un-inverts the y motion of mouse inputs
-            double dx = x - last_x;
-            double dy = y - last_y;
-            if (dx != 0 || dy != 0) {
-                accum_dx += dx;
-                accum_dy += dy;
-                last_x = x;
-                last_y = y;
-                long nanos = System.nanoTime();
-                if (grabbed) {
-                    putMouseEventWithCoords((byte)-1, (byte)0, dx, dy, 0, nanos);
-                } else {
-                    putMouseEventWithCoords((byte)-1, (byte)0, x, y, 0, nanos);
-                }
-            }
-        });
-        this.scrollCallback = GLFWScrollCallback.create((window, xoffset, yoffset) -> {
-            accum_dz += yoffset;
-            putMouseEvent((byte)-1, (byte)0, (int) yoffset, System.nanoTime());
-        });
-        this.cursorEnterCallback = GLFWCursorEnterCallback.create((window, entered) -> this.isInsideWindow = entered);*/
 	}
 
 	protected void putMouseEvent(byte button, byte state, int dz, long nanos) {
@@ -87,7 +53,6 @@ public class SDLMouseImplementation implements MouseImplementation {
 		tmp_event.put(button).put(state).putDouble(coord1).putDouble(coord2).putDouble(dz).putLong(nanos);
 		tmp_event.flip();
 		event_queue.putEvent(tmp_event);
-		last_event_nanos = nanos;
 	}
 
 	@Override
@@ -152,7 +117,6 @@ public class SDLMouseImplementation implements MouseImplementation {
 		return isInsideWindow;
 	}
 
-	@Override
 	public void processMouseEvent(SDL_Event event) {
 		switch (event.type()) {
 			case SDL_EVENT_MOUSE_BUTTON_UP, SDL_EVENT_MOUSE_BUTTON_DOWN -> {
@@ -161,7 +125,7 @@ public class SDLMouseImplementation implements MouseImplementation {
 					// SDL has right & middle buttons switched
 					case SDL_BUTTON_RIGHT -> 1;
 					case SDL_BUTTON_MIDDLE -> 2;
-					default -> (byte) (mouseButtonEvent.button()-1);
+					default -> (byte) (mouseButtonEvent.button() - 1);
 				};
 				putMouseEvent(button, state, 0, System.nanoTime());
 				if (button < button_states.length)

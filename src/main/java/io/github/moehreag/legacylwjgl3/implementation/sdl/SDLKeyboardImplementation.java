@@ -7,25 +7,21 @@ import io.github.moehreag.legacylwjgl3.implementation.input.KeyboardImplementati
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.lwjgl.input.Keyboard;
-import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.EventQueue;
+import org.lwjgl.opengl.SDLDisplay;
 import org.lwjgl.sdl.*;
 
 import static org.lwjgl.sdl.SDLEvents.*;
 
-/**
- * @author Zarzelcow
- * @created 28/09/2022 - 2:14 PM
- */
 public class SDLKeyboardImplementation implements KeyboardImplementation {
 
 	private final byte[] key_down_buffer = new byte[Keyboard.KEYBOARD_SIZE];
 	private final EventQueue event_queue = new EventQueue(Keyboard.EVENT_SIZE);
 
 	private final ByteBuffer tmp_event = ByteBuffer.allocate(Keyboard.EVENT_SIZE);
-	private final SDL_KeyboardEvent keyboardEvent = Display.getEvent().key();
-	private final SDL_TextEditingEvent textEditingEvent = Display.getEvent().edit();
-	private final SDL_TextInputEvent textInputEvent = Display.getEvent().text();
+	private final SDL_KeyboardEvent keyboardEvent = SDLDisplay.getInstance().getEvent().key();
+	private final SDL_TextEditingEvent textEditingEvent = SDLDisplay.getInstance().getEvent().edit();
+	private final SDL_TextInputEvent textInputEvent = SDLDisplay.getInstance().getEvent().text();
 
 	@Override
 	public void createKeyboard() {
@@ -65,7 +61,6 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 		event_queue.copyEvents(readBuffer);
 	}
 
-	@Override
 	public void processKeyboardEvent(SDL_Event event) {
 		switch (event.type()) {
 			case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP -> {
