@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @SuppressWarnings({"removal", "UnusedMixin"})
 @Mixin(value = MinecraftApplet.class, priority = 1100)
-public abstract class MinecraftAppletMixin extends Applet {
+public abstract class MinecraftApplet132Mixin extends Applet {
 
 	@Inject(method = "init", remap = false, at = @At("HEAD"), cancellable = true)
 	private void onAppletInit(CallbackInfo ci) {
@@ -27,7 +27,7 @@ public abstract class MinecraftAppletMixin extends Applet {
 			var1 = this.getParameter("fullscreen").equalsIgnoreCase("true");
 		}
 
-		Minecraft minecraft = new Minecraft(null, null, null, 854, 480, var1) {
+		Minecraft minecraft = new Minecraft(null, null, 854, 480, var1) {
 			public void handleCrash(net.minecraft.util.crash.CrashReport crashSummary) {
 				CrashReport.report(crashSummary);
 			}
@@ -36,9 +36,6 @@ public abstract class MinecraftAppletMixin extends Applet {
 		if (this.getParameter("username") != null && this.getParameter("sessionid") != null) {
 			minecraft.session = new Session(this.getParameter("username"), this.getParameter("sessionid"));
 			System.out.println("Setting user: " + minecraft.session.username + ", " + minecraft.session.id);
-			if (this.getParameter("mppass") != null) {
-				minecraft.session.password = this.getParameter("mppass");
-			}
 		} else {
 			minecraft.session = new Session("Player", "");
 		}

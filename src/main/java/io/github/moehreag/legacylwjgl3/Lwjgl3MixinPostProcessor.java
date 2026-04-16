@@ -16,8 +16,7 @@ import net.fabricmc.loader.api.VersionParsingException;
 import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.*;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.util.Annotations;
@@ -81,7 +80,11 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 			var additionalMixins = new ArrayList<String>();
 			if (VersionPredicate.parse(">=0.22.5+a <1.6.0-alpha.13.16.a+04192037").test(MINECRAFT_VERSION)) {
 				LOGGER.info("Applying Applet Mixins!");
-				additionalMixins.add("MinecraftAppletMixin");
+				if (VersionPredicate.parse(">=1.3.0-alpha.12.18.a").test(MINECRAFT_VERSION)) {
+					additionalMixins.add("MinecraftApplet132Mixin");
+				} else {
+					additionalMixins.add("MinecraftAppletMixin");
+				}
 				additionalMixins.add("MixinResourceDownloadThread");
 			}
 			if (VersionPredicate.parse("<1.2.4").test(MINECRAFT_VERSION)) {

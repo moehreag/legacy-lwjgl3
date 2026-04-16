@@ -8,4 +8,5 @@ pluginManagement {
 }
 
 include("applet")
+include("applet132")
 include("common")

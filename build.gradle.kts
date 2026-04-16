@@ -86,6 +86,7 @@ dependencies {
     include(implementation("org.tukaani:xz:1.10")!!)
     "shade"(implementation(project(":common"))!!)
     "shade"(implementation(project(":applet"))!!)
+    "shade"(implementation(project(":applet132"))!!)
 
     compileOnly("org.jspecify:jspecify:1.0.0")
 }
@@ -116,7 +117,12 @@ configurations.configureEach {
 
 tasks {
     processResources {
-        from(configurations.getByName("shade").asFileTree.flatMap { zipTree(it) }.filter { it.name.endsWith(".class") })
+        mustRunAfter(configurations.getByName("shade").incoming.dependencies.buildDependencies.getDependencies(this))
+        actions.addFirst {
+            from(configurations.getByName("shade")
+                .asFileTree.flatMap { zipTree(it) }
+                .filter { it.name.endsWith(".class") })
+        }
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(mapOf("version" to project.version))
