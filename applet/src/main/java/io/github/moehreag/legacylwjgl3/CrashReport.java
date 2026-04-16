@@ -13,7 +13,6 @@ import org.lwjgl.opengl.GL11;
 
 public class CrashReport {
 	public static void report(net.minecraft.util.crash.CrashReport summary){
-		Display.destroy();
 		StringWriter var2 = new StringWriter();
 		summary.exception.printStackTrace(new PrintWriter(var2));
 		String stackTrace = var2.toString();
@@ -38,7 +37,7 @@ public class CrashReport {
 				.append(System.getProperty("java.vm.vendor")).append("\n");
 			report.append("LWJGL: ").append(Sys.getVersion()).append("\n");
 			cardManufacturer = GL11.glGetString(7936);
-			report.append("OpenGL: ").append(GL11.glGetString(7937)).append(" version ").append(GL11.glGetString(7938)).append(", ").append(GL11.glGetString(7936)).append("\n");
+			report.append("OpenGL: ").append(GL11.glGetString(7937)).append(" version ").append(GL11.glGetString(7938)).append(", ").append(cardManufacturer).append("\n");
 		} catch (Throwable var8) {
 			report.append("[failed to get system properties (").append(var8).append(")]\n");
 		}
@@ -80,6 +79,7 @@ public class CrashReport {
 		var6.append("\n");
 		var6.append("\n");
 
+		Display.destroy();
 		System.out.println(var6);
 	}
 }

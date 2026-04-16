@@ -21,6 +21,9 @@ public class Display {
 	}
 
 	public static void setTitle(@NotNull String title) {
+		if (title.startsWith("Minecraft Minecraft")) {
+			title = title.replace("Minecraft Minecraft", "Minecraft");
+		}
 		impl.setTitle(title);
 	}
 

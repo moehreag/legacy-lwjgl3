@@ -31,14 +31,16 @@ import static io.github.moehreag.legacylwjgl3.LegacyLWJGL3.LOGGER;
 public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 	private static final Version MINECRAFT_VERSION = FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion();
 
-	private static final VersionPredicate SCREEN_AVAILABLE, USES_APPLET, USES_132_APPLET, OLD_CLIPBOARD;
+	private static final VersionPredicate SCREEN_AVAILABLE, HAS_APPLET, HAS_APPLET_132, NEW_CLIPBOARD, OLD_CLIPBOARD, MOUSE_COMPONENT_FIX;
 
 	static {
 		try {
-			SCREEN_AVAILABLE = VersionPredicate.parse("<0.13.0+a.launcher");
-			USES_APPLET = VersionPredicate.parse(">=0.22.5+a <1.6.0-alpha.13.16.a+04192037");
-			USES_132_APPLET = VersionPredicate.parse(">=1.3.0-alpha.12.18.a");
-			OLD_CLIPBOARD = VersionPredicate.parse("<1.2.4");
+			SCREEN_AVAILABLE = VersionPredicate.parse("<0.13.0+a.launcher"); // c0.13.0
+			HAS_APPLET = VersionPredicate.parse(">=0.22.5+a <1.6.0-alpha.13.16.a+04192037");
+			HAS_APPLET_132 = VersionPredicate.parse(">=1.3.0-alpha.12.18.a"); // 12w18a
+			NEW_CLIPBOARD = VersionPredicate.parse(">=1.2.4");
+			OLD_CLIPBOARD = VersionPredicate.parse(">=1.0.0-alpha.1.0.15"); // a1.0.15
+			MOUSE_COMPONENT_FIX = VersionPredicate.parse("<1.6.0-alpha.13.16.a+04192037"); // 13w16a-04192037
 		} catch (VersionParsingException e) {
 			throw new IllegalStateException("Failed to parse version:", e);
 		}
@@ -87,19 +89,22 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 	@Override
 	public List<String> getMixins() {
 		var additionalMixins = new ArrayList<String>();
-		if (USES_APPLET.test(MINECRAFT_VERSION)) {
+		if (HAS_APPLET.test(MINECRAFT_VERSION)) {
 			LOGGER.info("Applying Applet Mixins!");
-			if (USES_132_APPLET.test(MINECRAFT_VERSION)) {
+			if (HAS_APPLET_132.test(MINECRAFT_VERSION)) {
 				additionalMixins.add("MinecraftApplet132Mixin");
 			} else {
 				additionalMixins.add("MinecraftAppletMixin");
 			}
 			additionalMixins.add("MixinResourceDownloadThread");
 		}
-		if (OLD_CLIPBOARD.test(MINECRAFT_VERSION)) {
-			additionalMixins.add("MixinScreenFixClipboardOld");
-		} else {
+		if (NEW_CLIPBOARD.test(MINECRAFT_VERSION)) {
 			additionalMixins.add("MixinScreenFixClipboard");
+		} else if (OLD_CLIPBOARD.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("MixinScreenFixClipboardOld");
+		}
+		if (MOUSE_COMPONENT_FIX.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("MouseMixin");
 		}
 		return additionalMixins;
 	}

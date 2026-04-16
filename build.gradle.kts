@@ -116,13 +116,19 @@ configurations.configureEach {
 }
 
 tasks {
-    processResources {
-        mustRunAfter(configurations.getByName("shade").incoming.dependencies.buildDependencies.getDependencies(this))
+    jar {
         actions.addFirst {
-            from(configurations.getByName("shade")
+            from(
+                configurations.getByName("shade")
                 .asFileTree.flatMap { zipTree(it) }
                 .filter { it.name.endsWith(".class") })
         }
+        outputs.upToDateWhen { _ ->
+            configurations.getByName("shade").incoming.dependencies
+                .buildDependencies.getDependencies(this).none { it.didWork }
+        }
+    }
+    processResources {
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(mapOf("version" to project.version))

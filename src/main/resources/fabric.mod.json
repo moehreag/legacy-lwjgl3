@@ -26,8 +26,9 @@
   ],
   "depends": {
     "fabricloader": ">=0.18.0",
-    "minecraft": "<1.13 >=1.0.0-beta.1.6.0.test.3",
-    "java": ">=17"
+    "minecraft": "<1.13.0-alpha.17.43.a",
+    "java": ">=17",
+    "osl-lifecycle-events": ">=0.6.0"
   },
   "custom": {
 	"loom:injected_interfaces": {
