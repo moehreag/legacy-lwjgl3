@@ -1,12 +1,11 @@
 package io.github.moehreag.legacylwjgl3.mixin;
 
-import java.util.Objects;
-
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import net.minecraft.client.gui.screen.Screen;
-import org.lwjgl.sdl.SDLClipboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
+@SuppressWarnings({"UnusedMixin", "unused"})
 @Mixin(Screen.class)
 public class MixinScreenFixClipboard {
 
@@ -16,7 +15,7 @@ public class MixinScreenFixClipboard {
 	 */
 	@Overwrite
 	public static String getClipboard() {
-		return Objects.requireNonNullElse(SDLClipboard.SDL_GetClipboardText(), "");
+		return LegacyLWJGL3.getClipboard();
 	}
 
 	/**
@@ -25,6 +24,6 @@ public class MixinScreenFixClipboard {
 	 */
 	@Overwrite
 	public static void setClipboard(String string) {
-		SDLClipboard.SDL_SetClipboardText(string);
+		LegacyLWJGL3.setClipboard(string);
 	}
 }

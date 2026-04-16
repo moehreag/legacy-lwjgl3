@@ -197,8 +197,8 @@ public final class GLFWDisplay implements Display.Impl {
 
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, 0);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
-		handle =
-				GLFW.glfwCreateWindow(displayMode.getWidth(), displayMode.getHeight(), title, MemoryUtil.NULL, MemoryUtil.NULL);
+		handle = GLFW.glfwCreateWindow(displayMode.getWidth(), displayMode.getHeight(), title, MemoryUtil.NULL, MemoryUtil.NULL);
+		LegacyLWJGL3.GLFW_WINDOW = handle;
 
 		GLFW.glfwMakeContextCurrent(handle);
 		GL.createCapabilities();
@@ -398,6 +398,7 @@ public final class GLFWDisplay implements Display.Impl {
 		// Destroy the window
 		GLFW.glfwDestroyWindow(handle);
 		GLFW.glfwTerminate();
+		LegacyLWJGL3.GLFW_WINDOW = -1;
 	}
 
 	public boolean isCreated() {

@@ -21,4 +21,10 @@ jobs:
         with:
           cache-provider: basic
       - name: Build with Gradle
-        run: ./gradlew build
+        run: ./gradlew build --stacktrace --no-daemon
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Legacy-LWJGL3-nightly
+          path: build/libs/*.jar

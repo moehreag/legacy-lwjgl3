@@ -16,7 +16,8 @@ import net.fabricmc.loader.api.VersionParsingException;
 import net.fabricmc.loader.api.metadata.version.VersionPredicate;
 import net.fabricmc.loader.impl.launch.FabricLauncherBase;
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.*;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.util.Annotations;
@@ -24,10 +25,24 @@ import org.spongepowered.asm.util.Annotations;
 import static io.github.moehreag.legacylwjgl3.LegacyLWJGL3.LOGGER;
 
 /*
- * Uses custom annotations and the post-apply mixin phase to handle some transformations
+ * Uses custom annotations and the post-apply mixin phase to handle some transformations.
+ * Also uses version predicates to selectively apply mixins in order for broader compatibility.
  */
 public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 	private static final Version MINECRAFT_VERSION = FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion();
+
+	private static final VersionPredicate SCREEN_AVAILABLE, USES_APPLET, USES_132_APPLET, OLD_CLIPBOARD;
+
+	static {
+		try {
+			SCREEN_AVAILABLE = VersionPredicate.parse("<0.13.0+a.launcher");
+			USES_APPLET = VersionPredicate.parse(">=0.22.5+a <1.6.0-alpha.13.16.a+04192037");
+			USES_132_APPLET = VersionPredicate.parse(">=1.3.0-alpha.12.18.a");
+			OLD_CLIPBOARD = VersionPredicate.parse("<1.2.4");
+		} catch (VersionParsingException e) {
+			throw new IllegalStateException("Failed to parse version:", e);
+		}
+	}
 
 	@Override
 	public void onLoad(String mixinPackage) {
@@ -57,17 +72,12 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		var apply = true;
-		try {
-			if (MINECRAFT_VERSION.compareTo(Version.parse("0.13.0+a.launcher")) < 0) {
-				apply = !List.of("net.minecraft.client.Minecraft",
-						"net.minecraft.client.gui.screen.Screen", "net.minecraft.unmapped.C_85740840"
-				).contains(targetClassName);
-			}
-		} catch (VersionParsingException e) {
-			LOGGER.warn("Failed to parse version:", e);
+		if (SCREEN_AVAILABLE.test(MINECRAFT_VERSION)) {
+			return !List.of("net.minecraft.client.Minecraft",
+					"net.minecraft.client.gui.screen.Screen", "net.minecraft.unmapped.C_85740840" // calamus name for Screen
+			).contains(targetClassName);
 		}
-		return apply;
+		return true;
 	}
 
 	@Override
@@ -76,27 +86,22 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 
 	@Override
 	public List<String> getMixins() {
-		try {
-			var additionalMixins = new ArrayList<String>();
-			if (VersionPredicate.parse(">=0.22.5+a <1.6.0-alpha.13.16.a+04192037").test(MINECRAFT_VERSION)) {
-				LOGGER.info("Applying Applet Mixins!");
-				if (VersionPredicate.parse(">=1.3.0-alpha.12.18.a").test(MINECRAFT_VERSION)) {
-					additionalMixins.add("MinecraftApplet132Mixin");
-				} else {
-					additionalMixins.add("MinecraftAppletMixin");
-				}
-				additionalMixins.add("MixinResourceDownloadThread");
-			}
-			if (VersionPredicate.parse("<1.2.4").test(MINECRAFT_VERSION)) {
-				additionalMixins.add("MixinScreenFixClipboardOld");
+		var additionalMixins = new ArrayList<String>();
+		if (USES_APPLET.test(MINECRAFT_VERSION)) {
+			LOGGER.info("Applying Applet Mixins!");
+			if (USES_132_APPLET.test(MINECRAFT_VERSION)) {
+				additionalMixins.add("MinecraftApplet132Mixin");
 			} else {
-				additionalMixins.add("MixinScreenFixClipboard");
+				additionalMixins.add("MinecraftAppletMixin");
 			}
-			return additionalMixins;
-		} catch (VersionParsingException e) {
-			LOGGER.warn("Failed to parse version:", e);
+			additionalMixins.add("MixinResourceDownloadThread");
 		}
-		return null;
+		if (OLD_CLIPBOARD.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("MixinScreenFixClipboardOld");
+		} else {
+			additionalMixins.add("MixinScreenFixClipboard");
+		}
+		return additionalMixins;
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import net.fabricmc.loader.api.FabricLoader;
 import org.lwjgl.Sys;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GL11;
@@ -22,7 +23,7 @@ public class CrashReport {
 		try {
 			report.append("Generated ").append(new SimpleDateFormat().format(new Date())).append("\n");
 			report.append("\n");
-			report.append("Minecraft: Minecraft b1.7.3\n");
+			report.append("Minecraft: Minecraft ").append(FabricLoader.getInstance().getModContainer("minecraft").map(c -> c.getMetadata().getVersion().getFriendlyString()).orElse("<unknown>")).append("\n");
 			report.append("OS: ")
 				.append(System.getProperty("os.name"))
 				.append(" (")
