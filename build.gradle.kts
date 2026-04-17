@@ -2,7 +2,6 @@ import com.google.common.jimfs.Jimfs
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import net.fabricmc.loader.api.Version
-import net.fabricmc.loader.api.metadata.version.VersionPredicate
 import net.fabricmc.loader.impl.game.minecraft.McVersionLookup
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarHeader
@@ -292,20 +291,24 @@ modrinth {
     loaders = listOf("ornithe")
 
     gameVersions = run {
-        val predicate = VersionPredicate.parse("<1.13.0-alpha.17.43.a >=1.0.0-alpha.1.0.4")
-        URI("https://meta.ornithemc.net/v3/versions/gen2/game")
+        val max = Version.parse("1.13.0-alpha.17.43.a")
+        val min = Version.parse("1.0.0-alpha.0.4")
+        URI("https://ornithemc.net/mc-versions/gen2/version_manifest.json")
             .toURL()
             .openStream()
-            .use { JsonParser.parseReader(it.bufferedReader()).asJsonArray }
+            .use { JsonParser.parseReader(it.bufferedReader()).asJsonObject["versions"].asJsonArray }
             .mapNotNull {
                 it as JsonObject
-                val version = it["version"].asString
+                val version = it["id"].asString
+                //if (version.contains("w")) return@mapNotNull null
+                if (it["type"].asString.contains("server")) return@mapNotNull null
                 val parsed =
                     Version.parse(McVersionLookup.normalizeVersion(version, McVersionLookup.getRelease(version)))
-                return@mapNotNull if (predicate.test(parsed))
+                return@mapNotNull if (min <= parsed && parsed < max)
                     version else null
             }
     }
+    debugMode = true
 
     dependencies {
         required.project("osl")

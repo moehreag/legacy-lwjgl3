@@ -35,12 +35,12 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 
 	static {
 		try {
-			SCREEN_AVAILABLE = VersionPredicate.parse("<0.13.0+a.launcher"); // c0.13.0
-			HAS_APPLET = VersionPredicate.parse(">=0.22.5+a <1.6.0-alpha.13.16.a+04192037");
-			HAS_APPLET_132 = VersionPredicate.parse(">=1.3.0-alpha.12.18.a"); // 12w18a
+			SCREEN_AVAILABLE = VersionPredicate.parse("<0.13.3+launcher"); // c0.0.13a-launcher
+			HAS_APPLET = VersionPredicate.parse(">=0.22.5+a <1.6-alpha.13.16.a");
+			HAS_APPLET_132 = VersionPredicate.parse(">=1.3-alpha.12.18.a"); // 12w18a
 			NEW_CLIPBOARD = VersionPredicate.parse(">=1.2.4");
-			OLD_CLIPBOARD = VersionPredicate.parse(">=1.0.0-alpha.1.0.15"); // a1.0.15
-			MOUSE_COMPONENT_FIX = VersionPredicate.parse("<1.6.0-alpha.13.16.a+04192037"); // 13w16a-04192037
+			OLD_CLIPBOARD = VersionPredicate.parse(">=1.0.0-alpha.0.15"); // a1.0.15
+			MOUSE_COMPONENT_FIX = VersionPredicate.parse("<1.6-alpha.13.16.a"); // 13w16a
 		} catch (VersionParsingException e) {
 			throw new IllegalStateException("Failed to parse version:", e);
 		}
