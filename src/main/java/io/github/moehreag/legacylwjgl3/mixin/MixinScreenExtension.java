@@ -5,6 +5,6 @@ import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(Screen.class)
-public class MixinScreenExtension implements LegacyLWJGL3ScreenEx {
+public abstract class MixinScreenExtension implements LegacyLWJGL3ScreenEx {
 
 }

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import paulscode.sound.libraries.LibraryLWJGLOpenAL;
 
 @Mixin(value = LibraryLWJGLOpenAL.class, remap = false)
-public class LibraryLWJGLOpenALMixin {
+public abstract class LibraryLWJGLOpenALMixin {
 
 	@Unique
 	private static MethodHandle alExit = null;

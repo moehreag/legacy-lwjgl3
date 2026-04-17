@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(Minecraft.class)
-public class MixinMinecraftFixEarlyCrashNoReports {
+public abstract class MixinMinecraftFixEarlyCrashNoReports {
 
 	@WrapOperation(method = "populateCrashReport", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/crash/CrashReportCategory;add(Ljava/lang/String;Ljava/util/concurrent/Callable;)V", ordinal = 2))
 	private void fixOGLCrashReportInfo(CrashReportCategory instance, String key, Callable<String> value, Operation<Void> original) {

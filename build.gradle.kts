@@ -31,7 +31,7 @@ plugins {
 
 
 base.archivesName.set(project.property("archives_base_name") as String)
-version = "${project.property("mod_version")}+${project.property("minecraft_version")}"
+version = "${project.property("mod_version")}"
 group = project.property("maven_group") as String
 
 repositories {
@@ -43,6 +43,7 @@ val lwjglVersion = properties["lwjgl_version"]
 configurations {
     create("embedCompressed")
     create("shade")
+    create("shadeSources")
 }
 
 ploceus {
@@ -84,9 +85,15 @@ dependencies {
 
     include(implementation("org.kamranzafar:jtar:2.3")!!)
     include(implementation("org.tukaani:xz:1.10")!!)
-    "shade"(implementation(project(":common"))!!)
-    "shade"(implementation(project(":applet"))!!)
-    "shade"(implementation(project(":applet132"))!!)
+    localRuntime(compileOnly(project(":common"))!!)
+    localRuntime(compileOnly(project(":applet", configuration = "namedElements"))!!)
+    localRuntime(compileOnly(project(":applet132", configuration = "namedElements"))!!)
+    "shade"(project(":common"))
+    "shade"(project(":applet"))
+    "shade"(project(":applet132"))
+    "shadeSources"(project(":common", configuration = "sourcesElements"))
+    "shadeSources"(project(":applet", configuration = "sourcesElements"))
+    "shadeSources"(project(":applet132", configuration = "sourcesElements"))
 
     compileOnly("org.jspecify:jspecify:1.0.0")
 }
@@ -120,13 +127,31 @@ tasks {
         actions.addFirst {
             from(
                 configurations.getByName("shade")
-                    .asFileTree.flatMap { zipTree(it) }
-                    .filter { it.name.endsWith(".class") })
+                    .asFileTree.map { zipTree(it) }
+                    .map { it.matching { this.include { f -> f.name.endsWith(".class") } } }
+            )
         }
         outputs.upToDateWhen { _ ->
             configurations.getByName("shade").incoming.dependencies
                 .buildDependencies.getDependencies(this).none { it.didWork }
         }
+    }
+    getByName<Jar>("sourcesJar") {
+        dependsOn(project.provider {
+            configurations.getByName("shadeSources")
+                .incoming.dependencies.buildDependencies
+        })
+        from(project.provider {
+            configurations.getByName("shadeSources")
+                .asFileTree.map { zipTree(it).matching { this.include { f -> f.name.endsWith(".java") } } }
+        })
+        outputs.upToDateWhen { _ ->
+            configurations.getByName("shadeSources").incoming.dependencies
+                .buildDependencies.getDependencies(this).none { it.didWork }
+        }
+    }
+    getByName("remapSourcesJar") {
+        outputs.upToDateWhen { !project.tasks.getByName("sourcesJar").didWork }
     }
     processResources {
         inputs.property("version", project.version)
@@ -257,26 +282,22 @@ tasks {
     }
 }
 
-allprojects {
-    apply(plugin = "maven-publish")
-    apply(plugin = "java")
-    publishing {
-        publications {
-            create<MavenPublication>("mavenJava") {
-                from(components["java"])
-            }
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
         }
+    }
 
-        // select the repositories you want to publish to
-        repositories {
-            val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
-            val repository = if (isSnapshot) "snapshots" else "releases"
-            maven("https://moehreag.duckdns.org/maven/$repository") {
-                name = "owlMaven"
-                credentials(PasswordCredentials::class.java)
-                authentication {
-                    create<BasicAuthentication>("basic")
-                }
+    // select the repositories you want to publish to
+    repositories {
+        val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
+        val repository = if (isSnapshot) "snapshots" else "releases"
+        maven("https://moehreag.duckdns.org/maven/$repository") {
+            name = "owlMaven"
+            credentials(PasswordCredentials::class.java)
+            authentication {
+                create<BasicAuthentication>("basic")
             }
         }
     }

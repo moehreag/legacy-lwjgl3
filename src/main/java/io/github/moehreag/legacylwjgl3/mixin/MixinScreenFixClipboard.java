@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 
 @SuppressWarnings({"UnusedMixin", "unused"})
 @Mixin(Screen.class)
-public class MixinScreenFixClipboard {
+public abstract class MixinScreenFixClipboard {
 
 	/**
 	 * @author moehreag

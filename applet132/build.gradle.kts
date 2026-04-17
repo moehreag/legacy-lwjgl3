@@ -8,6 +8,8 @@ ploceus {
     setIntermediaryGeneration(2)
 }
 
+version = "${rootProject.property("mod_version")}"
+group = "${rootProject.property("maven_group")}.${rootProject.base.archivesName.get()}"
 val targetJava = JavaVersion.VERSION_17
 
 java {
