@@ -293,7 +293,7 @@ publishing {
     repositories {
         val isSnapshot = project.version.toString().contains("beta") || project.version.toString().contains("alpha")
         val repository = if (isSnapshot) "snapshots" else "releases"
-        maven("https://moehreag.duckdns.org/maven/$repository") {
+        maven("https://maven.axolotlclient.com/$repository") {
             name = "owlMaven"
             credentials(PasswordCredentials::class.java)
             authentication {
@@ -314,14 +314,13 @@ modrinth {
     gameVersions = run {
         val max = Version.parse("1.13.0-alpha.17.43.a")
         val min = Version.parse("1.0.0-alpha.0.4")
-        URI("https://ornithemc.net/mc-versions/gen2/version_manifest.json")
+        URI("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json")
             .toURL()
             .openStream()
             .use { JsonParser.parseReader(it.bufferedReader()).asJsonObject["versions"].asJsonArray }
             .mapNotNull {
                 it as JsonObject
                 val version = it["id"].asString
-                //if (version.contains("w")) return@mapNotNull null
                 if (it["type"].asString.contains("server")) return@mapNotNull null
                 val parsed =
                     Version.parse(McVersionLookup.normalizeVersion(version, McVersionLookup.getRelease(version)))
@@ -329,7 +328,6 @@ modrinth {
                     version else null
             }
     }
-    debugMode = true
 
     dependencies {
         required.project("osl")
