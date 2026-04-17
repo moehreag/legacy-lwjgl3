@@ -2,6 +2,7 @@ import com.google.common.jimfs.Jimfs
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import net.fabricmc.loader.api.Version
+import net.fabricmc.loader.api.metadata.version.VersionPredicate
 import net.fabricmc.loader.impl.game.minecraft.McVersionLookup
 import org.kamranzafar.jtar.TarEntry
 import org.kamranzafar.jtar.TarHeader
@@ -120,8 +121,8 @@ tasks {
         actions.addFirst {
             from(
                 configurations.getByName("shade")
-                .asFileTree.flatMap { zipTree(it) }
-                .filter { it.name.endsWith(".class") })
+                    .asFileTree.flatMap { zipTree(it) }
+                    .filter { it.name.endsWith(".class") })
         }
         outputs.upToDateWhen { _ ->
             configurations.getByName("shade").incoming.dependencies
@@ -264,7 +265,6 @@ allprojects {
         publications {
             create<MavenPublication>("mavenJava") {
                 from(components["java"])
-                //artifact(tasks["remapJar"])
             }
         }
 
@@ -292,8 +292,7 @@ modrinth {
     loaders = listOf("ornithe")
 
     gameVersions = run {
-        val firstLwjgl3 = Version.parse("1.13.0-alpha.17.43.a")
-        val earliestSupported = Version.parse("1.0.0-beta.6") // b1.6-tb3
+        val predicate = VersionPredicate.parse("<1.13.0-alpha.17.43.a >=1.0.0-alpha.1.0.4")
         URI("https://meta.ornithemc.net/v3/versions/gen2/game")
             .toURL()
             .openStream()
@@ -303,15 +302,10 @@ modrinth {
                 val version = it["version"].asString
                 val parsed =
                     Version.parse(McVersionLookup.normalizeVersion(version, McVersionLookup.getRelease(version)))
-                return@mapNotNull if (parsed < firstLwjgl3 && parsed >= earliestSupported)
+                return@mapNotNull if (predicate.test(parsed))
                     version else null
-                /*if (it["stable"].asBoolean) {
-                    val minor = Integer.parseInt(it["version"].asString.split(".")[1])
-                    if (minor in 8..12) it["version"].asString else null
-                } else null*/
             }
     }
-    debugMode = true
 
     dependencies {
         required.project("osl")
