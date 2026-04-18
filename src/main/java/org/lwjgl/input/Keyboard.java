@@ -34,12 +34,15 @@ package org.lwjgl.input;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
+import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.implementation.LWJGLImplementationUtils;
 import io.github.moehreag.legacylwjgl3.implementation.input.InputImplementation;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.sdl.SDLKeyboard;
 
@@ -63,7 +66,7 @@ public class Keyboard {
 	 */
 	private static final int BUFFER_SIZE = 50;
 
-	public static final int KEYBOARD_SIZE = SDLKeyboard.SDL_GetKeyboardState().limit() + 1;
+	public static final int KEYBOARD_SIZE = LegacyLWJGL3.USE_SDL ? Optional.ofNullable(SDLKeyboard.SDL_GetKeyboardState()).map(ByteBuffer::limit).orElse(0) + 1 : GLFW.GLFW_KEY_LAST + 1;
 
 	/**
 	 * Has the keyboard been created?

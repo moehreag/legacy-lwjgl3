@@ -7,6 +7,7 @@ pluginManagement {
     }
 }
 
-include("applet")
-include("applet132")
+include("b1.7.3")
+include("1.3.2")
+include("1.5.2")
 include("common")

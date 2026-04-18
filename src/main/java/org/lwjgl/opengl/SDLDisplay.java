@@ -91,6 +91,7 @@ public final class SDLDisplay implements Display.Impl {
 		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING, "Mojang AB"));
 		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "Minecraft EULA: https://minecraft.net/eula"));
 		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "game"));
+		checkSdlError(SDLHints.SDL_SetHint(SDLHints.SDL_HINT_IME_IMPLEMENTED_UI, "composition"));
 
 		if (!SDL_Init(SDL_INIT_VIDEO)) {
 			throw new IllegalStateException("Unable to initialize SDL" + SDL_GetError());
@@ -233,7 +234,7 @@ public final class SDLDisplay implements Display.Impl {
 					isFullscreen = false;
 					window_resized = true;
 				}
-				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING -> {
+				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING, SDL_EVENT_TEXT_EDITING_CANDIDATES -> {
 					if (Keyboard.isCreated()) {
 						((SDLKeyboardImplementation) LWJGLImplementationUtils._keyboardImplementation).processKeyboardEvent(event);
 					}
@@ -329,7 +330,6 @@ public final class SDLDisplay implements Display.Impl {
 
 		Mouse.create();
 		Keyboard.create();
-		SDLKeyboard.SDL_StartTextInput(this.getHandle());
 		checkSdlError(SDL_ShowWindow(handle));
 		if (cached_icons != null) {
 			setIcon(cached_icons);
@@ -431,7 +431,6 @@ public final class SDLDisplay implements Display.Impl {
 
 	public void destroy() {
 		// free callbacks
-		SDLKeyboard.SDL_StopTextInput(getHandle());
 		Keyboard.destroy();
 		Mouse.destroy();
 		memFree(GL.getCapabilities().getAddressBuffer());

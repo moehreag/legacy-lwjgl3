@@ -31,16 +31,29 @@ import static io.github.moehreag.legacylwjgl3.LegacyLWJGL3.LOGGER;
 public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 	private static final Version MINECRAFT_VERSION = FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion();
 
-	private static final VersionPredicate SCREEN_AVAILABLE, HAS_APPLET, HAS_APPLET_132, NEW_CLIPBOARD, OLD_CLIPBOARD, MOUSE_COMPONENT_FIX;
+	private static final VersionPredicate SCREEN_UNAVAILABLE, HAS_APPLET, HAS_APPLET_132, NEW_CLIPBOARD, OLD_CLIPBOARD, MOUSE_COMPONENT_FIX,
+			OLD_GAMERENDERER, OLD_WINDOW_SCALE, OLD_EDITBOX, OLD_TEXTURE_MANGER, TEXTURE_MANAGER_1_5, PRE_BUFFERBUILDER, TESSELATOR_END_RETURN, NORETURN_TEXTRENDERER,
+			NONSTATIC_FILL, MULTIPLAYER_SCREEN_FIX_OLD, MULTIPLAYER_SCREEN_FIX;
 
 	static {
 		try {
-			SCREEN_AVAILABLE = VersionPredicate.parse("<0.13.3+launcher"); // c0.0.13a-launcher
+			SCREEN_UNAVAILABLE = VersionPredicate.parse("<0.13.3+launcher"); // c0.0.13a-launcher
 			HAS_APPLET = VersionPredicate.parse(">=0.22.5+a <1.6-alpha.13.16.a");
 			HAS_APPLET_132 = VersionPredicate.parse(">=1.3-alpha.12.18.a"); // 12w18a
 			NEW_CLIPBOARD = VersionPredicate.parse(">=1.2.4");
 			OLD_CLIPBOARD = VersionPredicate.parse(">=1.0.0-alpha.0.15"); // a1.0.15
 			MOUSE_COMPONENT_FIX = VersionPredicate.parse("<1.6-alpha.13.16.a"); // 13w16a
+			OLD_GAMERENDERER = VersionPredicate.parse("<=1.8.2-pre.2");
+			OLD_WINDOW_SCALE = VersionPredicate.parse("<1.3-alpha.12.21.a"); // 12w21a
+			OLD_EDITBOX = VersionPredicate.parse("<1.2.4");
+			OLD_TEXTURE_MANGER = VersionPredicate.parse("<1.6-alpha.13.24.a"); // 13w24a
+			TEXTURE_MANAGER_1_5 = VersionPredicate.parse(">=1.5-alpha.13.9.a"); // 13w09a
+			PRE_BUFFERBUILDER = VersionPredicate.parse("<1.8-alpha.14.25.a"); // 14w28a
+			TESSELATOR_END_RETURN = VersionPredicate.parse(">=1.0.0-beta.9.0.5"); // b1.9-pre5
+			NORETURN_TEXTRENDERER = VersionPredicate.parse("<1.4.3");
+			NONSTATIC_FILL = VersionPredicate.parse("<1.2.4");
+			MULTIPLAYER_SCREEN_FIX_OLD = VersionPredicate.parse("<1.0.0-beta.8.0.1+081459"); // b1.8-pre1-081459
+			MULTIPLAYER_SCREEN_FIX = VersionPredicate.parse("<1.2.4");
 		} catch (VersionParsingException e) {
 			throw new IllegalStateException("Failed to parse version:", e);
 		}
@@ -72,12 +85,31 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 		return null;
 	}
 
+	@SuppressWarnings("RedundantIfStatement")
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		if (SCREEN_AVAILABLE.test(MINECRAFT_VERSION)) {
-			return !List.of("net.minecraft.client.Minecraft",
-					"net.minecraft.client.gui.screen.Screen", "net.minecraft.unmapped.C_85740840" // calamus name for Screen
-			).contains(targetClassName);
+		if (SCREEN_UNAVAILABLE.test(MINECRAFT_VERSION) && List.of("net.minecraft.client.Minecraft",
+				"net.minecraft.client.gui.screen.Screen", "net.minecraft.unmapped.C_85740840" // calamus name for Screen
+		).contains(targetClassName)) {
+			return false;
+		}
+		if (OLD_GAMERENDERER.test(MINECRAFT_VERSION) && mixinClassName.endsWith("IMEGameRendererMixin")) {
+			return false;
+		}
+		if (OLD_EDITBOX.test(MINECRAFT_VERSION) && mixinClassName.endsWith("IMETextFieldWidgetMixin")) {
+			return false;
+		}
+		if (OLD_TEXTURE_MANGER.test(MINECRAFT_VERSION) && mixinClassName.endsWith("LegacyLWJGL3RenderHelperBindMixin")) {
+			return false;
+		}
+		if (PRE_BUFFERBUILDER.test(MINECRAFT_VERSION) && (mixinClassName.endsWith("LegacyLWJGL3RenderHelperBlitMixin") || mixinClassName.endsWith("LegacyLWJGL3RenderHelperMatrixMixin"))) {
+			return false;
+		}
+		if (NORETURN_TEXTRENDERER.test(MINECRAFT_VERSION) && mixinClassName.endsWith("LegacyLWJGL3RenderHelperDrawStringMixin")) {
+			return false;
+		}
+		if (NONSTATIC_FILL.test(MINECRAFT_VERSION) && mixinClassName.endsWith("LegacyLWJGL3RenderHelperFillMixin")) {
+			return false;
 		}
 		return true;
 	}
@@ -105,6 +137,30 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 		}
 		if (MOUSE_COMPONENT_FIX.test(MINECRAFT_VERSION)) {
 			additionalMixins.add("MouseMixin");
+		}
+		if (OLD_GAMERENDERER.test(MINECRAFT_VERSION)) {
+			additionalMixins.add(OLD_WINDOW_SCALE.test(MINECRAFT_VERSION) ? "IMEGameRendererOldMixin" : "IMEGameRenderer13Mixin");
+		}
+		if (OLD_EDITBOX.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("IMETextFieldWidgetOldMixin");
+		}
+		if (OLD_TEXTURE_MANGER.test(MINECRAFT_VERSION)) {
+			additionalMixins.add(TEXTURE_MANAGER_1_5.test(MINECRAFT_VERSION) ? "LegacyLWJGL3RenderHelperBind15Mixin" : "LegacyLWJGL3RenderHelperBindOldMixin");
+		}
+		if (PRE_BUFFERBUILDER.test(MINECRAFT_VERSION)) {
+			additionalMixins.add(TESSELATOR_END_RETURN.test(MINECRAFT_VERSION) ? "LegacyLWJGL3RenderHelperBlit13Mixin" : "LegacyLWJGL3RenderHelperBlitOldMixin");
+			additionalMixins.add("LegacyLWJGL3RenderHelperMatrixOldMixin");
+		}
+		if (NORETURN_TEXTRENDERER.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("LegacyLWJGL3RenderHelperDrawStringOldMixin");
+		}
+		if (NONSTATIC_FILL.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("LegacyLWJGL3RenderHelperFillOldMixin");
+		}
+		if (MULTIPLAYER_SCREEN_FIX_OLD.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("JoinMultiplayerScreenMixin");
+		} else if (MULTIPLAYER_SCREEN_FIX.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("MultiplayerScreensMixin");
 		}
 		return additionalMixins;
 	}

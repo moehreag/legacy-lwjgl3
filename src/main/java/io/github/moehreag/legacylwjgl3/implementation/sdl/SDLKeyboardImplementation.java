@@ -1,9 +1,12 @@
 package io.github.moehreag.legacylwjgl3.implementation.sdl;
 
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.implementation.input.KeyboardImplementation;
+import io.github.moehreag.legacylwjgl3.util.IMEManager;
+import io.github.moehreag.legacylwjgl3.util.PreeditEvent;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.lwjgl.input.Keyboard;
@@ -31,8 +34,8 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 	private void putKeyboardEvent(int keycode, byte state, int ch, long nanos, boolean repeat) {
 		if (keycode == -1) {
 			ByteBuffer lastEvent = event_queue.getLastEvent();
-
-			if (lastEvent.getInt(0) > 0 && lastEvent.getInt(5) == 0) {
+			// check for: event has a keycode, character is not present and state is 'pressed'
+			if (lastEvent.getInt(0) > 0 && lastEvent.getInt(5) == 0 && lastEvent.getLong(4) == 1) {
 				lastEvent.putInt(5, ch);
 				return;
 			}
@@ -70,12 +73,15 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 				} else {
 					this.key_down_buffer[key] = 0;
 				}
-				putKeyboardEvent(key, this.key_down_buffer[key], 0, System.nanoTime(), keyboardEvent.repeat());
+
+				putKeyboardEvent(key, this.key_down_buffer[key], 0, keyboardEvent.timestamp(), keyboardEvent.repeat());
 			}
-			case SDL_EVENT_TEXT_EDITING -> textEditingEvent.textString().codePoints().forEach(codepoint ->
-					putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
-			case SDL_EVENT_TEXT_INPUT -> textInputEvent.textString().codePoints().forEach(codepoint ->
-					putKeyboardEvent(-1, (byte) 1, codepoint, textEditingEvent.timestamp(), false));
+			case SDL_EVENT_TEXT_EDITING ->
+					IMEManager.getInstance().submitPreeditEvent(PreeditEvent.createFromCompositionEvent(Objects.requireNonNullElse(textEditingEvent.textString(), ""),
+							textEditingEvent.start(), textEditingEvent.length()));
+			case SDL_EVENT_TEXT_INPUT ->
+					Objects.requireNonNullElse(textEditingEvent.textString(), "").codePoints().forEach(codepoint ->
+							putKeyboardEvent(-1, (byte) -1, codepoint, textInputEvent.timestamp(), false));
 		}
 	}
 

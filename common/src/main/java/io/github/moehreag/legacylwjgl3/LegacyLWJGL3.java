@@ -1,5 +1,6 @@
 package io.github.moehreag.legacylwjgl3;
 
+import io.github.moehreag.legacylwjgl3.implementation.LegacyLWJGL3Internal;
 import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +17,10 @@ public class LegacyLWJGL3 implements ClientModInitializer {
 	}
 
 	public static String getClipboard() {
-		throw new UnsupportedOperationException("Implemented in Mixin");
+		return LegacyLWJGL3Internal.getClipboard();
 	}
 
 	public static void setClipboard(String s) {
-		throw new UnsupportedOperationException("Implemented in Mixin: "+s);
+		LegacyLWJGL3Internal.setClipboard(s);
 	}
 }

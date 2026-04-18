@@ -21,5 +21,5 @@ java {
 dependencies {
     compileOnly("net.fabricmc:fabric-loader:${properties["loader_version"]}")
     compileOnly("org.slf4j:slf4j-api:2.0.17")
-    compileOnly("net.fabricmc:sponge-mixin:0.17.1+mixin.0.8.7")
+    compileOnly("org.jetbrains:annotations:26.1.0")
 }

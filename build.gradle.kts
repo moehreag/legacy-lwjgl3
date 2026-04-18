@@ -52,6 +52,17 @@ ploceus {
 
 loom {
     uncompressNestedJars = true
+    mods {
+        create("legacy-lwjgl3") {
+            sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+        }
+    }
+    runs {
+        getByName("client") {
+            //environmentVariable("LEGACY_LWJGL3_USE_SDL", "true") // use SDL3
+        }
+        remove(getByName("server"))
+    }
 }
 
 val targetJava = JavaVersion.VERSION_17
@@ -86,14 +97,13 @@ dependencies {
     include(implementation("org.kamranzafar:jtar:2.3")!!)
     include(implementation("org.tukaani:xz:1.10")!!)
     localRuntime(compileOnly(project(":common"))!!)
-    localRuntime(compileOnly(project(":applet", configuration = "namedElements"))!!)
-    localRuntime(compileOnly(project(":applet132", configuration = "namedElements"))!!)
     "shade"(project(":common"))
-    "shade"(project(":applet"))
-    "shade"(project(":applet132"))
     "shadeSources"(project(":common", configuration = "sourcesElements"))
-    "shadeSources"(project(":applet", configuration = "sourcesElements"))
-    "shadeSources"(project(":applet132", configuration = "sourcesElements"))
+    for (version in arrayOf("b1.7.3", "1.3.2", "1.5.2")) {
+        localRuntime(compileOnly(project(":$version", configuration = "namedElements"))!!)
+        "shade"(project(":$version"))
+        "shadeSources"(project(":$version", configuration = "sourcesElements"))
+    }
 
     compileOnly("org.jspecify:jspecify:1.0.0")
 }
@@ -127,7 +137,9 @@ tasks {
         actions.addFirst {
             from(
                 configurations.getByName("shade")
-                    .asFileTree.map { zipTree(it) }
+                    .asFileTree.matching { this.include { f ->
+                        f.file.path.startsWith(project.projectDir.path)
+                    } }.map { zipTree(it) }
                     .map { it.matching { this.include { f -> f.name.endsWith(".class") } } }
             )
         }
@@ -143,7 +155,8 @@ tasks {
         })
         from(project.provider {
             configurations.getByName("shadeSources")
-                .asFileTree.map { zipTree(it).matching { this.include { f -> f.name.endsWith(".java") } } }
+                .asFileTree.matching { this.include { f -> f.file.path.startsWith(project.projectDir.path) } }
+                .map { zipTree(it).matching { this.include { f -> f.name.endsWith(".java") } } }
         })
         outputs.upToDateWhen { _ ->
             configurations.getByName("shadeSources").incoming.dependencies
@@ -279,6 +292,13 @@ tasks {
 
     this.modrinth {
         dependsOn("remapJar")
+    }
+
+    register("normalizeVersion") { // utility task to get a normalized version as we've needed that quite a few times now
+        actions.add {
+            var version = readln()
+            println(McVersionLookup.normalizeVersion(version, McVersionLookup.getRelease(version)))
+        }
     }
 }
 
