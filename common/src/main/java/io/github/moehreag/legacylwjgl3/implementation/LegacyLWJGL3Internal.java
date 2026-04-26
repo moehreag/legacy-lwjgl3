@@ -4,7 +4,7 @@ import org.jetbrains.annotations.ApiStatus;
 
 @SuppressWarnings("unused")
 @ApiStatus.Internal
-public class LegacyLWJGL3Internal {
+public final class LegacyLWJGL3Internal {
 	public static void renderIMEOverlay(int guiScale, int windowWidth, int windowHeight) {
 		throw new UnsupportedOperationException("Implemented in Mixin");
 	}

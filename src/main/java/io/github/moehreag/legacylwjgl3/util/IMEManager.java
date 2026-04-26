@@ -1,6 +1,7 @@
 package io.github.moehreag.legacylwjgl3.util;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
+import io.github.moehreag.legacylwjgl3.api.PreeditAwareWidget;
 import net.ornithemc.osl.lifecycle.api.client.MinecraftClientEvents;
 import net.ornithemc.osl.lifecycle.impl.client.MinecraftAccess;
 import org.lwjgl.glfw.GLFW;
@@ -14,7 +15,8 @@ public class IMEManager {
 	private boolean imeRequested;
 	private volatile boolean imeStatusChanged = true;
 	private boolean cachedIMEStatus;
-	private PreeditListener currentListener;
+	private PreeditAwareWidget currentWidget;
+	private IMEPreeditOverlay overlay;
 	private PreeditEvent lastEvent;
 
 	private static final IMEManager INSTANCE = new IMEManager();
@@ -30,18 +32,16 @@ public class IMEManager {
 	public void submitPreeditEvent(PreeditEvent event) {
 		lastEvent = event;
 		if (MinecraftAccess.getInstance().screen != null) {
-			if (currentListener != null) {
-				currentListener.legacy_lwjgl3$onPreeditChange(event);
+			if (currentWidget != null) {
+				overlay = event != null ? new IMEPreeditOverlay(event, MinecraftAccess.getInstance().textRenderer, currentWidget.getInputHeight()+1) : null;
 			}
 		}
 	}
 
 	public void renderPreeditOverlay(int guiScale, int windowWidth, int windowHeight) {
-		if (currentListener != null) {
-			var overlay = currentListener.legacy_lwjgl3$getOverlay();
-			if (overlay != null) {
-				overlay.render(guiScale, windowWidth, windowHeight);
-			}
+		if (overlay != null) {
+			overlay.updateInputPosition(currentWidget.getCursorX(), currentWidget.getCursorY());
+			overlay.render(guiScale, windowWidth, windowHeight);
 		}
 	}
 
@@ -99,13 +99,13 @@ public class IMEManager {
 		this.textInputEnabled = false;
 	}
 
-	public void onTextInputFocusChange(PreeditListener listener, final boolean focused) {
+	public void onWidgetFocusUpdate(PreeditAwareWidget widget, boolean focused) {
 		if (focused) {
-			this.currentListener = listener;
+			this.currentWidget = widget;
 			this.startTextInput();
 		} else {
-			if (currentListener == listener) {
-				this.currentListener = null;
+			if (currentWidget == widget) {
+				this.currentWidget = null;
 			}
 			this.stopTextInput();
 		}
@@ -128,11 +128,5 @@ public class IMEManager {
 		} else {
 			GLFW.glfwSetInputMode(Display.getHandle(), 208903, value ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
 		}
-	}
-
-	public interface PreeditListener {
-		void legacy_lwjgl3$onPreeditChange(PreeditEvent event);
-
-		IMEPreeditOverlay legacy_lwjgl3$getOverlay();
 	}
 }

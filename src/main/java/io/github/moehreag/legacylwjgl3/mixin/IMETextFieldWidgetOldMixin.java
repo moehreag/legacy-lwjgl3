@@ -1,8 +1,7 @@
 package io.github.moehreag.legacylwjgl3.mixin;
 
-import io.github.moehreag.legacylwjgl3.util.IMEManager;
+import io.github.moehreag.legacylwjgl3.api.PreeditAwareWidget;
 import io.github.moehreag.legacylwjgl3.util.IMEPreeditOverlay;
-import io.github.moehreag.legacylwjgl3.util.PreeditEvent;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.render.TextRenderer;
 import org.spongepowered.asm.mixin.Final;
@@ -13,9 +12,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@SuppressWarnings({"UnusedMixin", "unused"})
+@SuppressWarnings({"UnusedMixin", "unused", "AddedMixinMembersNamePattern"})
 @Mixin(TextFieldWidget.class)
-public abstract class IMETextFieldWidgetOldMixin implements IMEManager.PreeditListener {
+public abstract class IMETextFieldWidgetOldMixin implements PreeditAwareWidget {
 
 	@Shadow
 	@Final
@@ -39,8 +38,8 @@ public abstract class IMETextFieldWidgetOldMixin implements IMEManager.PreeditLi
 
 	@Inject(method = "setFocused", at = @At("HEAD"))
 	private void startTextInput(boolean focused, CallbackInfo ci) {
-		if (focused != this.focused && editable) {
-			IMEManager.getInstance().onTextInputFocusChange(this, focused);
+		if (focused != this.focused && this.editable) {
+			onFocusUpdate(focused);
 		}
 	}
 
@@ -52,12 +51,17 @@ public abstract class IMETextFieldWidgetOldMixin implements IMEManager.PreeditLi
 	}
 
 	@Override
-	public void legacy_lwjgl3$onPreeditChange(PreeditEvent event) {
-		overlay = event != null ? new IMEPreeditOverlay(event, textRenderer, 9 + 1) : null;
+	public int getCursorX() {
+		return 0;
 	}
 
 	@Override
-	public IMEPreeditOverlay legacy_lwjgl3$getOverlay() {
-		return overlay;
+	public int getCursorY() {
+		return 0;
+	}
+
+	@Override
+	public int getInputHeight() {
+		return 9;
 	}
 }

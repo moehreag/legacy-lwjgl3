@@ -11,7 +11,10 @@
 	"GL11Mixin",
 	"GL20Mixin",
 	"GLCapabilitiesMixin",
+	"IMEBookEditScreenMixin",
 	"IMEGameRendererMixin",
+	"IMEMinecraftMixin",
+	"IMESignEditScreenMixin",
 	"IMETextFieldWidgetMixin",
 	"LegacyLWJGL3RenderHelperBindMixin",
 	"LegacyLWJGL3RenderHelperBlitMixin",
@@ -22,6 +25,7 @@
 	"LibraryLWJGLOpenALMixin",
 	"MixinMinecraftFixEarlyCrashNoReports",
 	"MixinMinecraftFixResize",
-	"MixinScreenExtension"
+	"MixinScreenExtension",
+	"PreeditAwareWidgetInternalMixin"
   ]
 }

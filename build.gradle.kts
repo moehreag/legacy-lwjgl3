@@ -59,7 +59,7 @@ loom {
     }
     runs {
         getByName("client") {
-            //environmentVariable("LEGACY_LWJGL3_USE_SDL", "true") // use SDL3
+            environmentVariable("LEGACY_LWJGL3_USE_SDL", "true") // use SDL3
         }
         remove(getByName("server"))
     }
@@ -96,6 +96,7 @@ dependencies {
 
     include(implementation("org.kamranzafar:jtar:2.3")!!)
     include(implementation("org.tukaani:xz:1.10")!!)
+    include(api(project(":api"))!!)
     localRuntime(compileOnly(project(":common"))!!)
     "shade"(project(":common"))
     "shadeSources"(project(":common", configuration = "sourcesElements"))
@@ -113,6 +114,15 @@ subprojects {
     dependencies {
         compileOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion")
         compileOnly("org.lwjgl:lwjgl-glfw:${lwjglVersion}")
+    }
+}
+
+allprojects {
+    tasks.withType<JavaCompile>().configureEach {
+        options.encoding = "UTF-8"
+        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_18)) {
+            options.release.set(17)
+        }
     }
 }
 
@@ -274,13 +284,6 @@ tasks {
         outputs.upToDateWhen { false }
         actions.addLast {
             outputs.files.asFileTree.files.forEach { recompressNestedJar(it) }
-        }
-    }
-
-    withType<JavaCompile>().configureEach {
-        options.encoding = "UTF-8"
-        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_18)) {
-            options.release.set(17)
         }
     }
 

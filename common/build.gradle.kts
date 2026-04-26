@@ -19,6 +19,7 @@ java {
 }
 
 dependencies {
+    compileOnly(project(":api"))
     compileOnly("net.fabricmc:fabric-loader:${properties["loader_version"]}")
     compileOnly("org.slf4j:slf4j-api:2.0.17")
     compileOnly("org.jetbrains:annotations:26.1.0")

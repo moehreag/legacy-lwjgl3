@@ -33,7 +33,7 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 
 	private static final VersionPredicate SCREEN_UNAVAILABLE, HAS_APPLET, HAS_APPLET_132, NEW_CLIPBOARD, OLD_CLIPBOARD, MOUSE_COMPONENT_FIX,
 			OLD_GAMERENDERER, OLD_WINDOW_SCALE, OLD_EDITBOX, OLD_TEXTURE_MANGER, TEXTURE_MANAGER_1_5, PRE_BUFFERBUILDER, TESSELATOR_END_RETURN, NORETURN_TEXTRENDERER,
-			NONSTATIC_FILL, MULTIPLAYER_SCREEN_FIX_OLD, MULTIPLAYER_SCREEN_FIX;
+			NONSTATIC_FILL, MULTIPLAYER_SCREEN_FIX_OLD, MULTIPLAYER_SCREEN_FIX, BOOK_EDIT_SCREEN_HANDLING, SIGN_EDIT_SCREEN_HANDLING;
 
 	static {
 		try {
@@ -54,6 +54,8 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 			NONSTATIC_FILL = VersionPredicate.parse("<1.2.4");
 			MULTIPLAYER_SCREEN_FIX_OLD = VersionPredicate.parse("<1.0.0-beta.8.0.1+081459"); // b1.8-pre1-081459
 			MULTIPLAYER_SCREEN_FIX = VersionPredicate.parse("<1.2.4");
+			BOOK_EDIT_SCREEN_HANDLING = VersionPredicate.parse(">=1.3-alpha.12.17.a"); // 12w17a
+			SIGN_EDIT_SCREEN_HANDLING = VersionPredicate.parse(">=0.31.20100607"); // inf-20100607
 		} catch (VersionParsingException e) {
 			throw new IllegalStateException("Failed to parse version:", e);
 		}
@@ -88,9 +90,9 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 	@SuppressWarnings("RedundantIfStatement")
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-		if (SCREEN_UNAVAILABLE.test(MINECRAFT_VERSION) && List.of("net.minecraft.client.Minecraft",
+		if (SCREEN_UNAVAILABLE.test(MINECRAFT_VERSION) && (List.of(
 				"net.minecraft.client.gui.screen.Screen", "net.minecraft.unmapped.C_85740840" // calamus name for Screen
-		).contains(targetClassName)) {
+		).contains(targetClassName) || mixinClassName.endsWith("IMEMinecraftMixin") || mixinClassName.endsWith("ScreenMixin"))) {
 			return false;
 		}
 		if (OLD_GAMERENDERER.test(MINECRAFT_VERSION) && mixinClassName.endsWith("IMEGameRendererMixin")) {
@@ -109,6 +111,12 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 			return false;
 		}
 		if (NONSTATIC_FILL.test(MINECRAFT_VERSION) && mixinClassName.endsWith("LegacyLWJGL3RenderHelperFillMixin")) {
+			return false;
+		}
+		if (!BOOK_EDIT_SCREEN_HANDLING.test(MINECRAFT_VERSION) && mixinClassName.endsWith("IMEBookEditScreenMixin")) {
+			return false;
+		}
+		if (!SIGN_EDIT_SCREEN_HANDLING.test(MINECRAFT_VERSION) && mixinClassName.endsWith("IMESignEditScreenMixin")) {
 			return false;
 		}
 		return true;
@@ -157,10 +165,12 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 		if (NONSTATIC_FILL.test(MINECRAFT_VERSION)) {
 			additionalMixins.add("LegacyLWJGL3RenderHelperFillOldMixin");
 		}
-		if (MULTIPLAYER_SCREEN_FIX_OLD.test(MINECRAFT_VERSION)) {
-			additionalMixins.add("JoinMultiplayerScreenMixin");
-		} else if (MULTIPLAYER_SCREEN_FIX.test(MINECRAFT_VERSION)) {
-			additionalMixins.add("MultiplayerScreensMixin");
+		if (!SCREEN_UNAVAILABLE.test(MINECRAFT_VERSION)) {
+			if (MULTIPLAYER_SCREEN_FIX_OLD.test(MINECRAFT_VERSION)) {
+				additionalMixins.add("JoinMultiplayerScreenMixin");
+			} else if (MULTIPLAYER_SCREEN_FIX.test(MINECRAFT_VERSION)) {
+				additionalMixins.add("MultiplayerScreensMixin");
+			}
 		}
 		return additionalMixins;
 	}
