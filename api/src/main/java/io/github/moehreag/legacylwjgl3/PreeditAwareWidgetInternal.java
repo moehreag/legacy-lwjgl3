@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Internal
 public final class PreeditAwareWidgetInternal {
 	public static void updateWidgetFocus(PreeditAwareWidget widget, boolean focused) {
-		throw new UnsupportedOperationException("Implemented in Mixin");
+		// Does nothing if legacy-lwjgl3 isn't installed but this API package is present
+		// This method is implemented using a mixin.
 	}
 }
