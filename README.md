@@ -1,113 +1,72 @@
 # legacy-lwjgl3
 
-A hacky over-engineered project that runs LWJGL3 on legacy-fabric minecraft versions (current only tested 1.8.9),
-Allowing you to use modern LWJGL features and libraries on older minecraft versions.
+A mod for [Ornithe](https://ornithemc.net) to run old versions of Minecraft with [lwjgl3](https://github.com/lwjgl/lwjgl3).
 
-### Table of Contents
- * Usage
-   * [Dev Environments](#dev-environments)
-   * [Clients](#Clients)
- * [Performance Increases?](#performance-increases) 
-## Credits
-A whole lot of this code is just code from the original LWJGL 2 project modified to work with LWJGL 3, Thanks so much to
-the LWJGL devs for making their license so permissive.
+### Usage
 
-and a big thanks to gudenau for the original F*rge mod <https://github.com/gudenau/MC-LWJGL3> that did the same thing,
-thanks as a big portion of this code is from that project.
+#### Configuration
 
-# Usage
-
-## Configuration
-
-The mod offers a handful of optional configuration options via system properties or
+The mod offers optional configuration options via system properties or
 environment variables.
 
 A list of currently available options is provided below.
 
-| Property Name                                 | Environment variable name                     | Description                                                                                        |
-|-----------------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------------------------------|
-| `legacy_lwjgl3.allow_virtual_cursor`          | `LEGACY_LWJGL3_ALLOW_VIRTUAL_CURSOR`          | Enable the virtual cursor when using wayland. Disabled by default due to slightly buggy behaviour. |
-| `legacy_lwjgl3.disable_desktopfile_injection` | `LEGACY_LWJGL3_DISABLE_DESKTOPFILE_INJECTION` | Disable desktop file injection. Used to provide a window icon on wayland environments.             |
+| Property Name                                 | Environment variable name                     | Description                                          |
+|-----------------------------------------------|-----------------------------------------------|------------------------------------------------------|
+| `legacy_lwjgl3.use_sdl`                       | `LEGACY_LWJGL3_USE_SDL`                       | Use SDL3 instead of GLFW for window & input handling |
 
-## Dev Environments
-First head over to https://jitpack.io/#Zarzelcow/legacy-lwjgl3 and select the latest version in commits
+### Unstable versions (CI)
 
-then add this to your build.gradle replacing %VERSION% with the version of your choosing
+Bleeding-Edge versions can be found in the Actions tab of the repository: https://github.com/moehreag/legacy-lwjgl3/actions.
 
-❯ build.gradle
-```groovy
+### Building
 
-import org.gradle.internal.os.OperatingSystem
+This mod can be built using `./gradlew build`, jars can then be found at `build/libs/`.
 
-project.ext.lwjglVersion = "3.3.1"
+### Dev
 
-switch (OperatingSystem.current()) {
-    case OperatingSystem.LINUX:
-        project.ext.lwjglNatives = "natives-linux"
-        break
-    case OperatingSystem.WINDOWS:
-        project.ext.lwjglNatives = "natives-windows"
-        break
-}
+This mod is published to AxolotlClient's maven, located at https://maven.axolotlclient.com.
 
+
+```kotlin
 repositories {
-   maven { url 'https://jitpack.io' }
+    maven("https://maven.axolotlclient.com/releases")
+    //maven("https://maven.axolotlclient.com/snapshots") // for unstable versions, optional
 }
 
 dependencies {
-    modImplementation "com.github.Zarzelcow:legacy-lwjgl3:%VERSION%"
-    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
-
-    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
-    runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
-}
-
-configurations.all {
-    // Removes LWJGL2 dependencies
-    exclude group: "org.lwjgl.lwjgl"
+	modImplementation("io.github.moehreag:legacy-lwjgl3:<VERSION>")
 }
 ```
 
-## Clients
- Shaded builds are not currently published, so you will have to build them yourself.
+### IME support for other mods
 
- TLDR: `./gradlew remapShadowJar` then add `build/libs/*-all-remapped.jar` to your mods, done
- <br>
- <br>
- <br>
+This mod provides IME preedit overlay functionality. If other mods provide independent text field implementations
+they will not integrate with IME by default. legacy-lwjgl3 publishes a small API package which allows other mods
+to integrate with IME input.
 
- Longer version: in the directory containing the file `build.gradle` run the command `./gradlew remapShadowJar`
+```kotlin
+repositories {
+    maven("https://maven.axolotlclient.com/releases")
+    //maven("https://maven.axolotlclient.com/snapshots") // for unstable versions, optional
+}
 
- this will create 2 new files in the folder `build/libs`, add the file ending with `-all-remapped.jar` to your list of mods and run the game
- 
-# Performance Increases?
-While increasing performance was not the main point you do very much do see a benefit from LWJGl 3's quite substantial performance increase,
-resulting in a bump of about 20 fps (for me) even while having to emulate a lot of lwjgl 2 code that got removed.
-
-![results](.github/results.png) <br>
-The settings used
-```yaml
-JDK: temurin-17 (Adopt OpenJDK Hotspot 17)
-JVM Options:
-  -client
-  -server
-mods:
-  - fabricloader 0.13.3,
-  - java 17,
-  - minecraft 1.8.9
-World seed: 123
-Options changed from default:
-  - Map FPS: unlimited
-  - Use VBOS: true
-  - VSync: Disabled
+dependencies {
+	modImplementation("io.github.moehreag.legacy-lwjgl3:api:<VERSION>")
+}
 ```
 
-## Contributing
-This project is a work in progress, if you have any suggestions or want to contribute feel free to open an issue or pull
-request<br>
-**Seriously please I suck at code quality and need people to help me**<br>***Really i w ill accept it im begging you my
-code quality is so bad 😭***![tiny potato](.github/tiny_potato.webp)
+### Contributing
+
+Contributions are welcome! Due to the project structure and its goal to support as many Minecraft versions
+as possible working with the codebase is not trivial. If you are interested in contributing and need
+assistance please join our [Discord server](https://discord.gg/BfmYmPw3Ts)
+
+### Credits
+
+This mod is forked from the version for legacyfabric authored by Zarzelcow: https://github.com/Zarzelcow/legacy-lwjgl3.
+It is based on [lwjgl2](https://github.com/lwjgl/lwjgl) and a forge mod by gudenau: https://github.com/gudenau/MC-LWJGL3.
+
+Additional Credits to:
+ - The OrnitheMC Project: https://ornithemc.net
+ - Contributors to this mod, especially: [Floweynt](https://github.com/Floweynt)
