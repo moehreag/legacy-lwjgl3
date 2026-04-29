@@ -48,10 +48,8 @@ public final class SDLDisplay implements Display.Impl {
 	private long handle = -1L;
 	private long glContext = 0;
 	private boolean resizable;
-	@NotNull
-	private DisplayMode displayMode = new DisplayMode(640, 480, 24, 60);
-	private int width, height,
-			framebufferWidth, framebufferHeight,
+	private int width = 640, height = 480,
+			framebufferWidth = 640, framebufferHeight = 480,
 			windowedWidth, windowedHeight;
 	@Getter
 	@Setter
@@ -75,6 +73,7 @@ public final class SDLDisplay implements Display.Impl {
 	private final List<Path> currentEventDrops = new ArrayList<>(2);
 	@Getter
 	private final Drawable drawable = new NoOpImpl();
+	private boolean useFullscreenDeferred;
 
 	SDLDisplay() {
 		SDL_SetMemoryFunctions(
@@ -116,11 +115,17 @@ public final class SDLDisplay implements Display.Impl {
 
 	@NotNull
 	public DisplayMode getDisplayMode() {
-		return displayMode;
+		return new DisplayMode(framebufferWidth, framebufferHeight, 24, 60);
 	}
 
 	public void setDisplayMode(@NotNull DisplayMode mode) {
-		displayMode = mode;
+		setWidth(mode.getWidth());
+		setScreenWidth(mode.getWidth());
+		setHeight(mode.getHeight());
+		setScreenHeight(mode.getHeight());
+		windowedWidth = mode.getWidth();
+		windowedHeight = mode.getHeight();
+		window_resized = true;
 	}
 
 	public int getWidth() {
@@ -234,7 +239,8 @@ public final class SDLDisplay implements Display.Impl {
 					isFullscreen = false;
 					window_resized = true;
 				}
-				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING, SDL_EVENT_TEXT_EDITING_CANDIDATES -> {
+				case SDL_EVENT_KEY_DOWN, SDL_EVENT_KEY_UP, SDL_EVENT_TEXT_INPUT, SDL_EVENT_TEXT_EDITING,
+				     SDL_EVENT_TEXT_EDITING_CANDIDATES -> {
 					if (Keyboard.isCreated()) {
 						((SDLKeyboardImplementation) LWJGLImplementationUtils._keyboardImplementation).processKeyboardEvent(event);
 					}
@@ -280,8 +286,8 @@ public final class SDLDisplay implements Display.Impl {
 	}
 
 	public void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
-		windowedWidth = width = displayMode.getWidth();
-		windowedHeight = height = displayMode.getHeight();
+		windowedWidth = width;
+		windowedHeight = height;
 		// Configure SDL
 		int props = SDL_CreateProperties();
 		checkSdlError(SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED));
@@ -319,7 +325,7 @@ public final class SDLDisplay implements Display.Impl {
 			SDL_GetWindowPosition(handle, xBox, yBox);
 			windowedX = x = xBox.get(0);
 			windowedY = y = yBox.get(0);
-			setFullscreen(false);
+			setFullscreen(useFullscreenDeferred);
 
 			IntBuffer width = ms.mallocInt(1);
 			IntBuffer height = ms.mallocInt(1);
@@ -353,6 +359,10 @@ public final class SDLDisplay implements Display.Impl {
 	}
 
 	public void setFullscreen(boolean fullscreen) {
+		if (!isCreated()) {
+			useFullscreenDeferred = fullscreen;
+			return;
+		}
 
 		try {
 
@@ -393,6 +403,7 @@ public final class SDLDisplay implements Display.Impl {
 				height = windowedHeight;
 			}
 			SDL_SetWindowFullscreen(handle, fullscreen);
+			SDL_SetWindowSize(handle, windowedWidth, windowedHeight);
 			window_resized = true;
 
 		} catch (Throwable t) {

@@ -10,6 +10,7 @@ import java.util.stream.IntStream;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3ScreenEx;
+import io.github.moehreag.legacylwjgl3.util.OS;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,7 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.glfw.GLFWImage.Buffer;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -29,10 +31,8 @@ public final class GLFWDisplay implements Display.Impl {
 	@Getter
 	private long handle = -1L;
 	private boolean resizable;
-	@NotNull
-	private DisplayMode displayMode = new DisplayMode(640, 480, 24, 60);
-	private int width, height,
-			framebufferWidth, framebufferHeight,
+	private int width = 640, height = 480,
+			framebufferWidth = 640, framebufferHeight = 480,
 			windowedWidth, windowedHeight;
 	@Getter
 	@Setter
@@ -50,8 +50,12 @@ public final class GLFWDisplay implements Display.Impl {
 	private ByteBuffer[] cached_icons = null;
 	private boolean focused;
 	private final Drawable drawable = new NoOpImpl();
+	private boolean useFullscreenDeferred;
 
 	GLFWDisplay() {
+		if (OS.current() == OS.OSX) {
+			Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
+		}
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
@@ -72,11 +76,17 @@ public final class GLFWDisplay implements Display.Impl {
 
 	@NotNull
 	public DisplayMode getDisplayMode() {
-		return displayMode;//new DisplayMode(framebufferWidth, framebufferHeight, 24, 60);
+		return new DisplayMode(framebufferWidth, framebufferHeight, 24, 60);
 	}
 
 	public void setDisplayMode(@NotNull DisplayMode mode) {
-		displayMode = mode;
+		setWidth(mode.getWidth());
+		setScreenWidth(mode.getWidth());
+		setHeight(mode.getHeight());
+		setScreenHeight(mode.getHeight());
+		windowedWidth = mode.getWidth();
+		windowedHeight = mode.getHeight();
+		window_resized = true;
 	}
 
 	public int getWidth() {
@@ -177,9 +187,8 @@ public final class GLFWDisplay implements Display.Impl {
 	}
 
 	public void create(@NotNull PixelFormat pixelFormat) throws LWJGLException {
-		windowedWidth = width = displayMode.getWidth();
-		windowedHeight = height = displayMode.getHeight();
-		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		windowedWidth = width;
+		windowedHeight = height;
 		// Configure GLFW
 		GLFW.glfwDefaultWindowHints();
 
@@ -197,26 +206,29 @@ public final class GLFWDisplay implements Display.Impl {
 
 		GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, 0);
 		GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, resizable ? 1 : 0);
-		handle = GLFW.glfwCreateWindow(displayMode.getWidth(), displayMode.getHeight(), title, MemoryUtil.NULL, MemoryUtil.NULL);
+		handle = GLFW.glfwCreateWindow(width, height, title, MemoryUtil.NULL, MemoryUtil.NULL);
 
 		GLFW.glfwMakeContextCurrent(handle);
 		GL.createCapabilities();
 
-		if (primaryMonitor != 0) {
+		long primaryMonitor = GLFW.glfwGetPrimaryMonitor();
+		if (GLFW.glfwGetPlatform() == GLFW.GLFW_PLATFORM_WAYLAND) {
+			windowedX = windowedY = x = y = -1;
+		} else if (primaryMonitor != 0) {
 			var mode = GLFW.glfwGetVideoMode(primaryMonitor);
 			var xBox = new int[1];
 			var yBox = new int[1];
 			GLFW.glfwGetMonitorPos(primaryMonitor, xBox, yBox);
 			windowedX = x = xBox[0] + mode.width() / 2 - width / 2;
 			windowedY = y = yBox[0] + mode.height() / 2 - height / 2;
-		} else if (GLFW.glfwGetPlatform() != GLFW.GLFW_PLATFORM_WAYLAND) {
+		} else {
 			var xBox = new int[1];
 			var yBox = new int[1];
 			GLFW.glfwGetWindowPos(handle, xBox, yBox);
 			windowedX = x = xBox[0];
 			windowedY = y = yBox[0];
 		}
-		setFullscreen(false);
+
 		int[] xBox = new int[1];
 		int[] yBox = new int[1];
 		GLFW.glfwGetFramebufferSize(handle, xBox, yBox);
@@ -254,6 +266,7 @@ public final class GLFWDisplay implements Display.Impl {
 		Mouse.create();
 		Keyboard.create();
 		GLFW.glfwShowWindow(handle);
+		setFullscreen(useFullscreenDeferred);
 		if (cached_icons != null) {
 			setIcon(cached_icons);
 		}
@@ -276,6 +289,10 @@ public final class GLFWDisplay implements Display.Impl {
 	}
 
 	public void setFullscreen(boolean fullscreen) {
+		if (!isCreated()) {
+			useFullscreenDeferred = fullscreen;
+			return;
+		}
 
 		try {
 			boolean isFullscreen = GLFW.glfwGetWindowMonitor(handle) != 0;
@@ -351,10 +368,10 @@ public final class GLFWDisplay implements Display.Impl {
 				int monitorXEnd = monitorXStart + currentMode.width();
 				int monitorYStart = posYBox[0];
 				int monitorYEnd = monitorYStart + currentMode.height();
-				int left = clamp(xStart, monitorXStart, monitorXEnd);
-				int right = clamp(xEnd, monitorXStart, monitorXEnd);
-				int top = clamp(yStart, monitorYStart, monitorYEnd);
-				int bottom = clamp(yEnd, monitorYStart, monitorYEnd);
+				int left = xStart == -1 ? monitorXStart : clamp(xStart, monitorXStart, monitorXEnd);
+				int right = xStart == -1 ? monitorXEnd : clamp(xEnd, monitorXStart, monitorXEnd);
+				int top = yStart == -1 ? monitorYStart : clamp(yStart, monitorYStart, monitorYEnd);
+				int bottom = yStart == -1 ? monitorYEnd : clamp(yEnd, monitorYStart, monitorYEnd);
 				int maxWidth = Math.max(0, right - left);
 				int maxHeight = Math.max(0, bottom - top);
 				int maxArea = maxWidth * maxHeight;

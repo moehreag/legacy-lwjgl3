@@ -60,6 +60,7 @@ loom {
     runs {
         getByName("client") {
             environmentVariable("LEGACY_LWJGL3_USE_SDL", "true") // use SDL3
+            //programArg("--fullscreen")
         }
         remove(getByName("server"))
     }
