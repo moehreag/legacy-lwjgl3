@@ -10,7 +10,6 @@ import java.util.stream.IntStream;
 
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3;
 import io.github.moehreag.legacylwjgl3.LegacyLWJGL3ScreenEx;
-import io.github.moehreag.legacylwjgl3.util.OS;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,6 @@ import org.lwjgl.glfw.*;
 import org.lwjgl.glfw.GLFWImage.Buffer;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
-import org.lwjgl.system.Configuration;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
 
@@ -53,9 +51,6 @@ public final class GLFWDisplay implements Display.Impl {
 	private boolean useFullscreenDeferred;
 
 	GLFWDisplay() {
-		if (OS.current() == OS.OSX) {
-			Configuration.GLFW_LIBRARY_NAME.set("glfw_async");
-		}
 		GLFWErrorCallback.createPrint(System.err).set();
 		if (!GLFW.glfwInit()) {
 			throw new IllegalStateException("Unable to initialize GLFW");
@@ -199,6 +194,7 @@ public final class GLFWDisplay implements Display.Impl {
 			GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
 			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
 		}
+		GLFW.glfwWindowHint(GLFW.GLFW_SCALE_FRAMEBUFFER, 0);
 		GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pixelFormat.getAlphaBits());
 		GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pixelFormat.getDepthBits());
 		GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pixelFormat.getStencilBits());
@@ -231,7 +227,7 @@ public final class GLFWDisplay implements Display.Impl {
 
 		int[] xBox = new int[1];
 		int[] yBox = new int[1];
-		GLFW.glfwGetFramebufferSize(handle, xBox, yBox);
+		GLFW.glfwGetWindowSize(handle, xBox, yBox);
 		framebufferWidth = xBox[0] <= 0 ? 1 : xBox[0];
 		framebufferHeight = yBox[0] <= 0 ? 1 : yBox[0];
 
