@@ -36,9 +36,13 @@ group = project.property("maven_group") as String
 
 repositories {
     mavenCentral()
+    exclusiveContent {
+        forRepository { mavenCentral() }
+        filter {includeGroup("org.lwjgl")}
+    }
 }
 
-val lwjglVersion = properties["lwjgl_version"]
+val lwjglVersion = providers.gradleProperty("lwjgl_version").get()
 
 configurations {
     create("embedCompressed")
@@ -75,13 +79,13 @@ java {
 }
 
 dependencies {
-    minecraft("com.mojang:minecraft:${properties["minecraft_version"]}")
-    mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
-    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"]}")
+    minecraft("com.mojang:minecraft:${providers.gradleProperty("minecraft_version").get()}")
+    mappings(ploceus.featherMappings(providers.gradleProperty("mappings_build").get()))
+    modImplementation("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
 
-    ploceus.dependOsl(properties["osl_version"].toString())
+    ploceus.dependOsl(providers.gradleProperty("osl_version").get())
 
-    listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64").forEach { platform ->
+    listOf("linux", "windows", "macos", "windows-arm64", "macos-arm64", "linux-arm64").forEach { platform ->
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-sdl:$lwjglVersion:natives-$platform")!!)
         "embedCompressed"(runtimeOnly("org.lwjgl:lwjgl-glfw:$lwjglVersion:natives-$platform")!!)
@@ -135,7 +139,7 @@ buildscript {
         classpath("org.kamranzafar:jtar:2.3")
         classpath("org.tukaani:xz:1.10")
         classpath("com.google.jimfs:jimfs:1.3.1")
-        classpath("net.fabricmc:fabric-loader:${properties["loader_version"]}")
+        classpath("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
     }
 }
 
@@ -330,7 +334,7 @@ publishing {
 modrinth {
     token = System.getenv("MODRINTH_TOKEN")
     projectId = "lpiIRiAZ"
-    versionType = "beta"
+    versionType = providers.gradleProperty("mod_version").map { if (it.contains("beta")) "beta" else "release" }.get()
     uploadFile = tasks["remapJar"]
     additionalFiles = listOf(tasks.getByName("remapSourcesJar"))
     loaders = listOf("ornithe")

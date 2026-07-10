@@ -26,9 +26,9 @@ loom {
 
 dependencies {
     minecraft("com.mojang:minecraft:b1.7.3")
-    mappings(ploceus.featherMappings(properties["mappings_build"].toString()))
-    modImplementation("net.fabricmc:fabric-loader:${properties["loader_version"]}")
-    ploceus.dependOsl(properties["osl_version"].toString())
+    mappings(ploceus.featherMappings(providers.gradleProperty("mappings_build").get()))
+    modImplementation("net.fabricmc:fabric-loader:${providers.gradleProperty("loader_version").get()}")
+    ploceus.dependOsl(providers.gradleProperty("osl_version").get())
 
     compileOnly(project(":common"))
 }
