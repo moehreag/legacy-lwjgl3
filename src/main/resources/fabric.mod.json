@@ -17,6 +17,9 @@
   "icon": "assets/legacy-lwjgl3/icon.png",
   "environment": "client",
   "entrypoints": {
+	"preLaunch": [
+	  "io.github.moehreag.legacylwjgl3.MacOSPreLaunch"
+	],
     "client": [
 	    "io.github.moehreag.legacylwjgl3.LegacyLWJGL3"
     ]

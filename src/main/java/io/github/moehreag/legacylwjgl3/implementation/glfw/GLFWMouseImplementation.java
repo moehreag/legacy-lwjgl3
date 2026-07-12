@@ -147,6 +147,6 @@ public class GLFWMouseImplementation implements MouseImplementation {
 
     @Override
     public boolean isInsideWindow() {
-        return this.isInsideWindow;
+        return grabbed || isInsideWindow;
     }
 }
