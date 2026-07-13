@@ -23,4 +23,8 @@ public class LegacyLWJGL3 implements ClientModInitializer {
 	public static void setClipboard(String s) {
 		LegacyLWJGL3Internal.setClipboard(s);
 	}
+
+	public static void openLink(String s) {
+		LegacyLWJGL3Internal.openLink(s);
+	}
 }

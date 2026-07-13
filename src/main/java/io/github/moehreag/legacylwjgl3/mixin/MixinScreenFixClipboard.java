@@ -5,6 +5,8 @@ import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
+import java.net.URI;
+
 @SuppressWarnings({"UnusedMixin", "unused"})
 @Mixin(Screen.class)
 public abstract class MixinScreenFixClipboard {
@@ -25,5 +27,14 @@ public abstract class MixinScreenFixClipboard {
 	@Overwrite
 	public static void setClipboard(String string) {
 		LegacyLWJGL3.setClipboard(string);
+	}
+
+	/**
+	 * @author rdh
+	 * @reason fix link opening with GLFW
+	 */
+	@Overwrite
+	public void openLink(URI uri) {
+		LegacyLWJGL3.openLink(uri.toString());
 	}
 }

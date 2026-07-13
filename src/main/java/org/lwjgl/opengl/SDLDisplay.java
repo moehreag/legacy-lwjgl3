@@ -13,6 +13,7 @@ import io.github.moehreag.legacylwjgl3.SDLPlatforms;
 import io.github.moehreag.legacylwjgl3.implementation.LWJGLImplementationUtils;
 import io.github.moehreag.legacylwjgl3.implementation.sdl.SDLKeyboardImplementation;
 import io.github.moehreag.legacylwjgl3.implementation.sdl.SDLMouseImplementation;
+import io.github.moehreag.legacylwjgl3.util.OS;
 import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.loader.api.FabricLoader;
@@ -91,6 +92,10 @@ public final class SDLDisplay implements Display.Impl {
 		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING, "Minecraft EULA: https://minecraft.net/eula"));
 		checkSdlError(SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "game"));
 		checkSdlError(SDLHints.SDL_SetHint(SDLHints.SDL_HINT_IME_IMPLEMENTED_UI, "composition"));
+
+		if (OS.current() == OS.OSX) {
+			checkSdlError(SDLHints.SDL_SetHint(SDLHints.SDL_HINT_MAC_PRESS_AND_HOLD, "0"));
+		}
 
 		if (!SDL_Init(SDL_INIT_VIDEO)) {
 			throw new IllegalStateException("Unable to initialize SDL" + SDL_GetError());

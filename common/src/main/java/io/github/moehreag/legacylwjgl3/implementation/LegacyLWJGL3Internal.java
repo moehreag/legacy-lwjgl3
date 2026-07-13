@@ -16,4 +16,8 @@ public final class LegacyLWJGL3Internal {
 	public static void setClipboard(String s) {
 		throw new UnsupportedOperationException("Implemented in Mixin");
 	}
+
+	public static void openLink(String s) {
+		throw new UnsupportedOperationException("Implemented in Mixin");
+	}
 }
