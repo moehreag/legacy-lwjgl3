@@ -31,7 +31,7 @@ import static io.github.moehreag.legacylwjgl3.LegacyLWJGL3.LOGGER;
 public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 	private static final Version MINECRAFT_VERSION = FabricLoader.getInstance().getModContainer("minecraft").orElseThrow().getMetadata().getVersion();
 
-	private static final VersionPredicate SCREEN_UNAVAILABLE, HAS_APPLET, HAS_APPLET_132, NEW_CLIPBOARD, OLD_CLIPBOARD, MOUSE_COMPONENT_FIX,
+	private static final VersionPredicate SCREEN_UNAVAILABLE, HAS_APPLET, HAS_APPLET_132, NEW_CLIPBOARD, OLD_CLIPBOARD, AWT_LINK, MOUSE_COMPONENT_FIX,
 			OLD_GAMERENDERER, OLD_WINDOW_SCALE, OLD_EDITBOX, OLD_TEXTURE_MANGER, TEXTURE_MANAGER_1_5, PRE_BUFFERBUILDER, TESSELATOR_END_RETURN, NORETURN_TEXTRENDERER,
 			NONSTATIC_FILL, MULTIPLAYER_SCREEN_FIX_OLD, MULTIPLAYER_SCREEN_FIX, BOOK_EDIT_SCREEN_HANDLING, SIGN_EDIT_SCREEN_HANDLING;
 
@@ -42,6 +42,7 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 			HAS_APPLET_132 = VersionPredicate.parse(">=1.3-alpha.12.18.a"); // 12w18a
 			NEW_CLIPBOARD = VersionPredicate.parse(">=1.2.4");
 			OLD_CLIPBOARD = VersionPredicate.parse(">=1.0.0-alpha.0.15"); // a1.0.15
+			AWT_LINK = VersionPredicate.parse(">=1.8-alpha.14.25.a"); // 14w28a
 			MOUSE_COMPONENT_FIX = VersionPredicate.parse("<1.6-alpha.13.16.a"); // 13w16a
 			OLD_GAMERENDERER = VersionPredicate.parse("<=1.8.2-pre.2");
 			OLD_WINDOW_SCALE = VersionPredicate.parse("<1.3-alpha.12.21.a"); // 12w21a
@@ -142,6 +143,9 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 			additionalMixins.add("MixinScreenFixClipboard");
 		} else if (OLD_CLIPBOARD.test(MINECRAFT_VERSION)) {
 			additionalMixins.add("MixinScreenFixClipboardOld");
+		}
+		if (AWT_LINK.test(MINECRAFT_VERSION)) {
+			additionalMixins.add("MixinScreenFixOpenLink");
 		}
 		if (MOUSE_COMPONENT_FIX.test(MINECRAFT_VERSION)) {
 			additionalMixins.add("MouseMixin");

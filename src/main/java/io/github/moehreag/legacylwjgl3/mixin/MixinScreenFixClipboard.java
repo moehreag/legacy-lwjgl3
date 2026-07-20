@@ -29,12 +29,4 @@ public abstract class MixinScreenFixClipboard {
 		LegacyLWJGL3.setClipboard(string);
 	}
 
-	/**
-	 * @author rdh
-	 * @reason fix link opening with GLFW
-	 */
-	@Overwrite
-	public void openLink(URI uri) {
-		LegacyLWJGL3.openLink(uri.toString());
-	}
 }
