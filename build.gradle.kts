@@ -25,8 +25,8 @@ plugins {
     id("io.freefair.lombok") version "9.+"
     id("maven-publish")
     id("com.modrinth.minotaur") version "2.+"
-    id("fabric-loom") version "1.16.+"
-    id("ploceus") version "1.16.+"
+    id("fabric-loom") version "1.17.+"
+    id("ploceus") version "1.17.+"
 }
 
 
@@ -38,7 +38,7 @@ repositories {
     mavenCentral()
     exclusiveContent {
         forRepository { mavenCentral() }
-        filter {includeGroup("org.lwjgl")}
+        filter { includeGroup("org.lwjgl") }
     }
 }
 
@@ -63,7 +63,7 @@ loom {
     }
     runs {
         getByName("client") {
-            environmentVariable("LEGACY_LWJGL3_USE_SDL", "true") // use SDL3
+            environmentVars.put("LEGACY_LWJGL3_USE_SDL", "true") // use SDL3
             //programArg("--fullscreen")
         }
         remove(getByName("server"))
@@ -152,9 +152,11 @@ tasks {
         actions.addFirst {
             from(
                 configurations.getByName("shade")
-                    .asFileTree.matching { this.include { f ->
-                        f.file.path.startsWith(project.projectDir.path)
-                    } }.map { zipTree(it) }
+                    .asFileTree.matching {
+                        this.include { f ->
+                            f.file.path.startsWith(project.projectDir.path)
+                        }
+                    }.map { zipTree(it) }
                     .map { it.matching { this.include { f -> f.name.endsWith(".class") } } }
             )
         }

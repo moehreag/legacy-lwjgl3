@@ -752,7 +752,7 @@ public class Mouse {
 	}
 
 	/**
-	 * Retrieves whether or not the mouse cursor is within the bounds of the window.
+	 * Retrieves whether the mouse cursor is within the bounds of the window.
 	 * If the mouse cursor was moved outside the display during a drag, then the result of calling
 	 * this method will be true until the button is released.
 	 *
