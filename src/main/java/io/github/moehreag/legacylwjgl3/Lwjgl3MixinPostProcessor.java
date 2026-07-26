@@ -42,7 +42,7 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 			HAS_APPLET_132 = VersionPredicate.parse(">=1.3-alpha.12.18.a"); // 12w18a
 			NEW_CLIPBOARD = VersionPredicate.parse(">=1.2.4");
 			OLD_CLIPBOARD = VersionPredicate.parse(">=1.0.0-alpha.0.15"); // a1.0.15
-			AWT_LINK = VersionPredicate.parse(">=1.8-alpha.14.25.a"); // 14w28a
+			AWT_LINK = VersionPredicate.parse(">=1.8-alpha.14.25.a"); // 14w25a
 			MOUSE_COMPONENT_FIX = VersionPredicate.parse("<1.6-alpha.13.16.a"); // 13w16a
 			OLD_GAMERENDERER = VersionPredicate.parse("<=1.8.2-pre.2");
 			OLD_WINDOW_SCALE = VersionPredicate.parse("<1.3-alpha.12.21.a"); // 12w21a

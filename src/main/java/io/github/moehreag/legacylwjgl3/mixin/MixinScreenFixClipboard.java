@@ -5,8 +5,6 @@ import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-import java.net.URI;
-
 @SuppressWarnings({"UnusedMixin", "unused"})
 @Mixin(Screen.class)
 public abstract class MixinScreenFixClipboard {
