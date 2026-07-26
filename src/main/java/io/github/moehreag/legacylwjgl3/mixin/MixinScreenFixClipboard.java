@@ -26,4 +26,5 @@ public abstract class MixinScreenFixClipboard {
 	public static void setClipboard(String string) {
 		LegacyLWJGL3.setClipboard(string);
 	}
+
 }

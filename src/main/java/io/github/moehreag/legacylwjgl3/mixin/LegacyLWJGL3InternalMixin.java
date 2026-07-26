@@ -4,9 +4,11 @@ import java.util.Objects;
 
 import io.github.moehreag.legacylwjgl3.implementation.LegacyLWJGL3Internal;
 import io.github.moehreag.legacylwjgl3.util.IMEManager;
+import org.lwjgl.Sys;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.sdl.SDLClipboard;
+import org.lwjgl.sdl.SDLMisc;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
@@ -34,6 +36,19 @@ public abstract class LegacyLWJGL3InternalMixin {
 			SDLClipboard.SDL_SetClipboardText(s);
 		} else {
 			GLFW.glfwSetClipboardString(Display.getHandle(), s);
+		}
+	}
+
+	/**
+	 * @author rdh
+	 * @reason implement link opening
+	 */
+	@Overwrite
+	public static void openLink(String s) {
+		if (USE_SDL) {
+			SDLMisc.SDL_OpenURL(s);
+		} else {
+			Sys.openURL(s);
 		}
 	}
 
