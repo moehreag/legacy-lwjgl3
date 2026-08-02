@@ -40,6 +40,7 @@ public final class GLFWDisplay implements Display.Impl {
 	@Getter
 	private int y;
 	private int windowedY;
+	private float scale;
 	private boolean window_resized = true;
 	private boolean minimized;
 	@Getter
@@ -114,6 +115,10 @@ public final class GLFWDisplay implements Display.Impl {
 
 	public int getScreenHeight() {
 		return height;
+	}
+
+	public float getPixelScaleFactor() {
+		return scale;
 	}
 
 	@Nullable
@@ -194,7 +199,7 @@ public final class GLFWDisplay implements Display.Impl {
 			GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 2);
 			GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_COMPAT_PROFILE);
 		}
-		GLFW.glfwWindowHint(GLFW.GLFW_SCALE_FRAMEBUFFER, 0);
+		GLFW.glfwWindowHint(GLFW.GLFW_SCALE_FRAMEBUFFER, LegacyLWJGL3.SCALE_FRAMEBUFFER ? GLFW.GLFW_TRUE : GLFW.GLFW_FALSE);
 		GLFW.glfwWindowHint(GLFW.GLFW_ALPHA_BITS, pixelFormat.getAlphaBits());
 		GLFW.glfwWindowHint(GLFW.GLFW_DEPTH_BITS, pixelFormat.getDepthBits());
 		GLFW.glfwWindowHint(GLFW.GLFW_STENCIL_BITS, pixelFormat.getStencilBits());
@@ -230,9 +235,10 @@ public final class GLFWDisplay implements Display.Impl {
 		GLFW.glfwGetWindowSize(handle, xBox, yBox);
 		framebufferWidth = xBox[0] <= 0 ? 1 : xBox[0];
 		framebufferHeight = yBox[0] <= 0 ? 1 : yBox[0];
+		updateScaleFactor();
 
 		// create general callbacks
-		GLFW.glfwSetWindowSizeCallback(handle, GLFWWindowSizeCallback.create(this::resizeCallback));
+		GLFW.glfwSetWindowSizeCallback(handle, GLFWWindowSizeCallback.create(this::onWindowResize));
 		GLFW.glfwSetFramebufferSizeCallback(handle, GLFWFramebufferSizeCallback.create(this::onFramebufferResize));
 		GLFW.glfwSetWindowFocusCallback(handle, (window, focused1) -> {
 			if (window == handle) {
@@ -279,6 +285,7 @@ public final class GLFWDisplay implements Display.Impl {
 			if (this.framebufferWidth != prevWidth || this.framebufferHeight != prevHeight) {
 				window_resized = true;
 			}
+			this.updateScaleFactor();
 		} else {
 			minimized = true;
 		}
@@ -447,11 +454,20 @@ public final class GLFWDisplay implements Display.Impl {
 		return !minimized;
 	}
 
-	private void resizeCallback(long window, int width, int height) {
+	private void onWindowResize(long window, int width, int height) {
 		if (window == handle) {
 			window_resized = true;
 			this.width = width;
 			this.height = height;
+			this.updateScaleFactor();
+		}
+	}
+
+	private void updateScaleFactor() {
+		if (framebufferHeight != 0 && framebufferWidth != 0 && width != 0 && height != 0) {
+			float xscale = framebufferWidth * 1.0f / width;
+			float yscale = framebufferHeight * 1.0f / height;
+			this.scale = Math.max(xscale, yscale);
 		}
 	}
 

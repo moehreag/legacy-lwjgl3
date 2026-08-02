@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 public class LegacyLWJGL3 implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("LegacyLWJGL3");
 	public static final boolean USE_SDL = Boolean.getBoolean("legacy_lwjgl3.use_sdl") || System.getenv("LEGACY_LWJGL3_USE_SDL") != null;
+	public static final boolean SCALE_FRAMEBUFFER = Boolean.getBoolean("legacy_lwjgl3.scale_framebuffer") || System.getenv("LEGACY_LWJGL3_SCALE_FRAMEBUFFER") != null;
 
 	@Override
 	public void onInitializeClient() {
