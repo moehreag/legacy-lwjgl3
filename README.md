@@ -11,9 +11,10 @@ environment variables.
 
 A list of currently available options is provided below.
 
-| Property Name                                 | Environment variable name                     | Description                                          |
-|-----------------------------------------------|-----------------------------------------------|------------------------------------------------------|
-| `legacy_lwjgl3.use_sdl`                       | `LEGACY_LWJGL3_USE_SDL`                       | Use SDL3 instead of GLFW for window & input handling |
+| Property Name                     | Environment variable name         | Default | Description                                           |
+|-----------------------------------|-----------------------------------|---------|-------------------------------------------------------|
+| `legacy_lwjgl3.use_sdl`           | `LEGACY_LWJGL3_USE_SDL`           | `false` | Use SDL3 instead of GLFW for window & input handling  |
+| `legacy_lwjgl3.scale_framebuffer` | `LEGACY_LWJGL3_SCALE_FRAMEBUFFER` | `true`  | Enable framebuffer scaling on HiDPI displays          |
 
 ### Unstable versions (CI)
 
