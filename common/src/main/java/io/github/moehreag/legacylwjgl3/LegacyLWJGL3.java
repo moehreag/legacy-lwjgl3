@@ -7,14 +7,26 @@ import org.slf4j.LoggerFactory;
 
 public class LegacyLWJGL3 implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("LegacyLWJGL3");
-	public static final boolean USE_SDL = Boolean.getBoolean("legacy_lwjgl3.use_sdl") || System.getenv("LEGACY_LWJGL3_USE_SDL") != null;
-	public static final boolean SCALE_FRAMEBUFFER = Boolean.getBoolean("legacy_lwjgl3.scale_framebuffer") || System.getenv("LEGACY_LWJGL3_SCALE_FRAMEBUFFER") != null;
+	public static final boolean USE_SDL = readBooleanOption("legacy_lwjgl3.use_sdl", "LEGACY_LWJGL3_USE_SDL", false);
+	public static final boolean SCALE_FRAMEBUFFER = readBooleanOption("legacy_lwjgl3.scale_framebuffer", "LEGACY_LWJGL3_SCALE_FRAMEBUFFER", true);
 
 	@Override
 	public void onInitializeClient() {
 		if (USE_SDL) {
 			LOGGER.info("Using SDL3 for window & input handling instead of GLFW!");
 		}
+	}
+
+	private static boolean readBooleanOption(String propertyKey, String envVarName, boolean defaultValue) {
+		String property = System.getProperty(propertyKey);
+		if (property != null) {
+			return Boolean.parseBoolean(property);
+		}
+		if (System.getenv().containsKey(envVarName)) {
+			String envVar = System.getenv(envVarName);
+			return Boolean.parseBoolean(envVar) || "1".equals(envVar);
+		}
+		return defaultValue;
 	}
 
 	public static String getClipboard() {
