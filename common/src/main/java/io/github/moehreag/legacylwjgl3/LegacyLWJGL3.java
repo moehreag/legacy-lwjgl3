@@ -7,13 +7,15 @@ import org.slf4j.LoggerFactory;
 
 public class LegacyLWJGL3 implements ClientModInitializer {
 	public static final Logger LOGGER = LoggerFactory.getLogger("LegacyLWJGL3");
-	public static final boolean USE_SDL = readBooleanOption("legacy_lwjgl3.use_sdl", "LEGACY_LWJGL3_USE_SDL", false);
+	public static final boolean USE_SDL = readBooleanOption("legacy_lwjgl3.use_sdl", "LEGACY_LWJGL3_USE_SDL", true);
 	public static final boolean SCALE_FRAMEBUFFER = readBooleanOption("legacy_lwjgl3.scale_framebuffer", "LEGACY_LWJGL3_SCALE_FRAMEBUFFER", true);
 
 	@Override
 	public void onInitializeClient() {
 		if (USE_SDL) {
-			LOGGER.info("Using SDL3 for window & input handling instead of GLFW!");
+			LOGGER.info("Using SDL3 for window & input handling!");
+		} else {
+			LOGGER.info("Using GLFW for window & input handling!");
 		}
 	}
 

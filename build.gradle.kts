@@ -63,7 +63,7 @@ loom {
     }
     runs {
         getByName("client") {
-            environmentVars.put("LEGACY_LWJGL3_USE_SDL", "true") // use SDL3
+            //environmentVars.put("LEGACY_LWJGL3_USE_SDL", "false") // use GLFW
             //programArg("--fullscreen")
         }
         remove(getByName("server"))
