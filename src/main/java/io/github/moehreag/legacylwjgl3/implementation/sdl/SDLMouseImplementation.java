@@ -87,15 +87,16 @@ public class SDLMouseImplementation implements MouseImplementation {
 
 	@Override
 	public void setCursorPosition(double x, double y) {
+		float scale = Display.getPixelScaleFactor();
 		this.last_x = x;
 		this.last_y = y;
-		SDL_WarpMouseInWindow(windowHandle, (float) x, (float) y);
+		SDL_WarpMouseInWindow(windowHandle, (float) (x / scale), (float) (y / scale));
 	}
 
 	@Override
 	public void grabMouse(boolean grab) {
 		if (!grab) {
-			SDL_WarpMouseInWindow(windowHandle, (float) last_x, (float) last_y);
+			setCursorPosition(last_x, last_y);
 		}
 		SDL_SetWindowRelativeMouseMode(windowHandle, grab);
 		this.grabbed = grab;
@@ -138,8 +139,11 @@ public class SDLMouseImplementation implements MouseImplementation {
 
 			}
 			case SDL_EVENT_MOUSE_MOTION -> {
-				int x = (int) (mouseMotionEvent.x());
-				int y = (int) (Display.getHeight() - mouseMotionEvent.y());
+				float scale = Display.getPixelScaleFactor();
+				int x = (int) (mouseMotionEvent.x() * scale);
+				// LWJGL2: (0, 0) = the bottom-left corner
+				// SDL3: (0, 0) = the top-left corner
+				int y = (int) ((Display.getScreenHeight() - mouseMotionEvent.y()) * scale);
 				double dx = mouseMotionEvent.xrel();
 				double dy = -mouseMotionEvent.yrel();
 				if (dx != 0 || dy != 0) {

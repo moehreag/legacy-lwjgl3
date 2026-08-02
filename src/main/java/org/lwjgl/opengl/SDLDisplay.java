@@ -165,6 +165,10 @@ public final class SDLDisplay implements Display.Impl {
 		return height;
 	}
 
+	public float getPixelScaleFactor() {
+		return SDL_GetWindowPixelDensity(handle);
+	}
+
 	@Nullable
 	public DisplayMode getDesktopDisplayMode() {
 		var mode = SDL_GetDesktopDisplayMode(SDL_GetPrimaryDisplay());
@@ -315,6 +319,7 @@ public final class SDLDisplay implements Display.Impl {
 
 		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, true));
 		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, resizable));
+		checkSdlError(SDL_SetBooleanProperty(props, SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, LegacyLWJGL3.SCALE_FRAMEBUFFER));
 		handle = checkSdlError(SDL_CreateWindowWithProperties(props));
 		SDL_DestroyProperties(props);
 

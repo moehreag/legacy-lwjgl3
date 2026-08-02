@@ -43,8 +43,11 @@ public class GLFWMouseImplementation implements MouseImplementation {
                 button_states[button] = state;
         });
         this.posCallback = GLFWCursorPosCallback.create((window, xpos, ypos) -> {
-            int x = (int) (xpos);
-            int y = (int) (Display.getHeight() - ypos); // I don't know why but this un-inverts the y motion of mouse inputs
+            float scale = Display.getPixelScaleFactor();
+            int x = (int) (xpos * scale);
+            // LWJGL2: (0, 0) = the bottom-left corner
+            // GLFW: (0, 0) = the top-left corner
+            int y = (int) ((Display.getScreenHeight() - ypos) * scale);
             double dx = x - last_x;
             double dy = y - last_y;
             if (dx != 0 || dy != 0) {
@@ -120,16 +123,17 @@ public class GLFWMouseImplementation implements MouseImplementation {
 
     @Override
     public void setCursorPosition(double x, double y) {
+        float scale = Display.getPixelScaleFactor();
         this.last_x = x;
         this.last_y = y;
-        GLFW.glfwSetCursorPos(this.windowHandle, x, y);
+        GLFW.glfwSetCursorPos(this.windowHandle, x / scale, y / scale);
     }
 
     @Override
     public void grabMouse(boolean grab) {
         GLFW.glfwSetInputMode(this.windowHandle, GLFW.GLFW_CURSOR, grab ? GLFW.GLFW_CURSOR_DISABLED : GLFW.GLFW_CURSOR_NORMAL);
         if (!grab) {
-            GLFW.glfwSetCursorPos(this.windowHandle, last_x, last_y);
+            setCursorPosition(last_x, last_y);
         }
         this.grabbed = grab;
         this.reset();

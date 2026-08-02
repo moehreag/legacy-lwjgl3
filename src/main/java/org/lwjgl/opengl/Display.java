@@ -153,6 +153,10 @@ public class Display {
 		impl.swapBuffers();
 	}
 
+	public static float getPixelScaleFactor() {
+		return impl.getPixelScaleFactor();
+	}
+
 	sealed interface Impl permits SDLDisplay, GLFWDisplay {
 		long getHandle();
 
@@ -219,5 +223,7 @@ public class Display {
 		void swapBuffers();
 
 		boolean isCloseRequested();
+
+		float getPixelScaleFactor();
 	}
 }
