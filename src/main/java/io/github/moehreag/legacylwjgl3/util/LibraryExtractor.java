@@ -29,8 +29,8 @@ public class LibraryExtractor {
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				try {
 					recursiveDelete(out);
-				} catch (IOException e) {
-					log.warn("Failed to delete temp libraries dir!", e);
+				} catch (Exception e) {
+					//log.warn("Failed to delete temp libraries dir!", e);
 				}
 			}));
 			var path = FabricLoader.getInstance().getModContainer(MODID).orElseThrow(IOException::new).findPath("libraries.tar.xz").orElseThrow(IOException::new);
