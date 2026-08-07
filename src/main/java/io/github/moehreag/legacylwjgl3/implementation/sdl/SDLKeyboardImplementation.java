@@ -35,7 +35,7 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 		if (keycode == -1) {
 			ByteBuffer lastEvent = event_queue.getLastEvent();
 			// check for: event has a keycode, character is not present and state is 'pressed'
-			if (lastEvent.getInt(0) > 0 && lastEvent.getInt(5) == 0 && lastEvent.getLong(4) == 1) {
+			if (lastEvent.getInt(0) > 0 && lastEvent.getInt(5) == 0 && lastEvent.get(4) == 1) {
 				lastEvent.putInt(5, ch);
 				return;
 			}
@@ -80,7 +80,7 @@ public class SDLKeyboardImplementation implements KeyboardImplementation {
 					IMEManager.getInstance().submitPreeditEvent(PreeditEvent.createFromCompositionEvent(Objects.requireNonNullElse(textEditingEvent.textString(), ""),
 							textEditingEvent.start(), textEditingEvent.length()));
 			case SDL_EVENT_TEXT_INPUT ->
-					Objects.requireNonNullElse(textEditingEvent.textString(), "").codePoints().forEach(codepoint ->
+					Objects.requireNonNullElse(textInputEvent.textString(), "").codePoints().forEach(codepoint ->
 							putKeyboardEvent(-1, (byte) -1, codepoint, textInputEvent.timestamp(), false));
 		}
 	}
