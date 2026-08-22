@@ -55,6 +55,27 @@ public class SDLMouseImplementation implements MouseImplementation {
 		event_queue.putEvent(tmp_event);
 	}
 
+	private void putMouseMotionEvent(double coord1, double coord2, long nanos) {
+		synchronized (event_queue) {
+			if (event_queue.hasEvents()) {
+				ByteBuffer lastEvent = event_queue.getLastEvent();
+				if (lastEvent.get(0) == -1 && lastEvent.getDouble(18) == 0) {
+					if (grabbed) {
+						lastEvent.putDouble(2, lastEvent.getDouble(2) + coord1);
+						lastEvent.putDouble(10, lastEvent.getDouble(10) + coord2);
+					} else {
+						lastEvent.putDouble(2, coord1);
+						lastEvent.putDouble(10, coord2);
+					}
+					lastEvent.putLong(26, nanos);
+					return;
+				}
+			}
+
+			putMouseEventWithCoords((byte) -1, (byte) 0, coord1, coord2, 0, nanos);
+		}
+	}
+
 	@Override
 	public void destroyMouse() {
 
@@ -153,9 +174,9 @@ public class SDLMouseImplementation implements MouseImplementation {
 					last_y = y;
 					long nanos = mouseMotionEvent.timestamp();
 					if (grabbed) {
-						putMouseEventWithCoords((byte) -1, (byte) 0, dx, dy, 0, nanos);
+						putMouseMotionEvent(dx, dy, nanos);
 					} else {
-						putMouseEventWithCoords((byte) -1, (byte) 0, x, y, 0, nanos);
+						putMouseMotionEvent(x, y, nanos);
 					}
 				}
 			}
