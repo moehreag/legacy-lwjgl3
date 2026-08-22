@@ -88,4 +88,9 @@ public class EventQueue {
         queue.position(position);
         return slice;
     }
+
+    public synchronized boolean hasEvents() {
+        return queue.position() >= event_size;
+    }
+
 }
