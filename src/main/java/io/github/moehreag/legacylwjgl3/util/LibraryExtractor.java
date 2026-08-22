@@ -25,7 +25,10 @@ public class LibraryExtractor {
 	public void run(Consumer<Path> classpathAdder) {
 		if (FabricLoader.getInstance().isDevelopmentEnvironment()) return;
 		try {
-			var out = Files.createTempDirectory(MODID+"_dependencies");
+			var container = FabricLoader.getInstance().getModContainer(MODID).orElseThrow();
+			var version = container.getMetadata().getVersion().getFriendlyString();
+			var out = Files.createDirectories(Path.of(System.getProperty("java.io.tempdir"), MODID+"_"+version+"_dependencies"));
+			if (Files.exists(out)) return;
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				try {
 					recursiveDelete(out);
@@ -33,7 +36,7 @@ public class LibraryExtractor {
 					//log.warn("Failed to delete temp libraries dir!", e);
 				}
 			}));
-			var path = FabricLoader.getInstance().getModContainer(MODID).orElseThrow(IOException::new).findPath("libraries.tar.xz").orElseThrow(IOException::new);
+			var path = container.findPath("libraries.tar.xz").orElseThrow(IOException::new);
 			try (var in = Files.newInputStream(path)) {
 
 				try (var buf = new BufferedInputStream(in);

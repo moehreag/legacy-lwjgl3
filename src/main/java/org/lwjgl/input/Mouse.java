@@ -53,7 +53,42 @@ import org.lwjgl.opengl.Display;
  * supported, if one such is available. Movement is reported as delta from
  * last position or as an absolute position. If the window has been created
  * the absolute position will be clamped to 0 - width | height.
- *
+ * </p>
+ * <p>
+ * Event format:
+ * <table>
+ *     <thead>
+ *         <tr>
+ *         <th>Byte Offset</th>
+ *         <th>Name</th>
+ *         </tr>
+ *     </thead>
+ *     <tr>
+ *         <td>0</td>
+ *         <td>Button number</td>
+ *     </tr>
+ *     <tr>
+ *         <td>1</td>
+ *         <td>State</td>
+ *     </tr>
+ *     <tr>
+ *         <td>2</td>
+ *         <td>X-coordinate</td>
+ *     </tr>
+ *     <tr>
+ *	       <td>10</td>
+ *	       <td>Y-coordinate</td>
+ *     </tr>
+ *     <tr>
+ *         <td>18</td>
+ *         <td>Z-coordinate (Wheel X)</td>
+ *     </tr>
+ *     <tr>
+ *         <td>26</td>
+ *         <td>Timestamp</td>
+ *     </tr>
+ * </table>
+ * </p>
  * @author cix_foo <cix_foo@users.sourceforge.net>
  * @author elias_naur <elias_naur@users.sourceforge.net>
  * @author Brian Matzon <brian@matzon.dk>
