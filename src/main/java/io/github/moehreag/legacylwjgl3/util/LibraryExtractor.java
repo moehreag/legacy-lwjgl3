@@ -27,7 +27,7 @@ public class LibraryExtractor {
 		try {
 			var container = FabricLoader.getInstance().getModContainer(MODID).orElseThrow();
 			var version = container.getMetadata().getVersion().getFriendlyString();
-			var out = Files.createDirectories(Path.of(System.getProperty("java.io.tempdir"), MODID+"_"+version+"_dependencies"));
+			var out = Files.createDirectories(Path.of(System.getProperty("java.io.tmpdir"), MODID+"_"+version+"_dependencies"));
 			if (Files.exists(out)) return;
 			Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 				try {
@@ -50,7 +50,6 @@ public class LibraryExtractor {
 						classpathAdder.accept(res);
 					}
 				}
-
 			}
 		} catch (IOException e) {
 			log.error("Failed to extract libraries, the game is likely to crash!", e);
