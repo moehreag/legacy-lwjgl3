@@ -97,6 +97,9 @@ public class IMEManager {
 
 	public void stopTextInput() {
 		this.textInputEnabled = false;
+		if (LegacyLWJGL3.USE_SDL) {
+			setIMEInputMode(false);
+		}
 	}
 
 	public void onWidgetFocusUpdate(PreeditAwareWidget widget, boolean focused) {
