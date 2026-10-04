@@ -1,6 +1,6 @@
 package io.github.moehreag.legacylwjgl3.mixin;
 
-import net.minecraft.client.gui.screen.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screen.menu.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;

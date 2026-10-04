@@ -9,7 +9,6 @@ import java.util.Set;
 import io.github.moehreag.legacylwjgl3.annotations.CreateStub;
 import io.github.moehreag.legacylwjgl3.annotations.Public;
 import io.github.moehreag.legacylwjgl3.util.CodeGen;
-import io.github.moehreag.legacylwjgl3.util.LibraryExtractor;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
@@ -71,7 +70,6 @@ public class Lwjgl3MixinPostProcessor implements IMixinConfigPlugin {
 		//
 		// This was such a pain to figure out and caused me so much trouble
 		getPaulscodePath().ifPresent(FabricLauncherBase.getLauncher()::addToClassPath);
-		new LibraryExtractor().run(FabricLauncherBase.getLauncher()::addToClassPath);
 	}
 
 	public static Optional<Path> getPaulscodePath() {

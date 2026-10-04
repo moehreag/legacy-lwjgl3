@@ -4,7 +4,7 @@ import java.util.List;
 
 import io.github.moehreag.legacylwjgl3.api.PreeditAwareWidget;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.inventory.BookEditScreen;
+import net.minecraft.client.gui.screen.game.BookEditScreen;
 import net.minecraft.nbt.NbtList;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

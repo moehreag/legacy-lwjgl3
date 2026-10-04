@@ -1,7 +1,7 @@
 package io.github.moehreag.legacylwjgl3.mixin;
 
-import net.minecraft.client.gui.screen.DirectConnectScreen;
-import net.minecraft.client.gui.screen.menu.AddServerScreen;
+import net.minecraft.client.gui.screen.menu.multiplayer.DirectConnectScreen;
+import net.minecraft.client.gui.screen.menu.multiplayer.AddServerScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
