@@ -82,6 +82,9 @@ public class Display {
 		return impl.setIcon(icons);
 	}
 
+	public static void processMessages() {
+		impl.processMessages();
+	}
 
 	public static void update() {
 		impl.update();
@@ -194,6 +197,7 @@ public class Display {
 
 		int setIcon(@NotNull ByteBuffer[] icons);
 
+		void processMessages();
 
 		void update();
 
