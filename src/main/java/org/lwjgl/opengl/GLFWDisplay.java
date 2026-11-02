@@ -173,7 +173,7 @@ public final class GLFWDisplay implements Display.Impl {
 		}
 	}
 
-	public void update() {
+	public void processMessages() {
 		GLFW.glfwPollEvents();
 		if (Mouse.isCreated()) {
 			Mouse.poll();
@@ -182,7 +182,10 @@ public final class GLFWDisplay implements Display.Impl {
 		if (Keyboard.isCreated()) {
 			Keyboard.poll();
 		}
+	}
 
+	public void update() {
+		this.processMessages();
 		GLFW.glfwSwapBuffers(handle);
 	}
 

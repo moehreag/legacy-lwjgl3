@@ -223,8 +223,7 @@ public final class SDLDisplay implements Display.Impl {
 		}
 	}
 
-
-	public void update() {
+	public void processMessages() {
 		window_resized = false;
 		while (SDL_PollEvent(event)) {
 			switch (event.type()) {
@@ -277,7 +276,10 @@ public final class SDLDisplay implements Display.Impl {
 		}
 		Keyboard.poll();
 		Mouse.poll();
+	}
 
+	public void update() {
+		this.processMessages();
 		checkSdlError(SDL_GL_SwapWindow(handle));
 	}
 
