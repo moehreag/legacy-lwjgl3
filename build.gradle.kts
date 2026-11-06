@@ -6,8 +6,8 @@ plugins {
     id("maven-publish")
     id("com.gradleup.shadow") version "9.+"
     id("me.modmuss50.mod-publish-plugin") version "2.+"
-    id("net.fabricmc.fabric-loom-remap") version "1.17.+"
-    id("ploceus") version "1.17.+"
+    id("net.fabricmc.fabric-loom-remap") version "1.19.+"
+    id("ploceus") version "1.19.+"
 }
 
 base.archivesName.set(project.property("archives_base_name") as String)
@@ -164,20 +164,26 @@ tasks {
         }
     }
 
+    val expandSubprojectSourcesTask = register<Sync>("expandSubprojectSources") {
+        dependsOn(
+            configurations.getByName("shadeSources")
+                .incoming.dependencies.buildDependencies
+        )
+        from(configurations.named("shadeSources").map { conf -> conf.resolve().map { zipTree(it) } }) {
+            exclude { it.isDirectory || it.path.startsWith("META-INF") }
+        }
+        into(project.layout.buildDirectory.dir("shadeSources"))
+        outputs.upToDateWhen { false }
+    }
+
     getByName<Jar>("sourcesJar") {
         dependsOn(classes)
         dependsOn(
             configurations.getByName("shadeSources")
                 .incoming.dependencies.buildDependencies
         )
-        configurations.named("shadeSources").get().resolve().forEach {
-            zipTree(it).visit {
-                if (path.startsWith("META-INF") || file.isDirectory) return@visit
-                from(file) {
-                    into(path.substringBeforeLast("/"))
-                }
-            }
-        }
+        dependsOn(expandSubprojectSourcesTask)
+        from(expandSubprojectSourcesTask)
         inputs.property("version", project.version)
         filesMatching("fabric.mod.json") {
             expand(mapOf("version" to project.version))
