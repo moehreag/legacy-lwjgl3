@@ -122,6 +122,9 @@ tasks {
     shadowJar {
         enabled = false
     }
+    jar {
+        enabled = false
+    }
 
     val shadeJar = register<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadeJar") {
         description = "Shade all subproject classes"
@@ -202,6 +205,10 @@ tasks {
             var version = readln()
             println(McVersionLookup.normalizeVersion(version, McVersionLookup.getRelease(version)))
         }
+    }
+
+    afterEvaluate {
+        filterIsInstance<AbstractPublishToMaven>().forEach { it.dependsOn(remapJar, remapSourcesJar) }
     }
 }
 
